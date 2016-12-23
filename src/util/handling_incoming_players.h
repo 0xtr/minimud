@@ -1,0 +1,5 @@
+#pragma once
+
+int32_t find_and_set_new_player_struct (const int32_t wfd);
+int32_t ensure_player_moving_valid_dir (const int32_t socket_num, const uint8_t *command);
+#include "handling_incoming_players.c"

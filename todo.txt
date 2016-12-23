@@ -1,0 +1,1 @@
+-handle quit request during char creation, including ctrl-c
