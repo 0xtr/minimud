@@ -1,4 +1,4 @@
-int32_t handle_existing_pass (const int32_t socket_num, final uint8_t *command) {
+int32_t handle_existing_pass (const int32_t socket_num, const uint8_t *command) {
     int32_t pnum = getplayernum(socket_num);
     if (get_existing_player_hash(pnum) == -1) {
         print_output(socket_num, UNABLE_TO_RETRIEVE_CHAR);
@@ -24,7 +24,7 @@ int32_t handle_existing_pass (const int32_t socket_num, final uint8_t *command) 
     return EXIT_SUCCESS;
 }
 
-int32_t handle_new_pass (const int32_t socket_num, final uint8_t *command) {
+int32_t handle_new_pass (const int32_t socket_num, const uint8_t *command) {
     int32_t pnum = getplayernum(socket_num);
     if (strcmp((char*)command, (char*)player[pnum].holder) == 0 && 
        (strlen((char*)command) == strlen((char*)player[pnum].holder))) {
@@ -49,13 +49,13 @@ int32_t handle_new_pass (const int32_t socket_num, final uint8_t *command) {
     return -1;
 }
 
-int32_t set_player_confirm_new_pw (const int32_t socket_num, final uint8_t *command) {
+int32_t set_player_confirm_new_pw (const int32_t socket_num, const uint8_t *command) {
     int32_t pnum = getplayernum(socket_num);
     strncpy(player[pnum].holder, command, NAMES_MAX);
     if ((print_output(socket_num, REQUEST_PW_CONFIRM)) == 0) {
         // TODO: confirm return of print_output
         // shutdown_socket
     }
-    player[pnum].wait_state = THEIR_PASSWORD_NEWconst;
+    player[pnum].wait_state = THEIR_PASSWORD_NEW;
     return EXIT_SUCCESS;
 }

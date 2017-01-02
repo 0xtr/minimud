@@ -1,3 +1,8 @@
+const uint8_t valid_dirs[10] = {
+    "north", "south", "west", "east", "northeast", "southwest", "northwest",
+    "southeast", "up", "down"
+};
+
 int32_t adjust_room_details (int32_t adjusting, int32_t reverse, int32_t pnum, int32_t x, int32_t y, int32_t z) {
     #define SET_VAL \
         if (val1 == 0 && pnum != -1) {\
@@ -6,10 +11,6 @@ int32_t adjust_room_details (int32_t adjusting, int32_t reverse, int32_t pnum, i
             snprintf(val, sizeof(int), "%d", 0);\
         }\
 
-    if (get_roomdb() == NULL) {
-        fprintf(stdout, "ERROR: %s\n", "No room database connection! Shutting down.");
-        exit(EXIT_FAILURE);
-    }
     int32_t rv = 0;
     uint8_t *sqlerr = NULL;
     uint8_t *room   = NULL;
@@ -178,14 +179,37 @@ int32_t adjust_room_details (int32_t adjusting, int32_t reverse, int32_t pnum, i
         return -2;
     }
     //
-    rv = sqlite3_exec(db, room, callback, 0, &sqlerr); 
+    rv = sqlite3_exec(get_roomdb(), room, callback, 0, &sqlerr); 
     sqlite3_free(room);
     //
     lookup_room_exits(x, y, z, -1);
     if (rv != SQLITE_OK) {
-        fprintf(stdout, "[ABORTING] SQLITE3 room update error:\n%s\n", sqlite3_errmsg(db));
+        fprintf(stdout, "[ABORTING] SQLITE3 room update error:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(sqlerr);
         return -1;
     }
     return 1;
+}
+
+int32_t get_opposite_dir (const uint8_t *dir) {
+    int32_t i, found = 0;
+    for (i = 0; i != VALID_DIRS; ++i) {
+        if (strcmp((char*)valid_dirs[i], (char*)dir) == 0) {
+            found = 1;
+            break;
+        }
+    }
+    if (found == 0) {
+        return -1;
+    }
+    if (strcmp((char*)dir, "south") == 0     ||
+        strcmp((char*)dir, "east") == 0      ||
+        strcmp((char*)dir, "southwest") == 0 ||
+        strcmp((char*)dir, "southeast") == 0 ||
+        strcmp((char*)dir, "down") == 0) {
+        return i - 1;
+    } else {
+        return i + 1;
+    }
+    return -1;
 }

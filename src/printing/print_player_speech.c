@@ -1,38 +1,21 @@
-int32_t *print_player_speech (int32_t socket_num, const uint8_t *say) {
-    // length req'd for the actual command + the space after that
-    #define AFTER_SAY_AND_COLON 4
-    // length req'd to add 'SAY: ' at start of print32_t to that room
-    #define SAY_LEN             7
-    // length req'd for player to see You say: 
-    #define PLAYER_SAY          9
+int32_t print_player_speech (const int32_t socket_num, const uint8_t *say) {
+    #define TOKEN_SAY_CMD_LEN 4 // length req'd for the actual say command + the space after that
+    #define TOKEN_YOU_SAY_LEN 9 // length req'd for player to see You say: 
+    uint8_t *buffer = calloc(BUFFER_LENGTH, sizeof(uint8_t);
+    const int32_t pnum = getplayernum(socket_num);
 
-    /* ALLOCATE x2 */
-    uint8_t *tmp_buf = calloc(BUFLEN, sizeof(uint8_t);
-    uint8_t *buf_for_player = calloc(BUFLEN, sizeof(uint8_t));
-    // do stuff here
-    /* end */
+    strncpy(buffer, player[pnum].pname, strlen(player[pnum].pname));
+    strncat(buffer, " says: ", 7);
+    strncat(buffer, &say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - TOKEN_SAY_CMD_LEN);
+    echoaround_player(socket_num, ROOM_ONLY, buffer);
+#ifdef DEBUG
+    printf("print_player_speech: %s\n", buffer);
+#endif
+    strcpy(buffer, "You say: ");
+    strncat(buffer, &say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - TOKEN_SAY_CMD_LEN);
+    strcpy(player[pnum].buffer, buffer);
+    send_and_ensure(socket_num, NULL);
 
-    int32_t pnum = getplayernum(socket_num);
-    strncpy(tmp_buf, &say[AFTER_SAY_AND_COLON], BUFLEN - AFTER_SAY_AND_COLON);
-
-    // and here
-    strncpy(buf, player[pnum].pname, strlen(player[pnum].pname));
-    strncat(buf, " says: ", SAY_LEN);
-    strncat(buf, tmp_buf, BUFLEN - strlen(buf));
-
-    printf("print_player_speech: %s\n", buf);
-    strcpy(buf_for_player, "You say: ");
-    strncat(buf_for_player, tmp_buf, BUFLEN - PLAYER_SAY);
-
-    echoaround_player(pnum, ROOM_ONLY);
-    //wfd = player[pnum].socket_num;
-    strncpy(buf, buf_for_player, BUFLEN);
-    send_and_ensure(socket_num);
-
-    /* FREE X2 */
-    free(tmp_buf);
-    free(buf_for_player);
-    /* end */
-
+    free(buffer);
     return EXIT_SUCCESS;
 }

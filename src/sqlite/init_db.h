@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../mapping/BASE_ROOM_DETAILS.h"
 #include "../sqlite/set_get_dbs.h"
-#include "../sqlite/callback.h"
-#include "../sqlite_vars.h"
-int32_t init_db (const int DB_TYPE);
-void reset_player_sqlite_vars (void);
+#include "../sqlite/helper_funcs.h"
+#include "../SqliteVars.h"
+int32_t init_db (const int32_t DB_TYPE);
 #include "init_db.c"

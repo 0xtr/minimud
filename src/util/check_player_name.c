@@ -1,4 +1,4 @@
-int32_t check_if_name_is_reserved (const int32_t socket, const char[] name) {
+int32_t check_if_name_is_reserved (const int32_t socket, const uint8_t *name) {
     clist *tmp = head;
     while (tmp) {
         if ((strcmp(command, tmp->cname) == 0) || (strcmp(command, "TABLE") == 0) ||
@@ -11,7 +11,7 @@ int32_t check_if_name_is_reserved (const int32_t socket, const char[] name) {
     return EXIT_SUCCESS;
 }
 
-int32_t check_if_name_is_valid (const int32_t socket, const char[] name) {
+int32_t check_if_name_is_valid (const int32_t socket, const uint8_t *name) {
     if (strlen(buf) > NAMES_MAX || strlen(name) < NAMES_MIN) {
         print_output(socknum, NAME_NOT_WITHIN_PARAMS);
     }

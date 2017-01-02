@@ -12,7 +12,6 @@ int32_t print_output (int32_t socknum, int32_t argument) {
     uint8_t names_max[sizeof(NAMES_MAX)];
     #define DIRS     (argument >= 0 && argument <= 10)
 
-    CLEAR_BUFFER;
     switch (argument) {
         case PROMPT: 
             strcpy((char*)buf, "> ");
@@ -75,7 +74,7 @@ int32_t print_output (int32_t socknum, int32_t argument) {
 
             // now show the players in room here...
             for (i = 0; i != MAX_CONNS; ++i) {
-                if (player[i].in_use == 0 || i == conns || player[i].socknum == 0 || player[num].socknum == 0) {
+                if (player[i].in_use == 0 || i == get_active_conns() || player[i].socknum == 0 || player[num].socknum == 0) {
                     break;
                 }
                 if (player[i].socknum != player[num].socknum) {

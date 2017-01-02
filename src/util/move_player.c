@@ -1,4 +1,4 @@
-int32_t move_player (int32_t socknum, const uint8_t command[]) {
+int32_t move_player (const int32_t socknum, const uint8_t command[]) {
     int32_t rv = 0;
     int32_t movedir;
     int32_t num = getplayernum(socknum);

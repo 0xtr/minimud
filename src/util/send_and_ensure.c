@@ -1,9 +1,7 @@
-int32_t send_and_ensure (const int32_t player_num) {
-    uint8_t *tmp_buf = malloc(BUFLEN);
-    memset(tmp_buf, '\0', BUFLEN);
-    size_t  err = -1;
-    size_t  bytes, expected = strlen(buf);
-    size_t  bytes;
+int32_t send_and_ensure (const int32_t player_num, const uint8_t *generic_buf) {
+    uint8_t *tmp_buf = calloc(BUFLEN, sizeof(uint8_t));
+    size_t err = -1;
+    size_t bytes, expected = strlen(buf);
     ssize_t rv = 0;
 
     if (strlen(player[player_num].buffer) > PRINT_LINE_WIDTH) {

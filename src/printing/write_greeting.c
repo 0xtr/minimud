@@ -1,4 +1,4 @@
-int32_t write_greeting (int32_t player_num) {
+int32_t write_greeting (const int32_t player_num) {
     sprintf(player[player_num].buffer, (uint8_t*)"%s", "> WELCOME.");
     send_and_ensure(player_num);
     strcat(player[player_num].buffer, 

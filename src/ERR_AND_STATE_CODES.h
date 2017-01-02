@@ -8,7 +8,6 @@
 #define  LISTPLAYERS              -8504
 #define  PROMPT                   -8505
 #define  MAPIT                    -8506
-#define  HACKPLANET               -8507
 #define  ROOM_ONLY                -8508
 #define  ALL_PLAYERS              -8509
 #define  REQUEST_PW_FOR_NEW       -8510

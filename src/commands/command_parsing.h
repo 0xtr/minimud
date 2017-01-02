@@ -1,11 +1,14 @@
 #pragma once
 
-#include "command_struct.h"
+int32_t parse_clist (void);
+int32_t check_clist (const int32_t socket_num, const uint8_t command[]);
+int32_t line_begins_with_valid_chars (const uint8_t *line) __attribute__ ((unused));
+#include <stdio.h>
+#define _GNU_SOURCE
+#include "../Commands.h"
 #include "../printing/print_player_speech.h"
 #include "../printing/print_output.h"
 #include "../util/move_player.h"
 #include "../util/shutdown_socket.h"
 #include "../mapping/categorize_cmds.h"
-int32_t parse_clist (void);
 #include "command_parsing.c"
-int32_t check_clist (const int32_t socknum, const uint8_t command[]);

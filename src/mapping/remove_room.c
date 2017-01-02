@@ -22,7 +22,7 @@ int32_t remove_room (int32_t x, int32_t y, int32_t z, int32_t socknum) {
         sqlite3_free(sqlerr);
         return -3;
     }
-    if (sqlite_rows_count == 0) {
+    if (get_sqlite_rows_count() == 0) {
         return -1;
     }
     if (strcmp(map.owner, player[pnum].pname) != 0) {
@@ -76,4 +76,19 @@ int32_t remove_room (int32_t x, int32_t y, int32_t z, int32_t socknum) {
 
     remove_players_from_room(x, y, z);
     return 1;
+}
+
+int32_t remove_players_from_room (int32_t x, int32_t y, int32_t z) {
+    for (size_t i = 0; i != MAX_CONNS && i < get_active_conns(); ++i) {
+        if (player[i].in_use == 1) {
+            if (get_player_coord(X_COORD_REQUEST, i) == x &&
+                get_player_coord(Y_COORD_REQUEST, i) == y &&
+                get_player_coord(Z_COORD_REQUEST, i) == z) {
+                print_output(player[i].socknum, PRINT_REMOVED_FROM_ROOM);
+                adjust_player_location(i, -1, -1, -1);
+                print_output(player[i].socknum, SHOWROOM);
+            }
+        }
+    }
+    return 0;
 }

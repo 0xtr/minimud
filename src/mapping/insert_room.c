@@ -1,9 +1,5 @@
 int32_t insert_room (const uint8_t *rname, const int32_t xloc, const int32_t yloc, const int32_t zloc, const uint8_t *rdesc,
                      const uint8_t *owner, const uint8_t *flags) {
-    if (get_roomdb() == NULL) {
-        fprintf(stdout, "ERROR: %s\n", "No database connection! Shutting down.");
-        exit(EXIT_FAILURE);
-    }
     int32_t room_total, status = 0;
     uint8_t *sqlerr = NULL;
 
@@ -35,7 +31,7 @@ int32_t insert_room (const uint8_t *rname, const int32_t xloc, const int32_t ylo
         fprintf(stdout, "SQLITE3 failure in insert_room:\n%s\n", sqlite3_errmsg(get_roomdb()));
         return -1;
     }
-    if (sqlite_rows_count != 0) {
+    if (get_sqlite_rows_count() != 0) {
         return -2;
     }
 

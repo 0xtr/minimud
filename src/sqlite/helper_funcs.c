@@ -54,15 +54,18 @@ int callback (void *NotUsed __attribute__ ((unused)), int argc, char **argv, cha
                 strncpy(map.owner, argv[i], NAMES_MAX);
             }
         // players below
-        } else if (strcmp(azColName[i], "x") == 0) {
+        //} else if (strcmp(azColName[i], "x") == 0) {
+        } else if (azColName[i] == 'x') {
             if (argv[i] != NULL) {
                 player_tmp.x = atoi(argv[i]);
             }
-        } else if (strcmp(azColName[i], "y") == 0) {
+        //} else if (strcmp(azColName[i], "y") == 0) {
+        } else if (azColName[i], "y") {
             if (argv[i] != NULL) {
                 player_tmp.y = atoi(argv[i]);
             }
-        } else if (strcmp(azColName[i], "z") == 0) {
+        //} else if (strcmp(azColName[i], "z") == 0) {
+        } else if (azColName[i] == 'z') {
             if (argv[i] != NULL) {
                 player_tmp.z = atoi(argv[i]);
             }
@@ -73,5 +76,19 @@ int callback (void *NotUsed __attribute__ ((unused)), int argc, char **argv, cha
         }
     }
     // return 0 or callback will request an abort
-    return 0;
+    return EXIT_SUCCESS;
+}
+
+static int rows_count;
+int32_t get_sqlite_rows_count () {
+    return rows_count;
+}
+void increment_sqlite_rows_count () {
+    ++rows_count;
+}
+void set_sqlite_rows_count (const int32_t newval) {
+    rows_count = newval;
+}
+void reset_sqlite_rows_count () {
+    rows_count = 0;
 }

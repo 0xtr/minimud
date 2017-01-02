@@ -1,9 +1,5 @@
-int32_t insert_player (const uint8_t *pname, const uint8_t *pw, int32_t socknum) {
+int32_t insert_player (const uint8_t *pname, const uint8_t *pw, const int32_t socknum) {
     #define HASH_RESULT_LEN 70    // what the hash length is
-    if (get_playerdb() == NULL) {
-        fprintf(stdout, "ERROR: %s\n", "No player database connection! Shutting down.");
-        exit(EXIT_FAILURE);
-    }
     int32_t status  = 0;
     int32_t num     = getplayernum(socknum);
     uint8_t *sqlerr = NULL;

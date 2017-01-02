@@ -1,0 +1,19 @@
+#pragma once
+
+struct {
+    uint8_t rname[NAMES_MAX];
+    uint8_t rdesc[BUFLEN];
+    uint8_t owner[NAMES_MAX];
+    uint8_t last_modified[NAMES_MAX];
+    _Bool is_occupied;
+    _Bool north;
+    _Bool south;
+    _Bool west;
+    _Bool east;
+    _Bool down;
+    _Bool up;
+    _Bool northeast;
+    _Bool southeast;
+    _Bool southwest;
+    _Bool northwest;
+} map; 
