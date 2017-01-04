@@ -4,27 +4,27 @@ int32_t interpret_command (const int32_t socket_num) {
     int32_t x, y, z;
 
     #define ANNOUNCE_LOGIN_TO_OTHER_PLAYERS \
-        x = get_player_coord(X_COORD_REQUEST, player[pnum].socket_num);\
-        y = get_player_coord(Y_COORD_REQUEST, player[pnum].socket_num);\
-        z = get_player_coord(Z_COORD_REQUEST, player[pnum].socket_num);\
-        strncpy(player[pnum].buffer, player[pnum].pname, NAMES_MAX);\
-        strcat((char*)player[pnum].buffer, " has connected, in location [");\
+        x = get_player_coord(X_COORD_REQUEST, get_player_socket(pnum));\
+        y = get_player_coord(Y_COORD_REQUEST, get_player_socket(pnum));\
+        z = get_player_coord(Z_COORD_REQUEST, get_player_socket(pnum));\
+        strncpy(get_player_buffer(pnum), player[pnum].pname, NAMES_MAX);\
+        strcat((char*)get_player_buffer(pnum), " has connected, in location [");\
         rv = lookup_room_name_from_coords(x, y, z);\
-        strcat(player[pnum].buffer, "].");\
+        strcat(get_player_buffer(pnum), "].");\
         echoaround_player(pnum, ALL_PLAYERS);\
 
     // -------------------------------------------------------
 
-    if (player[pnum].wait_state != THEIR_NAME) {
+    if (get_player_wait_state(pnum) != THEIR_NAME) {
         for (size_t i = 0; i < (get_max_command_len() * 2); ++i) {
-            command[i] = player[pnum].buffer[i];
-            if (isspace(player[pnum].buffer[i]) != 0) {
+            command[i] = get_player_buffer(pnum)[i];
+            if (isspace(get_player_buffer(pnum)[i]) != 0) {
                 command[i] = '\0';
                 break;
             }
         }
     }
-    if (player[pnum].hold_for_input == 1 && strcmp((char*)command, "quit") != 0) {
+    if (get_player_hold_for_input(pnum) == 1 && strcmp((char*)command, "quit") != 0) {
         if (strlen((char*)command) > get_max_command_len() || ((check_clist(socket_num, command)) != 1)) { // not a valid command, inform the player 
             print_output(socket_num, INVALCMD);
             return -1;
@@ -32,17 +32,17 @@ int32_t interpret_command (const int32_t socket_num) {
     }
 
     // should probably handle 'quit' if they want to exit this process
-    switch (player[pnum].wait_state) {
+    switch (get_player_wait_state(pnum)) {
         case THEIR_NAME:
             if (check_if_name_is_valid(socket_num, command)) break;
             if (check_if_name_is_reserved(socket_num, command)) break;
-            strncpy((char*)player[pnum].pname, (char*)command, NAMES_MAX);
-            if (lookup_player(player[pnum].pname) == 1) {
+            set_player_pname(pnum, command);
+            if (lookup_player(get_player_pname(pnum)) == 1) {
                 print_output(socket_num, REQUEST_PW_FOR_EXISTING);
-                player[pnum].wait_state = THEIR_PASSWORD_EXISTING;
+                set_player_wait_state(pnum, THEIR_PASSWORD_EXISTING);
             } else {
                 print_output(socket_num, REQUEST_PW_FOR_NEW);
-                player[pnum].wait_state = THEIR_PASSWORD_NEWPRELIM;
+                set_player_wait_state(pnum, THEIR_PASSWORD_NEWPRELIM);
             }
             check_if_player_is_already_online(pnum);
             break;
@@ -56,10 +56,7 @@ int32_t interpret_command (const int32_t socket_num) {
             handle_new_pass(socket_num, command);
             break;
         case WAIT_ENTER_NEW_ROOM_NAME:
-            player[pnum].store = calloc(NAMES_MAX, sizeof(uint8_t));
-            player[pnum].store_size = NAMES_MAX;
-            player[pnum].wait_state = WAIT_CONFIRM_NEW_ROOM_NAME;
-            strncpy(player[pnum].store, player[pnum].buffer, NAMES_MAX);
+            init_player_store(pnum);
             print_output(socket_num, PRINT_CONFIRM_NEW_ROOM_NAME);
             break;
         case WAIT_CONFIRM_NEW_ROOM_NAME:
@@ -80,11 +77,7 @@ int32_t interpret_command (const int32_t socket_num) {
             }
             player[pnum].wait_state = NO_WAIT_STATE;
             player[pnum].hold_for_input = 0;
-
-            memset(player[pnum].store, '\0', player[pnum].store_size);
-            free(player[pnum].store);
-            player[pnum].store = NULL;
-            player[pnum].store_size = 0;
+            clear_player_store(pnum);
 
             print_output(socket_num, SHOWROOM);
             strncpy(player[pnum].buffer, player[pnum].pname, NAMES_MAX);
@@ -116,20 +109,12 @@ int32_t interpret_command (const int32_t socket_num) {
             }
             player[pnum].wait_state = NO_WAIT_STATE;
             player[pnum].hold_for_input = 0;
-
-            memset(player[pnum].store, '\0', player[pnum].store_size);
-            free(player[pnum].store);
-            player[pnum].store = NULL;
-            player[pnum].store_size = 0;
-
+            clear_player_store(pnum);
             print_output(socket_num, SHOWROOM);
-            strncpy(player[pnum].buffer, player[pnum].pname, NAMES_MAX);
-            strcat(player[pnum].buffer, (char*)"changes the room description.");
-            echoaround_player(pnum, ROOM_ONLY);
             break;
 
         case WAIT_ROOM_REMOVAL_CHECK:
-            if ((strcmp((char*)command, "y") == 0) || (strcmp((char*)command, "Y") == 0)) {
+            if (command[0] == 'y' || command[0] == 'Y') {
                 print_output(socket_num, PRINT_ROOM_REMOVAL_CONFIRM);
                 player[pnum].wait_state = WAIT_ROOM_REMOVAL_CONFIRM;
             } else {
@@ -139,7 +124,7 @@ int32_t interpret_command (const int32_t socket_num) {
             }
             break;
         case WAIT_ROOM_REMOVAL_CONFIRM:
-            if ((strcmp((char*)command, "y") == 0) || (strcmp((char*)command, "Y") == 0)) {
+            if (command[0] == 'y' || command[0] == 'Y') {
                 rv = remove_room(-1, -1, -1, pnum);
                 if (rv == 1) {
                     print_output(socket_num, PRINT_ROOM_REMOVAL_SUCCESS);

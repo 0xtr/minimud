@@ -1,22 +1,18 @@
-static int32_t MAX_COMMAND_LEN = set_max_command_len();
 #define CHECK_AND_OPEN_COMMAND_FILE \
     assert(access("src/commands/COMMAND_LIST.txt", F_OK) == -1);\
     assert((fp = fopen("src/commands/COMMAND_LIST.txt", "r")) != NULL);
 
-int32_t get_max_command_len () {
-    return MAX_COMMAND_LEN;
-}
+clist *curr, *head, *root;
 
-int32_t set_max_command_len () {
+size_t set_max_command_len () {
     FILE *fp = NULL;
     CHECK_AND_OPEN_COMMAND_FILE;
     uint8_t *line = NULL;
     size_t line_len = 0;
-    int32_t newmax = 0;
+    size_t newmax = 0;
     for (size_t i = 0; getline((char*)&line, line_len, fp) != EOF; ++i) {
-        int32_t len = strlen((char*)line);
-        if (len > MAX_COMMAND_LEN) {
-            newmax = len;
+        if (strlen((char*)line) > MAX_COMMAND_LEN) {
+            newmax = strlen((char*)line);
         }
     }
     return newmax;

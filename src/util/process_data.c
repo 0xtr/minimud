@@ -7,15 +7,15 @@ int32_t process_data (const int32_t socket_num) {
     if (incoming_data_len > BUFFER_LENGTH) {
         extra = malloc(incoming_data_len - BUFFER_LENGTH); 
     }
-    if (player[pnum].in_use != 1) {
+    if (get_player_in_use(pnum) != 1) {
         extra = realloc(extra, incoming_data_len);
-        retval = recv(socket_num, extra, incoming_data_len, 0);
+        recv(socket_num, extra, incoming_data_len, 0);
         memset(extra, '\0', incoming_data_len);
         free(extra);
         extra = NULL;
         return EXIT_SUCCESS;
     }
-    retval = recv(socket_num, player[pnum].buffer, sizeof(player[pnum].buffer), 0);
+    retval = recv(socket_num, get_player_buffer(pnum), sizeof(get_player_buffer(pnum)), 0);
     if (retval == 0) {
         shutdown_socket(pnum); 
         return EXIT_SUCCESS;

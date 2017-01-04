@@ -1,11 +1,15 @@
 int32_t init_db (const int32_t DB_TYPE) {
-    int32_t status = 0;
     _Bool tables_needed = 0;
-    if (access((char*)SQLITE_ROOMDB_LOC, F_OK) == -1 || access((char*)SQLITE_PLAYERDB_LOC, F_OK) == -1) {
+    if (access((char*)SQLITE_ROOMDB_LOC, F_OK) == -1 && DB_TYPE == ROOM_DB_TYPE) {
+        tables_needed = 1;
+    }
+    if (access((char*)SQLITE_PLAYERDB_LOC, F_OK) == -1 && DB_TYPE == PLAYER_DB_TYPE) {
         tables_needed = 1;
     }
     sqlite3 *db;
-    assert(sqlite3_open_v2((DB_TYPE == ROOM_DB_TYPE) ? SQLITE_ROOMDB_LOC : SQLITE_PLAYERDB_LOC, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL) == 0);
+    assert(sqlite3_open_v2((DB_TYPE == ROOM_DB_TYPE) 
+                ?  SQLITE_ROOMDB_LOC 
+                : SQLITE_PLAYERDB_LOC, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL) == 0);
     (DB_TYPE == ROOM_DB_TYPE) ? set_roomdb(db) : set_playerdb(db);
 
     if (tables_needed == 1) {

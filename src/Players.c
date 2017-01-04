@@ -25,8 +25,51 @@ struct Player *get_newest_player () {
     return curr;
 }
 
+int32_t get_player_wait_state (const int32_t pnum) {
+    return player[pnum]->wait_state;
+}
+
+void set_player_wait_state (const int32_t pnum, const int32_t wait_state) {
+    player[pnum].wait_state = wait_state;
+}
+
+void set_player_pname (const int32_t pnum, const uint8_t *name) {
+    strncpy((char*)player[pnum].pname, (char*)name, NAMES_MAX);
+}
+
+uint8_t *get_player_pname (const int32_t pnum) {
+    return &player[pnum].pname;
+}
+
+void init_player_store (const int32_t pnum) {
+    player[pnum].store = calloc(NAMES_MAX, sizeof(uint8_t));
+    player[pnum].store_size = NAMES_MAX;
+    strncpy((char*)player[pnum].store, (char*)player[pnum].buffer, NAMES_MAX);
+    set_player_wait_state (pnum, WAIT_CONFIRM_NEW_ROOM_NAME);
+}
+
+void clear_player_store (const int32_t pnum) {
+    assert(player[pnum].store_size != 0);
+    memset(player[pnum].store, '\0', player[pnum].store_size);
+    free(player[pnum].store);
+    player[pnum].store = NULL;
+    player[pnum].store_size = 0;
+}
+
+_Bool get_player_hold_for_input (const int32_t pnum) {
+    return player[pnum]->hold_for_input;
+}
+
 struct sockaddr *restrict get_newest_player_address () {
     return curr->address;
+}
+
+uint8_t *get_player_buffer (const int32_t pnum) {
+    return player[pnum]->buffer;
+}
+
+_Bool get_player_in_use (const int32_t pnum) {
+    return player[pnum]->in_use;
 }
 
 int32_t get_player_socket (const int32_t pnum) {
