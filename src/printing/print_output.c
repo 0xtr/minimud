@@ -1,12 +1,11 @@
-int32_t print_output (int32_t socknum, int32_t argument) {
-    clist   *tmp1 = head;
-    int32_t num   = getplayernum(socknum);
-    int32_t rv    = 0;
+int32_t print_output (const int32_t pnum, const int32_t argument) {
+    clist *tmp1 = head;
+    int32_t rv;
     int32_t room_x = get_player_coord(X_COORD_REQUEST, num);
     int32_t room_y = get_player_coord(Y_COORD_REQUEST, num);
     int32_t room_z = get_player_coord(Z_COORD_REQUEST, num);
 
-    int32_t dont_send_again = 0;
+    _Bool dont_send_again = 0;
     size_t  len = 0;
     uint8_t PWLEN_TMP[3];
     uint8_t names_max[sizeof(NAMES_MAX)];
@@ -14,21 +13,18 @@ int32_t print_output (int32_t socknum, int32_t argument) {
 
     switch (argument) {
         case PROMPT: 
-            strcpy((char*)buf, "> ");
+            set_player_buffer_replace(pnum, "> ");
             break;
         case INVALCMD:
-            strcpy((char*)buf, "Invalid command. Type \'commands\'.\n");
+            set_player_buffer_replace(pnum, "Invalid command. Type \'commands\'.\n");
             break;
         case SHOWCMDS:
-            strncpy((char*)buf, "> Available commands:", BUFLEN);
-            rv = send_and_ensure(socknum);
-            len = 0;
-            for (size_t i = 0; i != SUPPORTED_COMMANDS; ++i) {
-                len += strlen(tmp1->cname); 
-            }
+            set_player_buffer_replace(pnum, "> Available commands:");
+            assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
+            const size_t TOTAL_LEN_OF_ALL_COMMANDS = get_total_length_of_all_cmds();
             int32_t c = 1;
-            if (len > BUFLEN) {
-                c = len % BUFLEN;
+            if (len > BUFFER_LENGTH) {
+                c = len % BUFFER_LENGTH;
                 if (c == 1) {
                     ++c;
                 }
@@ -38,7 +34,7 @@ int32_t print_output (int32_t socknum, int32_t argument) {
             int32_t commands_on_line = 0;
             for (; c != 0; c--) {
                 while (tmp1) {
-                    if (1 + strlen(buf) + strlen(tmp1->cname) <= BUFLEN) {
+                    if (1 + strlen(buf) + strlen(tmp1->cname) <= BUFFER_LENGTH) {
                         if (strlen(tmp1->cname) > 1) {
                             if (trip_first == 0) {
                                 strncpy((char*)buf, tmp1->cname, strlen(tmp1->cname)); 
@@ -62,18 +58,18 @@ int32_t print_output (int32_t socknum, int32_t argument) {
                     if (commands_on_line == 5) {
                         commands_on_line = 0;
                         trip_first       = 0;
-                        rv = send_and_ensure(socknum);
+                        rv = send_and_ensure(pnum, NULL);
                     }
                 }
             }
-            rv = send_and_ensure(socknum);
+            rv = send_and_ensure(pnum, NULL);
             dont_send_again = 1;
             break;
         case SHOWROOM:
             lookup_room(room_x, room_y, room_z, socknum);
 
             // now show the players in room here...
-            for (i = 0; i != MAX_CONNS; ++i) {
+            for (size_t i = 0; i != MAX_CONNS; ++i) {
                 if (player[i].in_use == 0 || i == get_active_conns() || player[i].socknum == 0 || player[num].socknum == 0) {
                     break;
                 }
@@ -90,7 +86,7 @@ int32_t print_output (int32_t socknum, int32_t argument) {
                 }
             }
             if (strlen(buf) != 0) {
-                rv = send_and_ensure(socknum);
+                rv = send_and_ensure(pnum, NULL);
             }
 
             strncpy((char*)buf, "Exits:", 6);
@@ -128,7 +124,7 @@ int32_t print_output (int32_t socknum, int32_t argument) {
                 strncat((char*)buf, " NONE", 5);
             }
             strncat((char*)buf, "\n", 1);
-            rv = send_and_ensure(socknum);
+            rv = send_and_ensure(pnum, NULL);
             dont_send_again = 1;
             break;
         case INVALDIR:
@@ -194,26 +190,26 @@ int32_t print_output (int32_t socknum, int32_t argument) {
             break;
         case PRINT_PROVIDE_NEW_ROOM_DESC:
             strcpy((char*)buf, "Enter a new room description, up to ");
-            snprintf(names_max, sizeof(BUFLEN), "%d", BUFLEN - 1);
+            snprintf(names_max, sizeof(BUFFER_LENGTH), "%d", BUFLEN - 1);
             strcat((char*)buf, names_max);
             strcat((char*)buf, " chars in length.\n");
             break;
         case PRINT_CONFIRM_NEW_ROOM_DESC:
             strcpy((char*)buf, "Confirm the new description by typing Y/y. You entered:");
-            rv = send_and_ensure(socknum);
-            strncpy((char*)buf, player[num].store, BUFLEN);
-            rv = send_and_ensure(socknum);
+            rv = send_and_ensure(pnum, NULL);
+            strncpy((char*)buf, player[num].store, BUFFER_LENGTH);
+            rv = send_and_ensure(pnum, NULL);
             strcpy((char*)buf, "If this is wrong, type something other than Y/y.");
-            rv = send_and_ensure(socknum);
+            rv = send_and_ensure(pnum, NULL);
             dont_send_again = 1;
             break;
         case PRINT_CONFIRM_NEW_ROOM_NAME:
             strcpy((char*)buf, "Confirm the new name by typing Y/y. You entered:");
-            rv = send_and_ensure(socknum);
+            rv = send_and_ensure(pnum, NULL);
             strncpy((char*)buf, player[num].store, NAMES_MAX);
-            rv = send_and_ensure(socknum);
+            rv = send_and_ensure(pnum, NULL);
             strcpy((char*)buf, "If this is wrong, type something other than Y/y.");
-            rv = send_and_ensure(socknum);
+            rv = send_and_ensure(pnum, NULL);
             dont_send_again = 1;
             break;
         case PRINT_ADJUSTMENT_SUCCESSFUL:
@@ -325,7 +321,7 @@ int32_t print_output (int32_t socknum, int32_t argument) {
                         strcpy((char*)buf, "> MOVING SOUTHEAST.\n");
                         break;
                 }
-                rv = send_and_ensure(socknum);
+                rv = send_and_ensure(pnum, NULL);
                 if (argument == 0) {
                     return 0; 
                 }
@@ -333,8 +329,8 @@ int32_t print_output (int32_t socknum, int32_t argument) {
             }
     }
     if (dont_send_again == 0) {
-        rv = send_and_ensure(socknum);
+        rv = send_and_ensure(pnum, NULL);
     }
     assert(rv != -13); 
-    return 1;
+    return EXIT_SUCCESS;
 }

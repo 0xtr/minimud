@@ -28,6 +28,6 @@ int32_t process_data (const int32_t socket_num) {
         free(extra);
         extra = NULL;
     }
-    interpret_command(socket_num);
+    interpret_command(pnum);
     return EXIT_SUCCESS;
 }

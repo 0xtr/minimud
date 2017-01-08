@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Commands.h"
+#include "../commands/command_parsing.h"
 #include "../mapping/lookup_room.h"
-int32_t print_output (int32_t socknum, int argument); 
+int32_t print_output (const int32_t pnum, const int32_t argument);
 #include "print_output.c"

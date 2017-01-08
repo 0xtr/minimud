@@ -1,10 +1,10 @@
 int32_t adjust_player_location (const int32_t pnum, int32_t x, int32_t y, int32_t z) {
     uint8_t pname[NAMES_MAX] = {0};
-    if (strlen(player[pnum].pname) > 0) {
+    if (strlen(get_player_pname(pnum)) > 0) {
         strncpy(pname, player[pnum].pname, NAMES_MAX);
     } else {
        fprintf(stdout, "An attempt was made to adjust a player's location, but couldn't find their name: %d.\n", pnum);
-       return -1;
+       return EXIT_FAILURE;
     }
     if (x == -1 && y == -1 && z == -1) {
         x = y = z = 0;
@@ -21,10 +21,10 @@ int32_t adjust_player_location (const int32_t pnum, int32_t x, int32_t y, int32_
     int32_t status = sqlite3_exec(get_playerdb(), querystr, callback, 0, &sqlerr); 
     sqlite3_free(querystr);
     if (status != SQLITE_OK) {
-       fprintf(stdout, "SQLITE player location adjustment error:\n%s\n", sqlite3_errmsg(playerdb));
-       print_output(player[pnum].socknum, INVALDIR);
+       fprintf(stdout, "SQLITE player location adjustment error:\n%s\n", sqlite3_errmsg(get_playerdb()));
+       print_output(pnum, INVALDIR);
        sqlite3_free(sqlerr);
-       return -1;
+       return EXIT_FAILURE;
     }
-    return 1;
+    return EXIT_SUCCESS;
 }

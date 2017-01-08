@@ -1,6 +1,5 @@
 int32_t send_and_ensure (const int32_t player_num, const uint8_t *generic_buf) {
     uint8_t *tmp_buf = calloc(BUFLEN, sizeof(uint8_t));
-    size_t err = -1;
     size_t bytes, expected = strlen(buf);
     ssize_t rv = 0;
 
@@ -91,40 +90,36 @@ int32_t send_and_ensure (const int32_t player_num, const uint8_t *generic_buf) {
     } else {
         fprintf(stdout, "%s: %zd\n", "Problem sending data.", rv);
         log_issue("Problem sending data.");   
-        return -1;
+        return EXIT_FAILURE;
     }
-    if (bytes > 0) {
-        if (bytes == expected) { // sent OK
-            CLEAR_BUFFER;
-            strncpy(buf, (char*)"\n", 1);
-            rv = send(wfd, &buf, expected, 0);
-            CLEAR_BUFFER;
-            return 1; 
-        } else if (bytes < expected) { // partial send
-            rv = send(wfd, &buf[bytes], strlen(buf) - bytes, 0);
-            bytes += rv;
-            if (rv == -1) {
-                switch (errno) {
-                    case EINTR:
-                        rv = send(wfd, &buf[bytes], strlen(buf) - bytes, 0);
-                        break;
-                    default:
-                        log_issue("Problem sending data to socket.");
-                        exit(EXIT_FAILURE);
-                }
-                bytes += rv;
-                fprintf(stdout, "%s %zd %s %zd\n", "sent ", bytes, "expected ", expected);
-                if (bytes < expected) {
-                    rv = send(wfd, &buf[bytes], strlen(buf) - bytes, 0);
-                } else if (bytes == expected) {
-                    CLEAR_BUFFER;
-                    return 1;
-                }
-            }
-            return 2;
-        }
-    } else if (bytes == err) {
+    if (bytes == -1) {
         return EXIT_FAILURE; // something errored
     }
-    return 0;
+    if (bytes == expected) { // sent OK
+        strncpy(buf, (char*)"\n", 1);
+        rv = send(wfd, &buf, expected, 0);
+        return EXIT_SUCCESS; 
+    }
+    rv = send(wfd, &buf[bytes], strlen(buf) - bytes, 0);
+    bytes += rv;
+    if (rv == -1) {
+        switch (errno) {
+            case EINTR:
+                rv = send(wfd, &buf[bytes], strlen(buf) - bytes, 0);
+                break;
+            default:
+                log_issue((char*)"Problem sending data to socket.");
+                return EXIT_FAILURE;
+        }
+        bytes += rv;
+        fprintf(stdout, "%s %zd %s %zd\n", "sent ", bytes, "expected ", expected);
+        if (bytes < expected) {
+            rv = send(wfd, &buf[bytes], strlen(buf) - bytes, 0);
+        } else if (bytes == expected) {
+            CLEAR_BUFFER;
+            return EXIT_SUCCESS;
+        }
+    }
+    //return 2; // investigate why 2
+    return EXIT_SUCCESS;
 }

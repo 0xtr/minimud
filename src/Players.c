@@ -8,7 +8,7 @@ struct Player_l {
     struct  sockaddr *restrict address;
     socklen_t address_len;
     uint8_t buffer[BUFFER_LENGTH];
-    void    *store;
+    uint8_t *store;
     int32_t store_size;
     struct  Player* prev;
     struct  Player* next;
@@ -25,6 +25,10 @@ struct Player *get_newest_player () {
     return curr;
 }
 
+void set_player_hold_for_input (const int32_t pnum, const _Bool hold) {
+    player[pnum]->hold_for_input = hold;
+}
+
 int32_t get_player_wait_state (const int32_t pnum) {
     return player[pnum]->wait_state;
 }
@@ -34,18 +38,25 @@ void set_player_wait_state (const int32_t pnum, const int32_t wait_state) {
 }
 
 void set_player_pname (const int32_t pnum, const uint8_t *name) {
-    strncpy((char*)player[pnum].pname, (char*)name, NAMES_MAX);
+    strncpy((char*)player[pnum]->pname, (char*)name, NAMES_MAX);
+}
+
+void set_player_store_replace (const int32_t pnum, const uint8_t *newval) {
+    strncpy((char*)player[pnum]->store, (char*)new, BUFFER_LENGTH);
+}
+
+void set_player_store_append (const int32_t pnum, const uint8_t *new) {
+    strncat((char*)player[pnum]->store, (char*)new, BUFFER_LENGTH - strlen((char*)player[pnum]->store));
 }
 
 uint8_t *get_player_pname (const int32_t pnum) {
     return &player[pnum].pname;
 }
 
-void init_player_store (const int32_t pnum) {
+void init_player_store (const int32_t pnum, const int32_t len) {
     player[pnum].store = calloc(NAMES_MAX, sizeof(uint8_t));
-    player[pnum].store_size = NAMES_MAX;
-    strncpy((char*)player[pnum].store, (char*)player[pnum].buffer, NAMES_MAX);
-    set_player_wait_state (pnum, WAIT_CONFIRM_NEW_ROOM_NAME);
+    player[pnum].store_size = len;
+    strncpy((char*)player[pnum].store, (char*)player[pnum].buffer, BUFFER_LENGTH);
 }
 
 void clear_player_store (const int32_t pnum) {
@@ -78,6 +89,14 @@ int32_t get_player_socket (const int32_t pnum) {
 
 socklen_t *get_newest_player_address_len () {
     return curr->address_len;
+}
+
+void set_player_buffer_replace (const int32_t pnum, const uint8_t *newbuf) {
+    strncpy((char*)player[pnum]->buffer, (char*)newbuf, BUFFER_LENGTH);
+}
+
+void set_player_buffer_append (const int32_t pnum, const uint8_t *append) {
+    strncat((char*)player[pnum]->buffer, (char*)append, strlen((char*)player[pnum].buffer) - strlen((char*)append));
 }
 
 void remove_player_record (const int32_t pnum) {

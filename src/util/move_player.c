@@ -5,8 +5,8 @@ int32_t move_player (const int32_t socknum, const uint8_t command[]) {
     int32_t x = get_player_coord(X_COORD_REQUEST, num);
     int32_t y = get_player_coord(Y_COORD_REQUEST, num);
     int32_t z = get_player_coord(Z_COORD_REQUEST, num);
-    int32_t xadj, yadj, zadjt;
-    xadj = yadj = zadjt = 0;
+    int32_t xadj, yadj, zadj;
+    xadj = yadj = zadj = 0;
 
     // new funcs here
     if (strcmp((char*)command, "north") == 0 || strcmp((char*)command, "n") == 0) {
