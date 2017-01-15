@@ -26,8 +26,6 @@
 #include "src/sqlite/init_db.h"
 
 #define  BUFFER_LENGTH    512
-#define  NAMES_MIN        5
-#define  NAMES_MAX        45
 #define  PRINT_LINE_WIDTH 56
 
 int32_t main (void) {

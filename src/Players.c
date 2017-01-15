@@ -1,28 +1,16 @@
-struct Player_l {
-    _Bool   in_use;
-    _Bool   hold_for_input;
-    int32_t wait_state;
-    int32_t socket_num;
-    uint8_t pname[NAMES_MAX];
-    uint8_t holder[NAMES_MAX];
-    struct  sockaddr *restrict address;
-    socklen_t address_len;
-    uint8_t buffer[BUFFER_LENGTH];
-    uint8_t *store;
-    int32_t store_size;
-    struct  Player* prev;
-    struct  Player* next;
-};
-typedef struct Player_l Player;
 static Player *player;
 static Player *curr, *head, *root;
 
-struct Player* get_player (const int32_t pnum) {
+struct Player *get_player (const int32_t pnum) {
     return player[pnum];
 }
 
 struct Player *get_newest_player () {
     return curr;
+}
+
+uint8_t *get_player_store (const int32_t pnum) {
+    return player[pnum]->store;
 }
 
 void set_player_hold_for_input (const int32_t pnum, const _Bool hold) {

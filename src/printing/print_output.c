@@ -1,336 +1,316 @@
 int32_t print_output (const int32_t pnum, const int32_t argument) {
-    clist *tmp1 = head;
-    int32_t rv;
-    int32_t room_x = get_player_coord(X_COORD_REQUEST, num);
-    int32_t room_y = get_player_coord(Y_COORD_REQUEST, num);
-    int32_t room_z = get_player_coord(Z_COORD_REQUEST, num);
-
     _Bool dont_send_again = 0;
-    size_t  len = 0;
-    uint8_t PWLEN_TMP[3];
-    uint8_t names_max[sizeof(NAMES_MAX)];
-    #define DIRS     (argument >= 0 && argument <= 10)
+    #define IS_DIRECTION_ARG (argument >= 0 && argument <= 10)
 
     switch (argument) {
         case PROMPT: 
-            set_player_buffer_replace(pnum, "> ");
+            set_player_buffer_replace(pnum, (uint8_t*)"> ");
             break;
         case INVALCMD:
-            set_player_buffer_replace(pnum, "Invalid command. Type \'commands\'.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Invalid command. Type \'commands\'.\n");
             break;
         case SHOWCMDS:
-            set_player_buffer_replace(pnum, "> Available commands:");
-            assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
-            const size_t TOTAL_LEN_OF_ALL_COMMANDS = get_total_length_of_all_cmds();
-            int32_t c = 1;
-            if (len > BUFFER_LENGTH) {
-                c = len % BUFFER_LENGTH;
-                if (c == 1) {
-                    ++c;
-                }
-                printf("c buffers required: %d\n", c);
-            }
-            int32_t trip_first       = 0;
-            int32_t commands_on_line = 0;
-            for (; c != 0; c--) {
-                while (tmp1) {
-                    if (1 + strlen(buf) + strlen(tmp1->cname) <= BUFFER_LENGTH) {
-                        if (strlen(tmp1->cname) > 1) {
-                            if (trip_first == 0) {
-                                strncpy((char*)buf, tmp1->cname, strlen(tmp1->cname)); 
-                                trip_first = 1;
-                            } else {
-                                strncat((char*)buf, tmp1->cname, strlen(tmp1->cname)); 
-                            }
-                            if (++commands_on_line != 5) {
-                                strncat((char*)buf, "\t", 1);
-                                if (strlen(tmp1->cname) < 5) {
-                                    strncat((char*)buf, "\t", 1);
-                                }
-                            }
-                        }
-                        tmp1 = tmp1->next;
-                    } else {
-                        commands_on_line = 0;
-                        trip_first = 0;
-                        break;
-                    }
-                    if (commands_on_line == 5) {
-                        commands_on_line = 0;
-                        trip_first       = 0;
-                        rv = send_and_ensure(pnum, NULL);
-                    }
-                }
-            }
-            rv = send_and_ensure(pnum, NULL);
+            print_all_commands(pnum);
             dont_send_again = 1;
             break;
         case SHOWROOM:
-            lookup_room(room_x, room_y, room_z, socknum);
-
-            // now show the players in room here...
-            for (size_t i = 0; i != MAX_CONNS; ++i) {
-                if (player[i].in_use == 0 || i == get_active_conns() || player[i].socknum == 0 || player[num].socknum == 0) {
-                    break;
-                }
-                if (player[i].socknum != player[num].socknum) {
-                    if (player[i].in_use == 1 &&
-                        get_player_coord(X_COORD_REQUEST, i) == room_x &&
-                        get_player_coord(Y_COORD_REQUEST, i) == room_y &&
-                        get_player_coord(Z_COORD_REQUEST, i) == room_z) {
-                        if (strlen(buf) == 0) {
-                            strcpy((char*)buf, player[i].pname); 
-                            strcat((char*)buf, " is here too.\n");
-                        }
-                    }
-                }
-            }
-            if (strlen(buf) != 0) {
-                rv = send_and_ensure(pnum, NULL);
-            }
-
-            strncpy((char*)buf, "Exits:", 6);
-            if (map.north == 1) {
-                strncat((char*)buf, " NORTH", 7);
-            } 
-            if (map.south == 1) {
-                strncat((char*)buf, " SOUTH", 6);
-            } 
-            if (map.east == 1) {
-                strncat((char*)buf, " EAST", 5);
-            } 
-            if (map.west == 1) {
-                strncat((char*)buf, " WEST", 5);
-            } 
-            if (map.up == 1) {
-                strncat((char*)buf, " U", 2);
-            } 
-            if (map.down == 1) {
-                strncat((char*)buf, " D", 2);
-            } 
-            if (map.northeast == 1) {
-                strncat((char*)buf, " NE", 3);
-            } 
-            if (map.southeast == 1) {
-                strncat((char*)buf, " SE", 3);
-            } 
-            if (map.southwest == 1) {
-                strncat((char*)buf, " SW", 3);
-            } 
-            if (map.northwest == 1) {
-                strncat((char*)buf, " NW", 3);
-            } 
-            if (strlen(buf) == 6) {
-                strncat((char*)buf, " NONE", 5);
-            }
-            strncat((char*)buf, "\n", 1);
-            rv = send_and_ensure(pnum, NULL);
+            build_room_image(pnum);
             dont_send_again = 1;
             break;
         case INVALDIR:
-            strcpy((char*)buf, "Cannot move in that direction. Type 'look' to view current location.");
+            set_player_buffer_replace(pnum, (uint8_t*)"Cannot move in that direction. Type 'look' to view room.");
             break;
         case REQUEST_PW_FOR_NEW:
-            strcpy((char*)buf, "You've provided the name [");
-            strcat((char*)buf, player[num].pname);
-            strcat((char*)buf, "].\n");
-            strcat((char*)buf, "Please provide a password less than ");
-            snprintf(PWLEN_TMP, 3, "%d", NAMES_MAX);
-            strcat((char*)buf, PWLEN_TMP);
-            strcat((char*)buf, " characters long.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"You've provided the name [");
+            set_player_buffer_append(pnum, get_player_pname(pnum));
+            set_player_buffer_append(pnum, (uint8_t*)"].\n");
+            set_player_buffer_append(pnum, (uint8_t*)"Please provide a password less than ");
+            set_player_buffer_append(pnum, get_PW_len_max());
+            set_player_buffer_append(pnum, (uint8_t*)" characters long.\n");
             break;
         case REQUEST_PW_CONFIRM:
-            strcpy((char*)buf, "Please confirm your password by typing it out once more.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Please confirm your password by typing it out once more.\n");
             break;
         case REQUEST_PW_FOR_EXISTING:
-            strcpy((char*)buf, "Please provide your password.");
+            set_player_buffer_replace(pnum, (uint8_t*)"Please provide your password.");
             break;
         case ATTEMPT_CREATE_USR:
-            strcpy((char*)buf, "Attempting to create your character...\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Attempting to create your character...\n");
             break;
         case MISMATCH_PW_SET:
-            strcpy((char*)buf, "Password mismatch. Start over.\nPlease provide a NAME.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Password mismatch. Start over.\nPlease provide a NAME.\n");
             break;
         case PLAYER_CREATION_FAILED:
-            strcpy((char*)buf, "Dreadfully sorry, but character creation failed. Goodbye!\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Character creation failed. You should never see this.\n");
             break;
         case PLAYER_ALREADY_ONLINE: 
-            strcpy((char*)buf, "That player is already connected. Please provide another name.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"That player is already connected. Please provide another name.\n");
             break;
         case INCORRECT_PASSWORD:
-            strcpy((char*)buf, "Incorrect password. Restarting.\nPlease provide a NAME.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Incorrect password. Restarting.\nPlease provide a NAME.\n");
             break;
         case UNABLE_TO_RETRIEVE_CHAR:
-            strcpy((char*)buf, "Couldn't retrieve your character. uh oh.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Couldn't retrieve your character.\n");
             break;
         case NAME_UNAVAILABLE:
-            strcpy((char*)buf, "That name is unavailable. Try another, fiend.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"That name is unavailable.\n");
             break;
         case ALPHANUM_NAMES_ONLY:
-            strcpy((char*)buf, "Yeah, no. Alphanumeric names only, smartass. Try another.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Only alphanumeric characters are permitted.\n");
             break;
         case NAME_TOO_LONG:
-            strcpy((char*)buf, "That name is too long. As stated previously, the limit is ");
-            snprintf(names_max, sizeof(NAMES_MAX), "%d", NAMES_MAX);
-            strcat((char*)buf, names_max);
-            strcat((char*)buf, " characters. Try again.\nPlease provide a NAME.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Name too long. Maximum length is ");
+            set_player_buffer_append(pnum, get_max_name_len());
+            set_player_buffer_append(pnum, (uint8_t*)" characters. Try again.\nPlease provide a NAME.\n");
             break;
         case NAME_TOO_SHORT:
-            strcpy((char*)buf, "That name is too short. The minimum is ");
-            snprintf(names_max, sizeof(NAMES_MIN), "%d", NAMES_MIN);
-            strcat((char*)buf, names_max);
-            strcat((char*)buf, " characters. Try again.\nPlease provide a NAME.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Name too short. Minimum length is ");
+            set_player_buffer_append(pnum, get_min_name_len());
+            set_player_buffer_append(pnum, (uint8_t*)" characters. Try again.\nPlease provide a NAME.\n");
             break;
-
         case PRINT_PROVIDE_NEW_ROOM_NAME:
-            strcpy((char*)buf, "Enter a new room name, up to ");
-            snprintf(names_max, sizeof(NAMES_MAX), "%d", NAMES_MAX - 1);
-            strcat((char*)buf, names_max);
-            strcat((char*)buf, " chars in length.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Enter a new room name, of up to ");
+            set_player_buffer_append(pnum, get_max_room_name_len());
+            set_player_buffer_append(pnum, (uint8_t*)" chars.\n");
             break;
         case PRINT_PROVIDE_NEW_ROOM_DESC:
-            strcpy((char*)buf, "Enter a new room description, up to ");
-            snprintf(names_max, sizeof(BUFFER_LENGTH), "%d", BUFLEN - 1);
-            strcat((char*)buf, names_max);
-            strcat((char*)buf, " chars in length.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Enter a new room description, of up to ");
+            set_player_buffer_append(pnum, get_max_room_desc_len());
+            set_player_buffer_append(pnum, (uint8_t*)" chars.\n");
             break;
         case PRINT_CONFIRM_NEW_ROOM_DESC:
-            strcpy((char*)buf, "Confirm the new description by typing Y/y. You entered:");
-            rv = send_and_ensure(pnum, NULL);
-            strncpy((char*)buf, player[num].store, BUFFER_LENGTH);
-            rv = send_and_ensure(pnum, NULL);
-            strcpy((char*)buf, "If this is wrong, type something other than Y/y.");
-            rv = send_and_ensure(pnum, NULL);
-            dont_send_again = 1;
+            set_player_buffer_replace(pnum, (uint8_t*)"Confirm the new description by typing Y/y. You entered:");
+            set_player_buffer_append(pnum, get_player_store(pnum));
+            set_player_buffer_replace(pnum, (uint8_t*)"\nIf this is wrong, type something other than Y/y.");
             break;
         case PRINT_CONFIRM_NEW_ROOM_NAME:
-            strcpy((char*)buf, "Confirm the new name by typing Y/y. You entered:");
-            rv = send_and_ensure(pnum, NULL);
-            strncpy((char*)buf, player[num].store, NAMES_MAX);
-            rv = send_and_ensure(pnum, NULL);
-            strcpy((char*)buf, "If this is wrong, type something other than Y/y.");
-            rv = send_and_ensure(pnum, NULL);
-            dont_send_again = 1;
+            set_player_buffer_replace(pnum, (uint8_t*)"Confirm the new name by typing Y/y. You entered:");
+            set_player_buffer_append(pnum, get_player_store(pnum));
+            set_player_buffer_replace(pnum, (uint8_t*)"\nIf this is wrong, type something other than Y/y.");
             break;
         case PRINT_ADJUSTMENT_SUCCESSFUL:
-            strcpy((char*)buf, "Room adjusted successfully. Exiting editor.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Room adjusted successfully. Exiting editor.\n");
             break;
         case PRINT_COULDNT_ADJUST_ROOM:
-            strcpy((char*)buf, "Some kind of error occurred. Room adjustment failed. Exiting editor.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Some kind of error occurred. Room adjustment failed. Exiting editor.\n");
             break;
         case PRINT_EXITING_CMD_WAIT:
-            strcpy((char*)buf, "Exiting editor - returning you to the (real) world.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Exiting editor - returning you to the (real) world.\n");
             break;
         case PRINT_INSUFFICIENT_PERMISSIONS:
-            strcpy((char*)buf, "You don't have permission to do that.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"You don't have permission to do that.\n");
             break;
-
         case PRINT_ROOM_EXIT_CHANGED:
-            strcpy((char*)buf, "Room exit changed.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Room exit changed.\n");
             break;
         case PRINT_ROOM_FLAG_CHANGED:
-            strcpy((char*)buf, "Room flag toggled.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Room flag toggled.\n");
             break;
         case PRINT_ROOM_REMOVAL_CHECK:
-            strcpy((char*)buf, "You're trying to delete this room. Are you sure you want to do this?\nType only y/Y to confirm.");
+            set_player_buffer_replace(pnum, (uint8_t*)"You're trying to delete this room. Are you sure you want to do this?\nType only y/Y to confirm.");
             break;
         case PRINT_ROOM_REMOVAL_CONFIRM:
-            strcpy((char*)buf, "Again, confirm room deletion with y/Y - deleting: ");
-            strcat((char*)buf, map.rname);
-            strcat((char*)buf, ".\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Again, confirm room deletion with y/Y - deleting: ");
+            set_player_buffer_append(pnum, get_player_store(pnum));
+            set_player_buffer_append(pnum, (uint8_t*)".\n");
             break;
         case PRINT_ROOM_REMOVAL_SUCCESS:
-            strcpy((char*)buf, "Room removed successfully.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Room removed successfully.\n");
             break;
         case PRINT_ROOM_REMOVAL_FAILURE:
-            strcpy((char*)buf, "Room removal failed.\nThe owner of this room is: ");
-            strcat((char*)buf, map.owner);
-            strcat((char*)buf, ".\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Room removal failed - you are not the owner of this room.\n");
             break;
         case PRINT_ROOM_CREATION_GIVE_DIR:
-            strcpy((char*)buf, "Which direction are you trying to create a room in? (from current)\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Which direction are you trying to create a room in? (from current)\n");
             break;
         case PRINT_ROOM_CREATION_CONFIRMALL:
-            strcpy((char*)buf, "You're adding a room in the direction of: ");
-            strncpy(names_max, player[num].store, player[num].store_size);
-            strcat((char*)buf, names_max);
-            strcat((char*)buf, ". Confirm this by typing y/Y, or decline by typing anything else.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"You're adding a room in the direction of: ");
+            set_player_buffer_append(pnum, get_player_store(pnum));
+            set_player_buffer_append(pnum, (uint8_t*)". Confirm this by typing y/Y, or decline by typing anything else.\n");
             break;
         case PRINT_ROOM_CREATION_CANNOT:
-            strcpy((char*)buf, "Room creation couldn't be completed right now.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Room creation couldn't be completed right now.\n");
             break;
         case PRINT_ROOM_CREATION_SUCCESS:
-            strcpy((char*)buf, "Room creation complete.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Room creation complete.\n");
             break;
         case PRINT_ROOM_CREATION_FAILURE:
-            strcpy((char*)buf, "A room already exists in that direction. Exiting editor.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"A room already exists in that direction. Exiting editor.\n");
             break;
         case PRINT_REMOVED_FROM_ROOM:
-            strcpy((char*)buf, "You've been moved from your current room by the system; the owning player may have deleted it.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"You've been moved from your current room by the system; the owning player may have deleted it.\n");
             break;
         case PRINT_PROVIDE_ROOM_EXIT_NAME:
-            strcpy((char*)buf, "Which direction are you trying to toggle exit visibility for?\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Which direction are you trying to toggle exit visibility for?\n");
             break;
         case PRINT_PROVIDE_ROOM_FLAG_NAME:
-            strcpy((char*)buf, "Which flag are you trying to toggle?\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Which flag are you trying to toggle?\n");
             break;
         case PRINT_TOGGLED_ROOM_EXIT:
-            strcpy((char*)buf, "Room exit visibility toggled. Exiting editor.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Room exit visibility toggled. Exiting editor.\n");
             break;
         case PRINT_COULDNT_TOGGLE_EXIT:
-            strcpy((char*)buf, "Unable to toggle the exit for that room.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"Unable to toggle the exit for that room.\n");
             break;
         case PRINT_COULDNT_EXIT_NO_ROOM:
-            strcpy((char*)buf, "There's no room in that direction.\n");
+            set_player_buffer_replace(pnum, (uint8_t*)"There's no room in that direction.\n");
             break;
-
         default:
-            if (DIRS) {
-                switch (argument) {
-                    case 0:
-                        strcpy((char*)buf, "> RETURNING to the origin room.\n");
-                        break;
-                    case 1:
-                        strcpy((char*)buf, "> MOVING north.\n");
-                        break;
-                    case 2:
-                        strcpy((char*)buf, "> MOVING east.\n");
-                        break;
-                    case 3:
-                        strcpy((char*)buf, "> MOVING south.\n");
-                        break;
-                    case 4:
-                        strcpy((char*)buf, "> MOVING west.\n");
-                        break;
-                    case 5:
-                        strcpy((char*)buf, "> MOVING down.\n");
-                        break;
-                    case 6:
-                        strcpy((char*)buf, "> MOVING up.\n");
-                        break;
-                    case 7:
-                        strcpy((char*)buf, "> MOVING NORTHWEST.\n");
-                        break;
-                    case 8:
-                        strcpy((char*)buf, "> MOVING NORTHEAST.\n");
-                        break;
-                    case 9:
-                        strcpy((char*)buf, "> MOVING SOUTHWEST.\n");
-                        break;
-                    case 10:
-                        strcpy((char*)buf, "> MOVING SOUTHEAST.\n");
-                        break;
-                }
-                rv = send_and_ensure(pnum, NULL);
-                if (argument == 0) {
-                    return 0; 
-                }
-                return 2;
+            if (IS_DIRECTION_ARG) {
+                set_buffer_for_movement(pnum, argument);
             }
     }
     if (dont_send_again == 0) {
-        rv = send_and_ensure(pnum, NULL);
+        assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
     }
-    assert(rv != -13); 
+    return EXIT_SUCCESS;
+}
+
+static _Bool set_buffer_for_movement (const int32_t pnum, const int32_t argument);
+static _Bool set_buffer_for_movement (const int32_t pnum, const int32_t argument) {
+    switch (argument) {
+        case 0:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Returning to the central room.\n");
+            return EXIT_SUCCESS;
+        case 1:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving NORTH.\n");
+            return EXIT_SUCCESS;
+        case 2:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving EAST.\n");
+            return EXIT_SUCCESS;
+        case 3:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving SOUTH.\n");
+            return EXIT_SUCCESS;
+        case 4:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving WEST.\n");
+            return EXIT_SUCCESS;
+        case 5:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving DOWN.\n");
+            return EXIT_SUCCESS;
+        case 6:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving UP.\n");
+            return EXIT_SUCCESS;
+        case 7:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving NORTHWEST.\n");
+            return EXIT_SUCCESS;
+        case 8:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving NORTHEAST.\n");
+            return EXIT_SUCCESS;
+        case 9:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving SOUTHWEST.\n");
+            return EXIT_SUCCESS;
+        case 10:
+            set_player_buffer_replace(pnum, (uint8_t*)"> Moving SOUTHEAST.\n");
+            return EXIT_SUCCESS;
+        default:
+            return EXIT_FAILURE;
+    }
+    return EXIT_FAILURE;
+}
+
+static _Bool build_room_image (const int32_t pnum) {
+    const int32_t room_x = get_player_coord(X_COORD_REQUEST, pnum);
+    const int32_t room_y = get_player_coord(Y_COORD_REQUEST, pnum);
+    const int32_t room_z = get_player_coord(Z_COORD_REQUEST, pnum);
+    Map *map = lookup_room(room_x, room_y, room_z, get_player_socket(pnum));
+
+    // now show the players in room here...
+    for (size_t i = 0; i != get_active_conns(); ++i) {
+        if (get_player_in_use(i) == 0 || i == get_active_conns() || 
+            get_player_socket(i) == 0 || get_player_socket(pnum) == 0) {
+            break;
+        }
+        if (get_player_socket(i) != get_player_socket(pnum)) {
+            if (get_player_in_use(i) == 1 &&
+                get_player_coord(X_COORD_REQUEST, i) == room_x &&
+                get_player_coord(Y_COORD_REQUEST, i) == room_y &&
+                get_player_coord(Z_COORD_REQUEST, i) == room_z) {
+                if (strlen((char*)get_player_buffer(i)) == 0) {
+                    set_player_buffer_replace(i, get_player_pname(i));
+                    set_player_store_append(i, (uint8_t*)" is here too.\n");
+                    assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
+                }
+            }
+        }
+    }
+    set_player_buffer_replace(pnum, (uint8_t*)"Exits:");
+    if (map->north == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" NORTH");
+    } 
+    if (map->south == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" SOUTH");
+    } 
+    if (map->east == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" EAST");
+    } 
+    if (map->west == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" WEST");
+    } 
+    if (map->up == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" U");
+    } 
+    if (map->down == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" D");
+    } 
+    if (map->northeast == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" NE");
+    } 
+    if (map->southeast == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" SE");
+    } 
+    if (map->southwest == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" SW");
+    } 
+    if (map->northwest == 1) {
+        set_player_buffer_append(pnum, (uint8_t*)" NW");
+    } 
+    if (strlen(buf) == 6) {
+        set_player_buffer_append(pnum, (uint8_t*)" NONE");
+    }
+    set_player_buffer_append(pnum, (uint8_t*)"\n");
+    return send_and_ensure(pnum, NULL);
+}
+
+static _Bool print_all_commands (const int32_t pnum) {
+    set_player_buffer_replace(pnum, (uint8_t*)"> Available commands:");
+    int32_t c = 0;
+    if (get_total_length_of_all_cmds() > BUFFER_LENGTH) {
+        c = get_total_length_of_all_cmds() % BUFFER_LENGTH;
+        (c == 1) ? ++c : c;
+    }
+    int32_t trip_first       = 0;
+    int32_t commands_on_line = 0;
+    const int32_t NUM_OF_AVAILABLE_COMMANDS = get_num_of_available_cmds();
+    for (size_t i = 0; i < NUM_OF_AVAILABLE_COMMANDS; ++i) {
+        while (get_command(i)) {
+            if (1 + strlen(buf) + strlen(tmp1->cname) <= BUFFER_LENGTH) {
+                if (strlen(tmp1->cname) > 1) {
+                    if (trip_first == 0) {
+                        set_player_buffer_append(pnum, (uint8_t*)tmp1->cname);
+                        strncpy((char*)buf, tmp1->cname, strlen(tmp1->cname)); 
+                        trip_first = 1;
+                    } else {
+                        set_player_buffer_append(pnum, (uint8_t*)tmp1->cname); 
+                    }
+                    if (++commands_on_line != 5) {
+                        set_player_buffer_append(pnum, (uint8_t*)"\t");
+                        if (strlen(tmp1->cname) < 5) {
+                            set_player_buffer_append(pnum, (uint8_t*)"\t");
+                        }
+                    }
+                }
+                tmp1 = tmp1->next;
+            } else {
+                commands_on_line = 0;
+                trip_first = 0;
+                break;
+            }
+            if (commands_on_line == 5) {
+                commands_on_line = 0;
+                trip_first       = 0;
+                assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
+            }
+        }
+    }
     return EXIT_SUCCESS;
 }

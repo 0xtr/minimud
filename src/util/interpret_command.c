@@ -25,7 +25,8 @@ int32_t interpret_command (const int32_t pnum) {
         }
     }
     if (get_player_hold_for_input(pnum) == 1 && strcmp((char*)command, "quit") != 0) {
-        if (strlen((char*)command) > get_max_command_len() || ((check_clist(socket_num, command)) != 1)) { // not a valid command, inform the player 
+        if (strlen((char*)command) > get_max_command_len() || 
+            ((check_clist(pnum, command)) != 1)) { // not a valid command, inform the player 
             print_output(pnum, INVALCMD);
             return -1;
         }
@@ -34,8 +35,8 @@ int32_t interpret_command (const int32_t pnum) {
     // should probably handle 'quit' if they want to exit this process
     switch (get_player_wait_state(pnum)) {
         case THEIR_NAME:
-            if (check_if_name_is_valid(socket_num, command)) break;
-            if (check_if_name_is_reserved(socket_num, command)) break;
+            if (check_if_name_is_valid(pnum, command)) break;
+            if (check_if_name_is_reserved(pnum, command)) break;
             set_player_pname(pnum, command);
             if (lookup_player(get_player_pname(pnum)) == 1) {
                 print_output(pnum, REQUEST_PW_FOR_EXISTING);
@@ -47,13 +48,13 @@ int32_t interpret_command (const int32_t pnum) {
             check_if_player_is_already_online(pnum);
             break;
         case THEIR_PASSWORD_EXISTING:
-            handle_existing_pass(socket_num, command);
+            handle_existing_pass(pnum, command);
             break;
         case THEIR_PASSWORD_NEWPRELIM:
-            set_player_confirm_new_pw(socket_num, command);
+            set_player_confirm_new_pw(pnum, command);
             break;
         case THEIR_PASSWORD_NEWFINAL:
-            handle_new_pass(socket_num, command);
+            handle_new_pass(pnum, command);
             break;
         case WAIT_ENTER_NEW_ROOM_NAME:
             init_player_store(pnum);
@@ -140,7 +141,7 @@ int32_t interpret_command (const int32_t pnum) {
             set_player_hold_for_input(pnum, 0);
             break;
         case WAIT_ROOM_CREATION_DIR:
-            if ((ensure_player_moving_valid_dir(socket_num, command)) == EXIT_FAILURE) {
+            if ((ensure_player_moving_valid_dir(pnum, command)) == EXIT_FAILURE) {
                 break;
             }
             init_player_store(pnum);
@@ -185,16 +186,16 @@ int32_t interpret_command (const int32_t pnum) {
             set_player_hold_for_input(pnum, 0);
             break;
         case WAIT_ENTER_EXIT_NAME:
-            if ((ensure_player_moving_valid_dir(socket_num, command)) == EXIT_FAILURE) {
+            if ((ensure_player_moving_valid_dir(pnum, command)) == EXIT_FAILURE) {
                 break;
             }
 
             init_player_store(pnum);
             set_player_store_replace(pnum, command);
-            x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, pnum),
-            y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, pnum),
-            z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, pnum),
-            rv = lookup_room(x, y, z, -1);
+            x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, pnum);
+            y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, pnum);
+            z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, pnum);
+            Map *map = lookup_room(x, y, z, -1);
 
             if (rv == 1) {
                 rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 1, pnum, x, y, z);
@@ -209,6 +210,7 @@ int32_t interpret_command (const int32_t pnum) {
                 print_output(pnum, PRINT_COULDNT_EXIT_NO_ROOM);
             }
 
+            free(map);
             clear_player_store(pnum);
             set_player_wait_state(pnum, NO_WAIT_STATE);
             set_player_hold_for_input(pnum, 0);

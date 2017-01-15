@@ -8,9 +8,10 @@ size_t set_max_command_len () {
     FILE *fp = NULL;
     CHECK_AND_OPEN_COMMAND_FILE;
     uint8_t *line = NULL;
+    ssize_t ret = 0;
     size_t line_len = 0;
     size_t newmax = 0;
-    for (size_t i = 0; getline((char*)&line, line_len, fp) != EOF; ++i) {
+    for (size_t i = 0; (ret = getline((char*)&line, line_len, fp)) != EOF; ++i) {
         if (strlen((char*)line) > get_max_command_len()) {
             newmax = strlen((char*)line);
         }
@@ -48,7 +49,7 @@ int32_t parse_clist (void) {
     return num_of_cmds;
 }
 
-int32_t line_begins_with_valid_chars (const uint8_t *line) {
+static int32_t line_begins_with_valid_chars (const uint8_t *line) {
     return line[0] != '#' && strlen((char*)line) != 0 && 
            line[0] != '.' && line[0] != '\n';
 }
@@ -63,62 +64,61 @@ size_t get_total_length_of_all_cmds () {
 }
 
 int32_t check_clist (const int32_t pnum, const uint8_t *command) {
-    int32_t retval;
     clist *tmp = head; // last in file
     while (tmp) {
         if (strcmp((char*)command, (char*)tmp->cname) == 0) {
             if (is_direction(command)) {
-                if (move_player(socket_num, command) != EXIT_FAILURE) {
-                    retval = print_output(socket_num, SHOWROOM);
+                if (move_player(pnum, command) != EXIT_FAILURE) {
+                    print_output(pnum, SHOWROOM);
                     // check
                 }
             }
             // isroomcmd
             // isgamecmd
             if (strcmp((char*)command, "look") == 0 || command[0] == 'l') {
-                retval = print_output(pnum, SHOWROOM);
+                print_output(pnum, SHOWROOM);
             } else if (strcmp((char*)command, "say") == 0 ||
                        strcmp((char*)command, "Say") == 0) {
-                retval = print_player_speech (pnum, command);
+                print_player_speech (pnum, command);
             } else if (strcmp((char*)command, "quit") == 0) {
-                retval = shutdown_socket(pnum);
+                shutdown_socket(pnum);
             } else if (strcmp((char*)command, "commands") == 0) {
-                retval = print_output(pnum, SHOWCMDS); 
+                print_output(pnum, SHOWCMDS); 
             } else if (strcmp((char*)command, "return") == 0) {
-                retval = move_player(pnum, command);
-                retval = print_output(pnum, SHOWROOM);
+                move_player(pnum, command);
+                print_output(pnum, SHOWROOM);
             } else if (strcmp((char*)command, "players") == 0) {
-                retval = print_output(pnum, LISTPLAYERS);
+                print_output(pnum, LISTPLAYERS);
 
             ////////// ROOMS //////////
             // if (issetcmd(command[0]) == 0) {
             //     set_room(socket_num, command);
             // }
             } else if (strcmp((char*)command, "setrname") == 0) {
-                retval = print_output(pnum, PRINT_PROVIDE_NEW_ROOM_NAME);
+                print_output(pnum, PRINT_PROVIDE_NEW_ROOM_NAME);
                 set_player_wait_state(pnum, WAIT_ENTER_NEW_ROOM_NAME);
                 set_player_hold_for_input(pnum, 1);
             } else if (strcmp((char*)command, "setrdesc") == 0) {
-                retval = print_output(pnum, PRINT_PROVIDE_NEW_ROOM_DESC);
+                print_output(pnum, PRINT_PROVIDE_NEW_ROOM_DESC);
                 set_player_wait_state(pnum, WAIT_ENTER_NEW_ROOM_DESC);
                 set_player_hold_for_input(pnum, 1);
             } else if (strcmp((char*)command, "setrexit") == 0) {
-                retval = print_output(pnum, PRINT_PROVIDE_ROOM_EXIT_NAME);
+                print_output(pnum, PRINT_PROVIDE_ROOM_EXIT_NAME);
                 set_player_wait_state(pnum, WAIT_ENTER_EXIT_NAME);
                 set_player_hold_for_input(pnum, 1);
             } else if (strcmp((char*)command, "setrflag") == 0) {
-                retval = print_output(pnum, PRINT_PROVIDE_ROOM_FLAG_NAME);
+                print_output(pnum, PRINT_PROVIDE_ROOM_FLAG_NAME);
                 set_player_wait_state(pnum, WAIT_ENTER_FLAG_NAME);
                 set_player_hold_for_input(pnum, 1);
             // if (isroomexistcmd(command[0]) == 0) {
             //     something
             // }
             } else if (strcmp((char*)command, "mkroom") == 0) {
-                retval = print_output(pnum, PRINT_ROOM_CREATION_GIVE_DIR);
+                print_output(pnum, PRINT_ROOM_CREATION_GIVE_DIR);
                 set_player_wait_state(pnum, WAIT_ROOM_CREATION_DIR);
                 set_player_hold_for_input(pnum, 1);
             } else if (strcmp((char*)command, "rmroom") == 0) {
-                retval = print_output(pnum, PRINT_ROOM_REMOVAL_CHECK);
+                print_output(pnum, PRINT_ROOM_REMOVAL_CHECK);
                 set_player_wait_state(pnum, WAIT_ROOM_REMOVAL_CHECK);
                 set_player_hold_for_input(pnum, 1);
             }
@@ -129,4 +129,17 @@ int32_t check_clist (const int32_t pnum, const uint8_t *command) {
         }
     }
     return EXIT_FAILURE;
+}
+
+size_t get_num_of_available_cmds () {
+    clist *tmp = head; // last in file
+    int32_t commands = 0;
+    while (tmp) {
+        ++commands;
+    }
+    return commands;
+}
+
+uint8_t *get_command (const int32_t cmd) {
+    return clist[cmd]->cname;
 }

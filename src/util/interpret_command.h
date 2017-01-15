@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Map.h"
 #include <ctype.h>
 #include "../util/check_player_name.h"
 #include "../util/password_handling.h"

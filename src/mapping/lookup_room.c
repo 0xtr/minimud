@@ -1,5 +1,4 @@
-int32_t lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32_t socknum) {
-    const int32_t pnum = getplayernum(socknum);
+Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32_t pnum) {
     uint8_t *sqlerr = NULL;
     uint8_t s_x[3];
     uint8_t s_y[3];
@@ -11,23 +10,25 @@ int32_t lookup_room (const int32_t x, const int32_t y, const int32_t z, const in
 
     uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", s_x, s_y, s_z);
     if (sqlite3_exec(get_roomdb(), room, callback, 0, &sqlerr) != SQLITE_OK) {
-        fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(db));
+        fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(room);
         sqlite3_free(sqlerr);
-        return -1;
+        return EXIT_FAILURE;
     }
     sqlite3_free(room);
-    if (socknum == -1) {
+    Map *map = get_room();
+    // wut
+    //if (socknum == -1) {
         if (get_sqlite_rows_count() == 0) {
             return -1;
         }
         return 0;
-    }
-    strcpy(get_player(pnum).buffer, "> ");
+    //}
+    set_player_buffer_replace(pnum, "> ");
     if (get_sqlite_rows_count() == 0) {
-        strncat(buf, "NULL SPACE", NAMES_MAX - strlen(buf));
+        set_player_buffer_append(pnum, "NULL SPACE");
     } else {
-        strncat(buf, map.rname, NAMES_MAX - strlen(buf));
+        set_player_buffer_append(pnum, map.rname);
     }
 
     if (buf[strlen(buf) - 1] == '\n') {
@@ -41,7 +42,7 @@ int32_t lookup_room (const int32_t x, const int32_t y, const int32_t z, const in
             }
         }
     }
-    rv = send_and_ensure(socknum);
+    rv = send_and_ensure(pnum, NULL);
 
     strcpy(buf, "[");
     // room x
@@ -58,12 +59,12 @@ int32_t lookup_room (const int32_t x, const int32_t y, const int32_t z, const in
     snprintf(coords, sizeof(z), "%d", z);
     strcat(buf, coords);
     strcat(buf, "]");
-    rv = send_and_ensure(socknum);
+    rv = send_and_ensure(pnum, NULL);
 
     if (get_sqlite_rows_count() == 0) {
         strcpy(buf, "It is pitch black. You are likely to be eaten by a null character.");
     } else {
-        strncpy(buf, map.rdesc, BUFLEN - 2);
+        strncpy(buf, map.rdesc, BUFFER_LENGTH - 2);
     }
     if (buf[strlen(buf)] == '\n') {
         buf[strlen(buf)] = '\0';
@@ -71,7 +72,7 @@ int32_t lookup_room (const int32_t x, const int32_t y, const int32_t z, const in
     if (buf[strlen(buf) - 1] == '\n') {
         buf[strlen(buf) - 1] = '\0';
     }
-    rv = send_and_ensure(socknum);
+    rv = send_and_ensure(pnum, NULL);
 
     return EXIT_SUCCESS;
 }
@@ -106,7 +107,7 @@ _Bool is_vector_west (const int32_t x, const int32_t y) {
     return x == -1 && y == 0;
 }
 
-_Bool has_west_exit (const Map_t map) {
+_Bool has_west_exit (const Map map) {
     if (map.west == 0) {
         return EXIT_SUCCESS;
     }
@@ -114,51 +115,51 @@ _Bool has_west_exit (const Map_t map) {
     //return map.west == 0;
 }
 
-int32_t has_exit_for_dir (const int32_t x, const int32_t y, const int32_t z) {
-    if (is_vector_west(xadj, yadj) && !has_west_exit(map)) {
+int32_t has_exit_for_dir (const int32_t x, const int32_t y, const int32_t z, const Map map) {
+    if (is_vector_west(x, y) && !has_west_exit(map)) {
         return EXIT_FAILURE;
     }
-    if (xadj == 1 && yadj == 0) { // east
+    if (x == 1 && yadj == 0) { // east
         if (map.east == 0) {
             return -1;
         }
     }
-    if (xadj == 0 && yadj == 1) { // north
+    if (x == 0 && yadj == 1) { // north
         if (map.north == 0) {
             return -1;
         }
     }
-    if (xadj == 0 && yadj == -1) { // south
+    if (x == 0 && yadj == -1) { // south
         if (map.south == 0) {
             return -1;
         }
     }
-    if (xadj == 1 && yadj == 1) { // northeast
+    if (x == 1 && yadj == 1) { // northeast
         if (map.northeast == 0) {
             return -1;
         }
     }
-    if (xadj == 1 && yadj == -1) { // southeast
+    if (x == 1 && yadj == -1) { // southeast
         if (map.southeast == 0) {
             return -1;
         }
     }
-    if (xadj == -1 && yadj == -1) { // southwest
+    if (x == -1 && yadj == -1) { // southwest
         if (map.southwest == 0) {
             return -1;
         }
     }
-    if (xadj == -1 && yadj == 1) { // northwest
+    if (x == -1 && yadj == 1) { // northwest
         if (map.northwest == 0) {
             return -1;
         }
     }
-    if (zadj == 1) { // up
+    if (z == 1) { // up
         if (map.up == 0) {
             return -1;
         }
     }
-    if (zadj == -1) { // down
+    if (z == -1) { // down
         if (map.down == 0) {
             return -1;
         }
@@ -179,7 +180,7 @@ int32_t lookup_room_name_from_coords (const int32_t x, const int32_t y, const in
         fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(room);
         sqlite3_free(sqlerr);
-        return -1;
+        return EXIT_FAILURE;
     }
     sqlite3_free(room);
     if (get_sqlite_rows_count() != 0) {
@@ -187,5 +188,5 @@ int32_t lookup_room_name_from_coords (const int32_t x, const int32_t y, const in
     } else {
         strcat(buf, (uint8_t*)"an unknown location");
     }
-    return 0;
+    return EXIT_SUCCESS;
 }

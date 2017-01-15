@@ -18,6 +18,7 @@ typedef struct clist_l clist;
 
 int32_t parse_clist (void);
 int32_t check_clist (const int32_t pnum, const uint8_t *command);
-int32_t line_begins_with_valid_chars (const uint8_t *line) __attribute__ ((unused));
 size_t get_total_length_of_all_cmds ();
+size_t get_num_of_available_cmds ();
+uint8_t *get_command (const int32_t cmd);
 #include "command_parsing.c"
