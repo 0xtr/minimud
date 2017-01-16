@@ -9,7 +9,7 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
     sprintf(s_z, "%d", z);
 
     uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", s_x, s_y, s_z);
-    if (sqlite3_exec(get_roomdb(), room, callback, 0, &sqlerr) != SQLITE_OK) {
+    if (sqlite3_exec(get_roomdb(), (char*)room, callback, 0, &sqlerr) != SQLITE_OK) {
         fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(room);
         sqlite3_free(sqlerr);
@@ -19,18 +19,22 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
     Map *map = get_room();
     // wut
     //if (socknum == -1) {
+    /*
         if (get_sqlite_rows_count() == 0) {
-            return -1;
+            return EXIT_FAILURE;
         }
-        return 0;
+        //return EXIT_SUCCESS;
+        */
     //}
     set_player_buffer_replace(pnum, "> ");
     if (get_sqlite_rows_count() == 0) {
-        set_player_buffer_append(pnum, "NULL SPACE");
+        set_player_buffer_append(pnum, (uint8_t*)"NULL SPACE");
     } else {
-        set_player_buffer_append(pnum, map.rname);
+        set_player_buffer_append(pnum, map->rname);
     }
 
+    // filter_forbidden_chars(get_player_buffer(pnum));
+    /*
     if (buf[strlen(buf) - 1] == '\n') {
         buf[strlen(buf) - 1] = '\0';
     } 
@@ -42,39 +46,37 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
             }
         }
     }
-    rv = send_and_ensure(pnum, NULL);
+    */
+    assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
 
-    strcpy(buf, "[");
+    set_player_buffer_replace(pnum, (uint8_t*)"[");
     // room x
-    snprintf(coords, sizeof(x), "%d", x);
-    strcat(buf, coords);
-    strcat(buf, "][");
-    memset(coords, '\0', 10);
+    set_player_buffer_append(pnum, (uint8_t*)x);
+    set_player_buffer_append(pnum, (uint8_t*)"][");
     // room y
-    snprintf(coords, sizeof(y), "%d", y);
-    strcat(buf, coords);
-    strcat(buf, "][");
-    memset(coords, '\0', 10);
+    set_player_buffer_append(pnum, (uint8_t*)y);
+    set_player_buffer_append(pnum, (uint8_t*)"][");
     // room z
-    snprintf(coords, sizeof(z), "%d", z);
-    strcat(buf, coords);
-    strcat(buf, "]");
-    rv = send_and_ensure(pnum, NULL);
+    set_player_buffer_append(pnum, (uint8_t*)z);
+    set_player_buffer_append(pnum, (uint8_t*)"]");
 
+    assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
     if (get_sqlite_rows_count() == 0) {
-        strcpy(buf, "It is pitch black. You are likely to be eaten by a null character.");
+        set_player_buffer_replace(pnum, "It is pitch black. You are likely to be eaten by a null character.");
     } else {
-        strncpy(buf, map.rdesc, BUFFER_LENGTH - 2);
+        set_player_buffer_replace(pnum, map->rdesc);
     }
+    /*
     if (buf[strlen(buf)] == '\n') {
         buf[strlen(buf)] = '\0';
     }
     if (buf[strlen(buf) - 1] == '\n') {
         buf[strlen(buf) - 1] = '\0';
     }
+    */
     rv = send_and_ensure(pnum, NULL);
 
-    return EXIT_SUCCESS;
+    return map;
 }
 
 int32_t lookup_room_exits (const int32_t pnum, const int32_t xadj, const int32_t yadj, const int32_t zadj) {
@@ -87,7 +89,7 @@ int32_t lookup_room_exits (const int32_t pnum, const int32_t xadj, const int32_t
     sprintf(s_z, "%d", get_player_coord(Z_COORD_REQUEST, pnum));
 
     uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", s_x, s_y, s_z);
-    if (sqlite3_exec(&get_roomdb(), room, callback, 0, &sqlerr) != SQLITE_OK) {
+    if (sqlite3_exec(get_roomdb(), (char*)room, callback, 0, &sqlerr) != SQLITE_OK) {
         fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(room);
         sqlite3_free(sqlerr);
@@ -119,64 +121,58 @@ int32_t has_exit_for_dir (const int32_t x, const int32_t y, const int32_t z, con
     if (is_vector_west(x, y) && !has_west_exit(map)) {
         return EXIT_FAILURE;
     }
-    if (x == 1 && yadj == 0) { // east
-        if (map.east == 0) {
-            return -1;
+    if (x == 1 && y == 0) { // east
+        if (map->east == 0) {
+            return EXIT_FAILURE;
         }
     }
-    if (x == 0 && yadj == 1) { // north
-        if (map.north == 0) {
-            return -1;
+    if (x == 0 && y == 1) { // north
+        if (map->north == 0) {
+            return EXIT_FAILURE;
         }
     }
-    if (x == 0 && yadj == -1) { // south
-        if (map.south == 0) {
-            return -1;
+    if (x == 0 && y == -1) { // south
+        if (map->south == 0) {
+            return EXIT_FAILURE;
         }
     }
-    if (x == 1 && yadj == 1) { // northeast
-        if (map.northeast == 0) {
-            return -1;
+    if (x == 1 && y == 1) { // northeast
+        if (map->northeast == 0) {
+            return EXIT_FAILURE;
         }
     }
-    if (x == 1 && yadj == -1) { // southeast
-        if (map.southeast == 0) {
-            return -1;
+    if (x == 1 && y == -1) { // southeast
+        if (map->southeast == 0) {
+            return EXIT_FAILURE;
         }
     }
-    if (x == -1 && yadj == -1) { // southwest
-        if (map.southwest == 0) {
-            return -1;
+    if (x == -1 && y == -1) { // southwest
+        if (map->southwest == 0) {
+            return EXIT_FAILURE;
         }
     }
-    if (x == -1 && yadj == 1) { // northwest
-        if (map.northwest == 0) {
-            return -1;
+    if (x == -1 && y == 1) { // northwest
+        if (map->northwest == 0) {
+            return EXIT_FAILURE;
         }
     }
     if (z == 1) { // up
-        if (map.up == 0) {
-            return -1;
+        if (map->up == 0) {
+            return EXIT_FAILURE;
         }
     }
     if (z == -1) { // down
-        if (map.down == 0) {
-            return -1;
+        if (map->down == 0) {
+            return EXIT_FAILURE;
         }
     }
     return EXIT_SUCCESS;
 }
 
-int32_t lookup_room_name_from_coords (const int32_t x, const int32_t y, const int32_t z) {
+int32_t lookup_room_name_from_coords (const int32_t pnum, const int32_t x, const int32_t y, const int32_t z) {
     uint8_t *sqlerr = NULL;
-    uint8_t s_x[3];
-    uint8_t s_y[3];
-    uint8_t s_z[3];
-    sprintf(s_x, "%d", x);
-    sprintf(s_y, "%d", y);
-    sprintf(s_z, "%d", z);
-    uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", s_x, s_y, s_z);
-    if (sqlite3_exec(get_roomdb(), room, callback, 0, &sqlerr) != SQLITE_OK) {
+    uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char*)x, (char*)y, (char*)z);
+    if (sqlite3_exec(get_roomdb(), (char*)room, callback, 0, &sqlerr) != SQLITE_OK) {
         fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(room);
         sqlite3_free(sqlerr);
@@ -184,9 +180,12 @@ int32_t lookup_room_name_from_coords (const int32_t x, const int32_t y, const in
     }
     sqlite3_free(room);
     if (get_sqlite_rows_count() != 0) {
-        strcat(buf, (uint8_t*)map.rname);
+        Map map = get_room();
+        // get_room_details(map);
+        set_player_buffer_replace(pnum, map.rname);
+        free(map);
     } else {
-        strcat(buf, (uint8_t*)"an unknown location");
+        set_player_buffer_replace(pnum, (uint8_t*)"an unknown location");
     }
     return EXIT_SUCCESS;
 }

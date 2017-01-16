@@ -131,7 +131,7 @@ int32_t check_clist (const int32_t pnum, const uint8_t *command) {
     return EXIT_FAILURE;
 }
 
-size_t get_num_of_available_cmds () {
+size_t set_num_of_available_cmds () {
     clist *tmp = head; // last in file
     int32_t commands = 0;
     while (tmp) {

@@ -8,15 +8,15 @@ int32_t insert_player (const uint8_t *pname, const uint8_t *pw, const int32_t so
     memset(pnum_str, '\0', 3);
 
     // get the salt, ainsley
-    uint8_t salt[SALTLEN];
+    uint8_t salt[SALTLEN] = {0};
     for (size_t i = 0; i != 10; ++i) {
         memset(salt, '\0', SALTLEN);
-        strcpy(salt, bcrypt_gensalt(10)); // pretty weak
+        strcpy((char*)salt, bcrypt_gensalt(10)); // pretty weak
     }
 
     // hash the salt + password, in that order
     uint8_t *hash_result = calloc(HASH_RESULT_LEN, sizeof(uint8_t));
-    bcrypt_hashpass(pw, salt, hash_result, HASH_RESULT_LEN);
+    bcrypt_hashpass((char*)pw, (char*)salt, (char*)hash_result, HASH_RESULT_LEN);
 
     // insert the above ^
     // player id in table, name, hash, salt, last ip, x, y, z
