@@ -1,10 +1,10 @@
 int32_t check_for_highest_socket_num (void) {
     int32_t fdmax = 0;
-    for (size_t j = 0; j < get_active_conns(); ++j) {
-        if (player[j].socket_num > 0) {
+    for (size_t j = 0; j < get_num_of_players(); ++j) {
+        if (get_player_socket(j) > 0) {
             FD_SET(player[j].socket_num, &rfds);
-            if (player[j].socket_num > fdmax) {
-                fdmax = player[j].socket_num;
+            if (get_player_socket(j) > fdmax) {
+                fdmax = get_player_socket(j);
             }
         }
     }
@@ -12,10 +12,10 @@ int32_t check_for_highest_socket_num (void) {
 }
 
 int32_t check_if_player_is_already_online (const int32_t pnum) {
-    for (size_t i = 0; i < (size_t)get_active_conns(); ++i) {
-        if (strcmp((char*)player[pnum].pname, (char*)player[i].pname) == 0 && i != pnum) {
-            print_output(socket_num, PLAYER_ALREADY_ONLINE);
-            player[pnum].wait_state = THEIR_NAME;
+    for (size_t i = 0; i < get_num_of_players(); ++i) {
+        if (strcmp((char*)get_player_pname(pnum), (char*)get_player_pname(i)) == 0 && i != pnum) {
+            print_output(pnum, PLAYER_ALREADY_ONLINE);
+            set_player_wait_state(pnum, THEIR_NAME);
             return EXIT_FAILURE;
         }
     }
@@ -25,7 +25,7 @@ int32_t check_if_player_is_already_online (const int32_t pnum) {
 int32_t find_and_set_new_player_struct (const int32_t wfd) {
     int32_t set = 0;
     for (size_t j = 0;; ++j) {
-        if (player[j].in_use != 0) {
+        if (get_player_in_use(j) != 0) {
             continue;
         }
         player[j].in_use = 1;

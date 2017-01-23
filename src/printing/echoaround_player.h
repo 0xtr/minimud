@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../util/send_and_ensure.h"
-#include "../files/log_issue.h"
-int32_t echoaround_player (const int32_t pnum, const int32_t override);
+#include "../util/outgoing_msg_handler.h"
+int32_t echoaround_player (const int32_t pnum, const uint8_t *buffer, const int32_t location);
 #include "echoaround_player.c"

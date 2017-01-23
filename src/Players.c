@@ -37,6 +37,10 @@ void set_player_store_append (const int32_t pnum, const uint8_t *new) {
     strncat((char*)player[pnum]->store, (char*)new, BUFFER_LENGTH - strlen((char*)player[pnum]->store));
 }
 
+void clear_player_buffer (const int32_t pnum) {
+    memset(player[pnum]->buffer, 0, BUFFER_LENGTH);
+}
+
 uint8_t *get_player_pname (const int32_t pnum) {
     return &player[pnum].pname;
 }
@@ -120,11 +124,11 @@ int32_t get_num_of_players () {
 
 int32_t getplayernum (const int32_t socknum) {
     int32_t i;
-    _Bool found = 0;
+    _Bool found = false;
     Player *tmp = head;
     for (i = 0; tmp->prev != NULL; ++i) {
         if (player[i].socknum == socknum) {
-            found = 1;
+            found = true;
             break;
         }
     }

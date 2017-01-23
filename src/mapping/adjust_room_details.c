@@ -1,4 +1,4 @@
-const uint8_t valid_dirs[10] = {
+const uint8_t valid_dirs[10][10] = {
     "north", "south", "west", "east", "northeast", "southwest", "northwest",
     "southeast", "up", "down"
 };

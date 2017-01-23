@@ -2,7 +2,8 @@
     assert(access("src/commands/COMMAND_LIST.txt", F_OK) == -1);\
     assert((fp = fopen("src/commands/COMMAND_LIST.txt", "r")) != NULL);
 
-clist *curr, *head, *root;
+clist *curr, *head;
+static int32_t line_begins_with_valid_chars (const uint8_t *line);
 
 size_t set_max_command_len () {
     FILE *fp = NULL;
@@ -11,7 +12,7 @@ size_t set_max_command_len () {
     ssize_t ret = 0;
     size_t line_len = 0;
     size_t newmax = 0;
-    for (size_t i = 0; (ret = getline((char*)&line, line_len, fp)) != EOF; ++i) {
+    for (size_t i = 0; (ret = getline((char**)line, &line_len, fp)) != EOF; ++i) {
         if (strlen((char*)line) > get_max_command_len()) {
             newmax = strlen((char*)line);
         }
@@ -27,7 +28,7 @@ int32_t parse_clist (void) {
     size_t line_len = 0;
     int32_t num_of_cmds = 0;
     head = NULL;
-    for (size_t i = 0; (ret = getline((char*)&line, line_len, fp)) != EOF; ++i) {
+    for (size_t i = 0; (ret = getline((char**)line, &line_len, fp)) != EOF; ++i) {
         if (line_begins_with_valid_chars(line) == 0) {
             const int32_t len = strlen((char*)line);
             curr = (clist*)calloc(sizeof(clist), sizeof(clist));
@@ -55,7 +56,7 @@ static int32_t line_begins_with_valid_chars (const uint8_t *line) {
 }
 
 size_t get_total_length_of_all_cmds () {
-    clist *tmp = head; // last in file
+    clist *tmp = head;
     int32_t len = 0;
     while (tmp) {
         len += strlen((char*)tmp->cname);
@@ -64,7 +65,7 @@ size_t get_total_length_of_all_cmds () {
 }
 
 int32_t check_clist (const int32_t pnum, const uint8_t *command) {
-    clist *tmp = head; // last in file
+    clist *tmp = head;
     while (tmp) {
         if (strcmp((char*)command, (char*)tmp->cname) == 0) {
             if (is_direction(command)) {
@@ -132,7 +133,7 @@ int32_t check_clist (const int32_t pnum, const uint8_t *command) {
 }
 
 size_t set_num_of_available_cmds () {
-    clist *tmp = head; // last in file
+    clist *tmp = head;
     int32_t commands = 0;
     while (tmp) {
         ++commands;
@@ -141,5 +142,10 @@ size_t set_num_of_available_cmds () {
 }
 
 uint8_t *get_command (const int32_t cmd) {
-    return clist[cmd]->cname;
+    clist *tmp = head;
+    size_t i;
+    for (i = 0; i != cmd; ++i) {
+        tmp = tmp->next;
+    }
+    return tmp->cname;
 }

@@ -1,5 +1,5 @@
 int32_t print_output (const int32_t pnum, const int32_t argument) {
-    _Bool dont_send_again = 0;
+    _Bool already_sent = 0;
     #define IS_DIRECTION_ARG (argument >= 0 && argument <= 10)
 
     switch (argument) {
@@ -11,11 +11,11 @@ int32_t print_output (const int32_t pnum, const int32_t argument) {
             break;
         case SHOWCMDS:
             print_all_commands(pnum);
-            dont_send_again = 1;
+            already_sent = true;
             break;
         case SHOWROOM:
             build_room_image(pnum);
-            dont_send_again = 1;
+            already_sent = true;
             break;
         case INVALDIR:
             set_player_buffer_replace(pnum, (uint8_t*)"Cannot move in that direction. Type 'look' to view room.");
@@ -60,12 +60,12 @@ int32_t print_output (const int32_t pnum, const int32_t argument) {
             break;
         case NAME_TOO_LONG:
             set_player_buffer_replace(pnum, (uint8_t*)"Name too long. Maximum length is ");
-            set_player_buffer_append(pnum, get_max_name_len());
+            set_player_buffer_append(pnum, NAMES_MAX);
             set_player_buffer_append(pnum, (uint8_t*)" characters. Try again.\nPlease provide a NAME.\n");
             break;
         case NAME_TOO_SHORT:
             set_player_buffer_replace(pnum, (uint8_t*)"Name too short. Minimum length is ");
-            set_player_buffer_append(pnum, get_min_name_len());
+            set_player_buffer_append(pnum, NAMES_MIN);
             set_player_buffer_append(pnum, (uint8_t*)" characters. Try again.\nPlease provide a NAME.\n");
             break;
         case PRINT_PROVIDE_NEW_ROOM_NAME:
@@ -160,8 +160,8 @@ int32_t print_output (const int32_t pnum, const int32_t argument) {
                 set_buffer_for_movement(pnum, argument);
             }
     }
-    if (dont_send_again == 0) {
-        assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
+    if (already_sent == false) {
+        assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
     }
     return EXIT_SUCCESS;
 }
@@ -215,8 +215,8 @@ static _Bool build_room_image (const int32_t pnum) {
     Map *map = lookup_room(room_x, room_y, room_z, get_player_socket(pnum));
 
     // now show the players in room here...
-    for (size_t i = 0; i != get_active_conns(); ++i) {
-        if (get_player_in_use(i) == 0 || i == get_active_conns() || 
+    for (size_t i = 0; i < get_num_of_players(); ++i) {
+        if (get_player_in_use(i) == 0 || i == get_num_of_players() || 
             get_player_socket(i) == 0 || get_player_socket(pnum) == 0) {
             break;
         }
@@ -228,7 +228,7 @@ static _Bool build_room_image (const int32_t pnum) {
                 if (strlen((char*)get_player_buffer(i)) == 0) {
                     set_player_buffer_replace(i, get_player_pname(i));
                     set_player_store_append(i, (uint8_t*)" is here too.\n");
-                    assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
+                    assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
                 }
             }
         }
@@ -264,52 +264,42 @@ static _Bool build_room_image (const int32_t pnum) {
     if (map->northwest == 1) {
         set_player_buffer_append(pnum, (uint8_t*)" NW");
     } 
-    if (strlen(buf) == 6) {
+    if (strlen((char*)get_player_buffer(pnum)) == 6) {
         set_player_buffer_append(pnum, (uint8_t*)" NONE");
     }
     set_player_buffer_append(pnum, (uint8_t*)"\n");
-    return send_and_ensure(pnum, NULL);
+    return outgoing_msg_handler(pnum);
 }
 
 static _Bool print_all_commands (const int32_t pnum) {
-    set_player_buffer_replace(pnum, (uint8_t*)"> Available commands:");
+    set_player_buffer_replace(pnum, (uint8_t*)"> Available commands:\n");
+    assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
     int32_t c = 0;
     if (get_total_length_of_all_cmds() > BUFFER_LENGTH) {
         c = get_total_length_of_all_cmds() % BUFFER_LENGTH;
         (c == 1) ? ++c : c;
     }
-    int32_t trip_first       = 0;
+    _Bool trip_first = false;
     int32_t commands_on_line = 0;
     const int32_t NUM_OF_AVAILABLE_COMMANDS = get_num_of_available_cmds();
     for (size_t i = 0; i < NUM_OF_AVAILABLE_COMMANDS; ++i) {
-        while (get_command(i)) {
-            if (1 + strlen(buf) + strlen(tmp1->cname) <= BUFFER_LENGTH) {
-                if (strlen(tmp1->cname) > 1) {
-                    if (trip_first == 0) {
-                        set_player_buffer_append(pnum, (uint8_t*)tmp1->cname);
-                        strncpy((char*)buf, tmp1->cname, strlen(tmp1->cname)); 
-                        trip_first = 1;
-                    } else {
-                        set_player_buffer_append(pnum, (uint8_t*)tmp1->cname); 
-                    }
-                    if (++commands_on_line != 5) {
-                        set_player_buffer_append(pnum, (uint8_t*)"\t");
-                        if (strlen(tmp1->cname) < 5) {
-                            set_player_buffer_append(pnum, (uint8_t*)"\t");
-                        }
-                    }
-                }
-                tmp1 = tmp1->next;
-            } else {
-                commands_on_line = 0;
-                trip_first = 0;
-                break;
-            }
-            if (commands_on_line == 5) {
-                commands_on_line = 0;
-                trip_first       = 0;
-                assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
-            }
+        if (strlen((char*)get_player_buffer(pnum)) + strlen((char*)get_command(i)) 
+                > BUFFER_LENGTH) {
+            assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
+            continue;
+        }
+        if (strlen((char*)get_player_buffer(pnum)) == 0) {
+            set_player_buffer_replace(pnum, get_command(i));
+        } else {
+            set_player_buffer_append(pnum, get_command(i));
+        }
+        if (++commands_on_line != 5) {
+            set_player_buffer_append(pnum, (uint8_t*)"\t");
+        }
+        if (commands_on_line == 5) {
+            commands_on_line = 0;
+            trip_first       = 0;
+            assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
         }
     }
     return EXIT_SUCCESS;

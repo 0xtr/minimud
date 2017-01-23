@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <dirent.h>
 #include <stdlib.h>
@@ -17,7 +18,6 @@
 #include <sys/select.h>
 
 #include "src/Players.h"
-#include "src/Connections.h"
 #include "src/ERR_AND_STATE_CODES.h"
 #include "src/util/handling_incoming_players.h"
 #include "src/printing/write_greeting.h"

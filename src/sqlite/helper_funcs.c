@@ -7,7 +7,7 @@ int callback (void *NotUsed __attribute__ ((unused)), int argc, char **argv, cha
             }
         } else if (strcmp(azColName[i], "rdesc") == 0) {
             if (argv[i] != NULL) {
-                strncpy(map.rdesc, argv[i], BUFLEN);
+                strncpy(map.rdesc, argv[i], BUFFER_LENGTH);
             }
         } else if (strcmp(azColName[i], "north") == 0) {
             if (argv[i] != NULL) {

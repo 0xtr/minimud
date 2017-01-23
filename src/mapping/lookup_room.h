@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Map.h"
-#include "../util/send_and_ensure.h"
+#include "../util/outgoing_msg_handler.h"
 #include "../sqlite/helper_funcs.h"
 _Bool is_vector_west (const int32_t x, const int32_t y);
 _Bool has_west_exit (const Map map);

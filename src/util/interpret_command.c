@@ -82,9 +82,10 @@ int32_t interpret_command (const int32_t pnum) {
             clear_player_store(pnum);
 
             print_output(pnum, SHOWROOM);
-            set_player_buffer_replace(pnum, get_player_pname(pnum));
-            set_player_buffer_append(pnum, (uint8_t*)" changes the room name.");
-            echoaround_player(pnum, ROOM_ONLY);
+            uint8_t room_echo[BUFFER_LENGTH] = {0};
+            strncpy((char*)room_echo, (char*)get_player_pname(pnum), BUFFER_LENGTH);
+            strncat((char*)room_echo, " changes the room name.", BUFFER_LENGTH - strlen((char*)room_echo));
+            echoaround_player(pnum, room_echo, ROOM_ONLY);
             break;
         case WAIT_ENTER_NEW_ROOM_DESC:
             init_player_store(pnum);

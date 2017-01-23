@@ -1,5 +1,8 @@
 #pragma once
 
+#define  NAMES_MIN        5
+#define  NAMES_MAX        45
+#include <stdbool.h>
 struct Player_l {
     _Bool   in_use;
     _Bool   hold_for_input;
@@ -32,6 +35,7 @@ uint8_t *get_player_buffer (const int32_t pnum);
 uint8_t *get_player_pname (const int32_t pnum);
 uint8_t *get_player_store (const int32_t pnum);
 void clear_player_store (const int32_t pnum);
+void clear_player_buffer (const int32_t pnum);
 void init_player_store (const int32_t pnum);
 void set_player_pname (const int32_t pnum, const uint8_t *name);
 void set_player_wait_state (const int32_t pnum, const int32_t wait_state);

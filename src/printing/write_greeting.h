@@ -1,5 +1,5 @@
 #pragma once
 
-#include "../util/send_and_ensure.h"
+#include "../util/outgoing_msg_handler.h"
 int32_t write_greeting (const int32_t player_num);
 #include "write_greeting.c"

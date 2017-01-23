@@ -47,7 +47,7 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
         }
     }
     */
-    assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
+    assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
 
     set_player_buffer_replace(pnum, (uint8_t*)"[");
     // room x
@@ -60,7 +60,7 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
     set_player_buffer_append(pnum, (uint8_t*)z);
     set_player_buffer_append(pnum, (uint8_t*)"]");
 
-    assert(send_and_ensure(pnum, NULL) == EXIT_SUCCESS);
+    assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
     if (get_sqlite_rows_count() == 0) {
         set_player_buffer_replace(pnum, "It is pitch black. You are likely to be eaten by a null character.");
     } else {
@@ -74,8 +74,7 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
         buf[strlen(buf) - 1] = '\0';
     }
     */
-    rv = send_and_ensure(pnum, NULL);
-
+    assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
     return map;
 }
 

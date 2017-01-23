@@ -1,7 +1,5 @@
 #pragma once
 
-#define  NAMES_MIN        5
-#define  NAMES_MAX        45
 struct map_t {
     uint8_t rname[NAMES_MAX];
     uint8_t rdesc[BUFFER_LENGTH];
