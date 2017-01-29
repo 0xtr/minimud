@@ -28,11 +28,11 @@ int32_t get_player_coord (const int32_t coord_type, const int32_t pnum) {
     }
     sqlite3_free(pcheck);
     if (coord_type == X_COORD_REQUEST) {
-        return player_tmp.x;
+        //return player_tmp.x;
     } else if (coord_type == Y_COORD_REQUEST) {
-        return player_tmp.y;
+        //return player_tmp.y;
     } else if (coord_type == Z_COORD_REQUEST) {
-        return player_tmp.z;
+        //return player_tmp.z;
     }
     return EXIT_FAILURE;
 }

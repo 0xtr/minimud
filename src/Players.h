@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DEFINITIONS.h"
 #define  NAMES_MIN        5
 #define  NAMES_MAX        45
 #include <stdbool.h>

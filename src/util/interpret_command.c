@@ -211,7 +211,7 @@ int32_t interpret_command (const int32_t pnum) {
                 print_output(pnum, PRINT_COULDNT_EXIT_NO_ROOM);
             }
 
-            free(map);
+            free_room(map);
             clear_player_store(pnum);
             set_player_wait_state(pnum, NO_WAIT_STATE);
             set_player_hold_for_input(pnum, 0);

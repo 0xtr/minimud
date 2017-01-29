@@ -18,15 +18,12 @@
 #include <sys/select.h>
 
 #include "src/Players.h"
-#include "src/ERR_AND_STATE_CODES.h"
+#include "src/DEFINITIONS.h"
 #include "src/util/handling_incoming_players.h"
 #include "src/printing/write_greeting.h"
 #include "src/util/check_if_data_is_waiting.h"
 #include "src/commands/command_parsing.h"
 #include "src/sqlite/init_db.h"
-
-#define  BUFFER_LENGTH    512
-#define  PRINT_LINE_WIDTH 56
 
 int32_t main (void) {
     int32_t new_fd, fdmax;

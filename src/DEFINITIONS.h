@@ -1,5 +1,9 @@
 #pragma once
 
+#define  BUFFER_LENGTH    512
+#define  PRINT_LINE_WIDTH 56
+
+
 // codes relating to standard commands
 #define  INVALCMD                 -8500
 #define  SHOWCMDS                 -8501
@@ -32,6 +36,7 @@
 #define  ALPHANUM_NAMES_ONLY      -8612
 #define  NAME_TOO_LONG            -8613
 #define  NAME_TOO_SHORT           -8614
+#define  NAME_NOT_WITHIN_PARAMS   -8615
 
 // codes for handling coordinates
 #define  X_COORD_REQUEST          -8650

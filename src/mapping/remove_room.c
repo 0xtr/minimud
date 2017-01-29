@@ -1,4 +1,4 @@
-int32_t remove_room (int32_t x, int32_t y, int32_t z, int32_t pnum) {
+int32_t remove_room (int32_t x, int32_t y, int32_t z, const int32_t pnum) {
     uint8_t *sqlerr = NULL;
 
     if (x == -1 && y == -1 && z == -1) {
@@ -6,79 +6,68 @@ int32_t remove_room (int32_t x, int32_t y, int32_t z, int32_t pnum) {
         y = get_player_coord(Y_COORD_REQUEST, pnum);
         z = get_player_coord(Z_COORD_REQUEST, pnum);
     }
-    uint8_t xloc[3];
-    uint8_t yloc[3];
-    uint8_t zloc[3];
-    sprintf(xloc, "%d", x);
-    sprintf(yloc, "%d", y);
-    sprintf(zloc, "%d", z);
 
-    uint8_t *check = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", xloc, yloc, zloc);
-    if (sqlite3_exec(get_roomdb(), (char*)check, callback, 0, (char**)sqlerr) != SQLITE_OK) {
-        fprintf(stdout, "SQLITE3 failure in remove_room; could not find the room:\n%s\n", sqlite3_errmsg(get_roomdb()));
-        sqlite3_free(sqlerr);
-        sqlite3_free(check);
-        return -3;
-    }
-    sqlite3_free(check);
+    Map *map = lookup_room(x, y, z, pnum);
     if (get_sqlite_rows_count() == 0) {
+        free_room(map);
         return -1;
     }
     if (strcmp((char*)map->owner, (char*)get_player_pname(pnum) != 0)) {
+        free_room(map);
         return -2;
     }
 
-    uint8_t *querystr = sqlite3_mprintf("DELETE FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", xloc, yloc, zloc);
+    uint8_t *querystr = sqlite3_mprintf("DELETE FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
     if (sqlite3_exec(get_roomdb(), (char*)querystr, callback, 0, (char**)sqlerr) != SQLITE_OK) {
         fprintf(stdout, "SQLITE3 failure in remove_room; could not delete the room:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(querystr);
         sqlite3_free(sqlerr);
+        free_room(map);
         return -3;
     }
     sqlite3_free(querystr);
 
-    uint8_t unlinkdirs[LONGEST_DIR];
-    memset(unlinkdirs, '\0', LONGEST_DIR);
-    if (map.north == 1) {
+    if (map->north == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -2, x, y + 1, z);
     }
-    if (map.south == 1) {
+    if (map->south == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -1, x, y - 1, z);
     }
-    if (map.east == 1) {
+    if (map->east == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -4, x + 1, y, z);
     }
-    if (map.west == 1) {
+    if (map->west == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -3, x + 1, y, z);
     }
 
-    if (map.up == 1) {
+    if (map->up == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -6, x, y, z + 1);
     }
-    if (map.down == 1) {
+    if (map->down == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -5, x, y - 1, z);
     }
 
-    if (map.northeast == 1) {
+    if (map->northeast == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -9, x + 1, y + 1, z);
     }
-    if (map.southeast == 1) {
+    if (map->southeast == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -10, x + 1, y - 1, z);
     }
-    if (map.southwest == 1) {
+    if (map->southwest == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -7, x - 1, y - 1, z);
     }
-    if (map.northwest == 1) {
+    if (map->northwest == 1) {
         adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -8, x - 1, y + 1, z);
     }
     //status = check_exits_and_adjust(ADJUSTING_ROOM_EXIT, x, y, z);
 
-    remove_players_from_room(x, y, z);
+    assert(remove_players_from_room(x, y, z) == EXIT_SUCCESS);
+    free_room(map);
     return EXIT_SUCCESS;
 }
 
 int32_t remove_players_from_room (const int32_t x, const int32_t y, const int32_t z) {
-    for (size_t i = 0; i != MAX_CONNS && i < get_num_of_players(); ++i) {
+    for (size_t i = 0; i < get_num_of_players(); ++i) {
         if (get_player_in_use(i) == 1) {
             if (get_player_coord(X_COORD_REQUEST, i) == x &&
                 get_player_coord(Y_COORD_REQUEST, i) == y &&

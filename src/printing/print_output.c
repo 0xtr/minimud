@@ -166,7 +166,6 @@ int32_t print_output (const int32_t pnum, const int32_t argument) {
     return EXIT_SUCCESS;
 }
 
-static _Bool set_buffer_for_movement (const int32_t pnum, const int32_t argument);
 static _Bool set_buffer_for_movement (const int32_t pnum, const int32_t argument) {
     switch (argument) {
         case 0:

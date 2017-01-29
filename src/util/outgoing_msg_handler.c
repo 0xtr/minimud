@@ -1,12 +1,12 @@
-int32_t outgoing_msg_handler (const int32_t player_num) {
+int32_t outgoing_msg_handler (const int32_t pnum) {
     size_t expected = strlen(get_player_buffer(pnum));
 
-    if ((CHARS_FOR_PROMPT_AND_NULL + strlen((char*)buffer)) <= PRINT_LINE_WIDTH) {
+    if ((CHARS_FOR_PROMPT_AND_NULL + strlen((char*)get_player_buffer(pnum))) <= PRINT_LINE_WIDTH) {
         expected += check_for_prompt_chars(pnum);
         return send_and_handle_errors(pnum, expected);
     }
 
-    const double LINES_REQUIRED_FOR_MSG = get_buffer_split_by_line_width(buffer);
+    const double LINES_REQUIRED_FOR_MSG = get_buffer_split_by_line_width(get_player_buffer(pnum));
     int32_t buffer_pos = 0;
     uint8_t *processed_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
     for (size_t iters = LINES_REQUIRED_FOR_MSG; iters > 0; iters--) {
@@ -69,9 +69,10 @@ static double get_buffer_split_by_line_width (const int32_t expected) {
 }
 
 static int32_t send_and_handle_errors (const int32_t pnum, const int32_t expected) {
+    #define MAX_ATTEMPTS 10
     int32_t returned, total = 0;
     for (int i = 0; i < MAX_ATTEMPTS; ++i) {
-        returned = send(get_player_socket(pnum), get_player_buffer(pnum)[total], expected, 0) 
+        returned = send(get_player_socket(pnum), get_player_buffer(pnum)[total], expected, 0);
         if (returned != -1) {
             if (was_all_data_sent((total += returned), expected) == EXIT_SUCCESS) {
                 break;
@@ -102,7 +103,7 @@ static _Bool was_all_data_sent (const int32_t total, const int32_t expected) {
 }
 
 static int32_t check_for_prompt_chars (const int32_t pnum) {
-    if (buffer[0] == '>' && buffer[1] == ' ') {
+    if (get_player_buffer(pnum)[0] == '>' && get_player_buffer(pnum)[1] == ' ') {
         return EXIT_SUCCESS; // +0 to expected
     }
     uint8_t *tmp_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));

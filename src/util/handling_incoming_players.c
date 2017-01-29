@@ -2,7 +2,7 @@ int32_t check_for_highest_socket_num (void) {
     int32_t fdmax = 0;
     for (size_t j = 0; j < get_num_of_players(); ++j) {
         if (get_player_socket(j) > 0) {
-            FD_SET(player[j].socket_num, &rfds);
+            //FD_SET(get_player_socket(j), &rfds);
             if (get_player_socket(j) > fdmax) {
                 fdmax = get_player_socket(j);
             }
@@ -28,10 +28,10 @@ int32_t find_and_set_new_player_struct (const int32_t wfd) {
         if (get_player_in_use(j) != 0) {
             continue;
         }
-        player[j].in_use = 1;
-        player[j].hold_for_input = 1;
-        player[j].socket_num = wfd;
-        player[j].wait_state = THEIR_NAME;
+        set_player_in_use(j, true);
+        set_player_hold_for_input(j, true);
+        set_player_socket(j, wfd);
+        set_player_wait_state(j, THEIR_NAME);
         FD_SET(wfd, &rfds);
         if (wfd > fdmax) {
             fdmax = wfd;
@@ -49,19 +49,18 @@ int32_t find_and_set_new_player_struct (const int32_t wfd) {
         struct ifaddrs *ifap;
         //status = getifaddrs(&ifap);
         //status = getpeername(wfd, player[i].address, &player[i].address_len);
-        strncpy(player[j].holder, inet_ntoa(addr.sin_addr), NAMES_MAX);
+        //strncpy(player[j].holder, inet_ntoa(addr.sin_addr), NAMES_MAX);
         break;
     }
     return set;
 }
 
-int32_t ensure_player_moving_valid_dir (const int32_t socket_num, const uint8_t *command) {
-    int32_t pnum = getplayernum(socket_num);
+int32_t ensure_player_moving_valid_dir (const int32_t pnum, const uint8_t *command) {
     if (is_direction(command) == EXIT_FAILURE) {
-        print_output(socket_num, INVALDIR);\
-        print_output(socket_num, PRINT_EXITING_CMD_WAIT);\
-        player[pnum].wait_state = NO_WAIT_STATE;\
-        player[pnum].hold_for_input = 0;\
+        print_output(pnum, INVALDIR);\
+        print_output(pnum, PRINT_EXITING_CMD_WAIT);\
+        set_player_wait_state(pnum, NO_WAIT_STATE);
+        set_player_hold_for_input(pnum, 0);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
