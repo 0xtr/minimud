@@ -32,10 +32,12 @@ int32_t find_and_set_new_player_struct (const int32_t wfd) {
         set_player_hold_for_input(j, true);
         set_player_socket(j, wfd);
         set_player_wait_state(j, THEIR_NAME);
-        FD_SET(wfd, &rfds);
+        //FD_SET(wfd, &rfds);
+        /*
         if (wfd > fdmax) {
             fdmax = wfd;
         }
+        */
         set = 1;
         set_active_connections();
 

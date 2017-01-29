@@ -1,6 +1,6 @@
 CC = gcc
-//CFLAGS = -Wall -Wextra -g
-CFLAGS = -w
+CFLAGS = -Wall -Wextra -g
+//CFLAGS = -w
 LDFLAGS = -lm
 LDLIBS = -lbsd -isystem src/crypto/ -lsqlite3
 

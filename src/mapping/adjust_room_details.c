@@ -2,6 +2,8 @@ const uint8_t VALID_DIRECTIONS[10][10] = {
     "north", "south", "west", "east", "northeast", "southwest", "northwest",
     "southeast", "up", "down"
 };
+static int32_t adjusting_room_exit (const int32_t pnum, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z);
+static int32_t get_direction_as_number (const uint8_t *dir);
 
 int32_t adjust_room_details (const int32_t adjusting, const _Bool reverse, const int32_t pnum, const int32_t x, const int32_t y, const int32_t z) {
     #define LONGEST_DIR 10
@@ -121,4 +123,5 @@ static int32_t adjusting_room_exit (const int32_t pnum, const _Bool reverse, con
             get_dir_string(direction), reverse_of_current(direction, reverse), get_player_pname(pnum), (char)x, (char)y, (char)z);
     free_room(map);
     // stuff
+    return EXIT_SUCCESS;
 }

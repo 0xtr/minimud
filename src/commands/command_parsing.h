@@ -3,12 +3,8 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include "../Players.h"
-#include "../Commands.h"
 #include "../printing/print_player_speech.h"
-#include "../printing/print_output.h"
-#include "../util/move_player.h"
-#include "../util/shutdown_socket.h"
-#include "../mapping/categorize_cmds.h"
+#include "../Commands.h"
 
 struct clist_l {
     uint8_t *cname;

@@ -1,3 +1,7 @@
+static _Bool set_buffer_for_movement (const int32_t pnum, const int32_t argument);
+static _Bool print_all_commands (const int32_t pnum);
+static _Bool build_room_image (const int32_t pnum);
+
 int32_t print_output (const int32_t pnum, const int32_t argument) {
     _Bool already_sent = 0;
     #define IS_DIRECTION_ARG (argument >= 0 && argument <= 10)

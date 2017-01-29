@@ -13,7 +13,7 @@ int32_t print_player_speech (const int32_t pnum, const uint8_t *say) {
     free(buffer);
 
     set_player_buffer_replace(pnum, (uint8_t*)"You say: ");
-    set_player_buffer_append(buffer, &say[TOKEN_SAY_CMD_LEN]);
+    set_player_buffer_append(pnum, &say[TOKEN_SAY_CMD_LEN]);
     assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
     return EXIT_SUCCESS;
 }

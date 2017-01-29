@@ -36,7 +36,7 @@ int32_t main (void) {
     // create the master socket 
     const int32_t master_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (master_sockfd <= 0) {
-        log_issue((uint8_t*)"Could not create a socket. Exiting.");
+        perror("Could not create a socket");
         return EXIT_FAILURE;
     }
 
@@ -46,13 +46,13 @@ int32_t main (void) {
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port        = htons(5000);
     if (bind(master_sockfd, (struct sockaddr *)&address, sizeof(address)) != 0) {
-        log_issue((u_int8_t*)"Problem binding socket to a port.");
+        perror("Problem binding socket to a port");
         return EXIT_FAILURE;
     }
     
     // set listener for connections
     if (listen(master_sockfd, SOMAXCONN) != 0) {
-        log_issue((u_int8_t*)"Listening for connections failed.");
+        perror("Listening for connections failed");
         return EXIT_FAILURE;
     }
     fprintf(stdout, "%s 5000 on socket %d\n", "WAIT: Now listening for connections", master_sockfd);
@@ -75,13 +75,14 @@ int32_t main (void) {
 
         if (FD_ISSET(master_sockfd, &rfds)) {
             get_new_player();
+            //Player *player = get_new_player();
             new_fd = accept(master_sockfd, get_newest_player_address(), get_newest_player_address_len());
             if (new_fd == -1) {
-                log_issue((u_int8_t*)"Failed to accept incoming connection.");
+                perror("Failed to accept incoming connection");
                 break;
             }
             if ((find_and_set_new_player_struct(new_fd)) == 0) {
-                log_issue((u_int8_t*)"Error setting up the new player's connection!");
+                perror("Error setting up the new player's connection");
                 return EXIT_FAILURE;
             }
             write_greeting(new_fd);

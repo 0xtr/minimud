@@ -1,7 +1,7 @@
 static sqlite3 *roomdb;
 static sqlite3 *playerdb;
 
-sqlite3* get_roomdb (void) {
+sqlite3 *get_roomdb (void) {
     assert(roomdb != NULL);
     return roomdb;
 }
@@ -10,7 +10,7 @@ void set_roomdb (sqlite3 *db) {
     roomdb = db;
 }
 
-sqlite3* get_playerdb (void) {
+sqlite3 *get_playerdb (void) {
     assert(playerdb != NULL);
     return playerdb;
 }

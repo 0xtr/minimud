@@ -1,3 +1,11 @@
+static double get_buffer_split_by_line_width (const int32_t expected);
+static int32_t check_for_prompt_chars (const int32_t pnum);
+static _Bool was_all_data_sent (const int32_t total, const int32_t expected);
+static _Bool is_there_another_space (const int32_t pnum, const int32_t buffer_pos, const int32_t plus);
+static size_t find_reasonable_line_end (const int32_t pnum, const int32_t buffer_pos);
+static _Bool is_space_or_newline (const uint8_t *character);
+static int32_t send_and_handle_errors (const int32_t pnum, const int32_t expected);
+
 int32_t outgoing_msg_handler (const int32_t pnum) {
     size_t expected = strlen(get_player_buffer(pnum));
 
@@ -29,7 +37,7 @@ int32_t outgoing_msg_handler (const int32_t pnum) {
 static size_t find_reasonable_line_end (const int32_t pnum, const int32_t buffer_pos) {
     int32_t last_space = 0;
     for (size_t i = 0; i < get_print_line_width(); ++i) {
-        if (is_space_or_newline(get_player_buffer(pnum)[buffer_pos + i]) == true) {
+        if (is_space_or_newline(&get_player_buffer(pnum)[buffer_pos + i]) == true) {
             last_space = i;
             if (is_there_another_space(pnum, buffer_pos, i) == false) {
                 break;
@@ -42,7 +50,7 @@ static size_t find_reasonable_line_end (const int32_t pnum, const int32_t buffer
     return last_space;
 }
 
-static _Bool is_space_or_newline (const uint8_t character) {
+static _Bool is_space_or_newline (const uint8_t *character) {
     return character == ' ' || character == '\n';
 }
 
@@ -110,8 +118,8 @@ static int32_t check_for_prompt_chars (const int32_t pnum) {
     tmp_buf[0] = '>'; 
     tmp_buf[1] = ' '; 
     strncat(tmp_buf, (char*)get_player_buffer(pnum), BUFFER_LENGTH - CHARS_FOR_PROMPT_AND_NULL);
-    if (buffer[strlen((char*)buffer)] == '\n') {
-        buffer[strlen((char*)buffer)] = '\0';
+    if (tmp_buf[strlen((char*)tmp_buf)] == '\n') {
+        tmp_buf[strlen((char*)tmp_buf)] = '\0';
     }
     set_player_buffer_replace(pnum, tmp_buf);
     free(tmp_buf);

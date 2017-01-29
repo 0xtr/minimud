@@ -1,34 +1,35 @@
-int callback (Map *map, int argc, char **argv, char **azColName) {
+int callback (void *map, int argc, char **argv, char **azColName) {
+    Map *map_ref = map;
     increment_sqlite_rows_count();
     for (size_t i = 0; i < (size_t)argc; ++i) {
 
         if (map != NULL) {
             if (strcmp(azColName[i], "rname") == 0) {
-                strncpy(map->rname, argv[i], NAMES_MAX);
+                strncpy(map_ref->rname, argv[i], NAMES_MAX);
             } else if (strcmp(azColName[i], "rdesc") == 0) {
-                strncpy(map->rdesc, argv[i], BUFFER_LENGTH);
+                strncpy(map_ref->rdesc, argv[i], BUFFER_LENGTH);
             } else if (strcmp(azColName[i], "north") == 0) {
-                map->north = atoi(argv[i]);
+                map_ref->north = atoi(argv[i]);
             } else if (strcmp(azColName[i], "east") == 0) {
-                map->east = atoi(argv[i]);
+                map_ref->east = atoi(argv[i]);
             } else if (strcmp(azColName[i], "south") == 0) {
-                map->south = atoi(argv[i]);
+                map_ref->south = atoi(argv[i]);
             } else if (strcmp(azColName[i], "west") == 0) {
-                map->west = atoi(argv[i]);
+                map_ref->west = atoi(argv[i]);
             } else if (strcmp(azColName[i], "up") == 0) {
-                map->up = atoi(argv[i]);
+                map_ref->up = atoi(argv[i]);
             } else if (strcmp(azColName[i], "down") == 0) {
-                map->down = atoi(argv[i]);
+                map_ref->down = atoi(argv[i]);
             } else if (strcmp(azColName[i], "northeast") == 0) {
-                map->northeast = atoi(argv[i]);
+                map_ref->northeast = atoi(argv[i]);
             } else if (strcmp(azColName[i], "southeast") == 0) {
-                map->southeast = atoi(argv[i]);
+                map_ref->southeast = atoi(argv[i]);
             } else if (strcmp(azColName[i], "southwest") == 0) {
-                map->southwest = atoi(argv[i]);
+                map_ref->southwest = atoi(argv[i]);
             } else if (strcmp(azColName[i], "northwest") == 0) {
-                map->northwest = atoi(argv[i]);
+                map_ref->northwest = atoi(argv[i]);
             } else if (strcmp(azColName[i], "owner") == 0) {
-                strncpy(map->owner, argv[i], NAMES_MAX);
+                //strncpy(map->owner, argv[i], NAMES_MAX);
             }
         } else { // players
             if (azColName[i] == 'x') {
