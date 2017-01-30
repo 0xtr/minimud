@@ -3,6 +3,6 @@ Map *get_room () {
     return map;
 }
 
-void free_room (const Map *map) {
+void free_room (Map *map) {
     free(map);
 }

@@ -3,7 +3,7 @@ static int32_t check_for_prompt_chars (const int32_t pnum);
 static _Bool was_all_data_sent (const int32_t total, const int32_t expected);
 static _Bool is_there_another_space (const int32_t pnum, const int32_t buffer_pos, const int32_t plus);
 static size_t find_reasonable_line_end (const int32_t pnum, const int32_t buffer_pos);
-static _Bool is_space_or_newline (const uint8_t *character);
+static _Bool is_space_or_newline (const uint8_t character);
 static int32_t send_and_handle_errors (const int32_t pnum, const int32_t expected);
 
 int32_t outgoing_msg_handler (const int32_t pnum) {
@@ -20,11 +20,11 @@ int32_t outgoing_msg_handler (const int32_t pnum) {
     for (size_t iters = LINES_REQUIRED_FOR_MSG; iters > 0; iters--) {
         const size_t stop_at_char = find_reasonable_line_end(pnum, buffer_pos);
         if (strlen((char*)processed_buf) == 0) {
-            strncpy(processed_buf, get_player_buffer(pnum)[buffer_pos], stop_at_char);
+            strncpy((char*)processed_buf, get_player_buffer(pnum)[buffer_pos], stop_at_char);
         } else {
-            strncat(processed_buf, get_player_buffer(pnum)[buffer_pos], stop_at_char);
+            strncat((char*)processed_buf, get_player_buffer(pnum)[buffer_pos], stop_at_char);
         }
-        strncat(processed_buf, "\n", BUFFER_LENGTH - strlen((char*)processed_buf) - 1);
+        strncat((char*)processed_buf, "\n", BUFFER_LENGTH - strlen((char*)processed_buf) - 1);
         buffer_pos += stop_at_char;
     }
     processed_buf[BUFFER_LENGTH] = '\0';
@@ -50,8 +50,8 @@ static size_t find_reasonable_line_end (const int32_t pnum, const int32_t buffer
     return last_space;
 }
 
-static _Bool is_space_or_newline (const uint8_t *character) {
-    return character == ' ' || character == '\n';
+static _Bool is_space_or_newline (const uint8_t character) {
+    return character == 32 || character == 10;
 }
 
 static _Bool is_there_another_space (const int32_t pnum, const int32_t buffer_pos, const int32_t plus) {
@@ -65,11 +65,10 @@ static _Bool is_there_another_space (const int32_t pnum, const int32_t buffer_po
 
 static double get_buffer_split_by_line_width (const int32_t expected) {
     double lines = expected / get_print_line_width();
-    printf("lines: %d\n", lines);
+    printf("lines: %f\n", lines);
     double integral;
     modff (lines, &integral);
     lines -= integral;
-    int32_t line_pos  = 0;
     if (lines != 0.0) {
         ++integral;
     }
@@ -80,7 +79,7 @@ static int32_t send_and_handle_errors (const int32_t pnum, const int32_t expecte
     #define MAX_ATTEMPTS 10
     int32_t returned, total = 0;
     for (int i = 0; i < MAX_ATTEMPTS; ++i) {
-        returned = send(get_player_socket(pnum), get_player_buffer(pnum)[total], expected, 0);
+        returned = send(get_player_socket(pnum), &get_player_buffer(pnum)[total], expected, 0);
         if (returned != -1) {
             if (was_all_data_sent((total += returned), expected) == EXIT_SUCCESS) {
                 break;

@@ -1,6 +1,7 @@
 #pragma once
 
 #define SALTLEN   50
+#include "../sqlite/helper_funcs.h"
 #include "../SqliteVars.h"
 #include "../crypto/bcrypt.h"
 #include <bsd/stdlib.h>

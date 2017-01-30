@@ -3,6 +3,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include "../Players.h"
+#include "../util/move_player.h"
 #include "../printing/print_player_speech.h"
 #include "../Commands.h"
 

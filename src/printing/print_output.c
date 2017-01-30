@@ -64,12 +64,12 @@ int32_t print_output (const int32_t pnum, const int32_t argument) {
             break;
         case NAME_TOO_LONG:
             set_player_buffer_replace(pnum, (uint8_t*)"Name too long. Maximum length is ");
-            set_player_buffer_append(pnum, NAMES_MAX);
+            set_player_buffer_append(pnum, (uint8_t*)NAMES_MAX);
             set_player_buffer_append(pnum, (uint8_t*)" characters. Try again.\nPlease provide a NAME.\n");
             break;
         case NAME_TOO_SHORT:
             set_player_buffer_replace(pnum, (uint8_t*)"Name too short. Minimum length is ");
-            set_player_buffer_append(pnum, NAMES_MIN);
+            set_player_buffer_append(pnum, (uint8_t*)NAMES_MIN);
             set_player_buffer_append(pnum, (uint8_t*)" characters. Try again.\nPlease provide a NAME.\n");
             break;
         case PRINT_PROVIDE_NEW_ROOM_NAME:
@@ -282,9 +282,8 @@ static _Bool print_all_commands (const int32_t pnum) {
         c = get_total_length_of_all_cmds() % BUFFER_LENGTH;
         (c == 1) ? ++c : c;
     }
-    _Bool trip_first = false;
     int32_t commands_on_line = 0;
-    const int32_t NUM_OF_AVAILABLE_COMMANDS = get_num_of_available_cmds();
+    const size_t NUM_OF_AVAILABLE_COMMANDS = get_num_of_available_cmds();
     for (size_t i = 0; i < NUM_OF_AVAILABLE_COMMANDS; ++i) {
         if (strlen((char*)get_player_buffer(pnum)) + strlen((char*)get_command(i)) 
                 > BUFFER_LENGTH) {
@@ -301,7 +300,6 @@ static _Bool print_all_commands (const int32_t pnum) {
         }
         if (commands_on_line == 5) {
             commands_on_line = 0;
-            trip_first       = 0;
             assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
         }
     }

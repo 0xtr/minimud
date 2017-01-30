@@ -5,9 +5,9 @@ int callback (void *map, int argc, char **argv, char **azColName) {
 
         if (map != NULL) {
             if (strcmp(azColName[i], "rname") == 0) {
-                strncpy(map_ref->rname, argv[i], NAMES_MAX);
+                strncpy((char*)map_ref->rname, argv[i], NAMES_MAX);
             } else if (strcmp(azColName[i], "rdesc") == 0) {
-                strncpy(map_ref->rdesc, argv[i], BUFFER_LENGTH);
+                strncpy((char*)map_ref->rdesc, argv[i], BUFFER_LENGTH);
             } else if (strcmp(azColName[i], "north") == 0) {
                 map_ref->north = atoi(argv[i]);
             } else if (strcmp(azColName[i], "east") == 0) {
@@ -29,14 +29,14 @@ int callback (void *map, int argc, char **argv, char **azColName) {
             } else if (strcmp(azColName[i], "northwest") == 0) {
                 map_ref->northwest = atoi(argv[i]);
             } else if (strcmp(azColName[i], "owner") == 0) {
-                //strncpy(map->owner, argv[i], NAMES_MAX);
+                strncpy((char*)map_ref->owner, argv[i], NAMES_MAX);
             }
         } else { // players
-            if (azColName[i] == 'x') {
+            if (azColName[i][0] == 'x') {
                 //player_tmp.x = atoi(argv[i]);
-            } else if (azColName[i], "y") {
+            } else if (azColName[i][0], "y") {
                 //player_tmp.y = atoi(argv[i]);
-            } else if (azColName[i] == 'z') {
+            } else if (azColName[i][0] == 'z') {
                 //player_tmp.z = atoi(argv[i]);
             } else if (strcmp(azColName[i], "hash") == 0) {
                 //strncpy(player_tmp.hash, (char*)argv[i], HASHSPACE);

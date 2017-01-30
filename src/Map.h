@@ -18,5 +18,5 @@ struct map_t {
 }; 
 typedef struct map_t Map;
 Map *get_room ();
-void free_room (const Map *map);
+void free_room (Map *map);
 #include "Map.c"

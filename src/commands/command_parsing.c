@@ -143,8 +143,7 @@ size_t set_num_of_available_cmds () {
 
 uint8_t *get_command (const int32_t cmd) {
     clist *tmp = head;
-    size_t i;
-    for (i = 0; i != cmd; ++i) {
+    for (size_t i = 0; i < (size_t)cmd; ++i) {
         tmp = tmp->next;
     }
     return tmp->cname;

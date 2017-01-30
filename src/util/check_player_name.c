@@ -1,4 +1,4 @@
-static const uint8_t RESERVED_WORDS[10][10] = { "admin", "root", "TABLE", "ADMIN", "Admin", "Administrator" };
+static const uint8_t RESERVED_WORDS[10][15] = { "admin", "root", "TABLE", "ADMIN", "Admin", "Administrator" };
 
 int32_t check_if_name_is_reserved (const int32_t pnum, const uint8_t *name) {
     for (size_t i = 0; i < 10; ++i) {

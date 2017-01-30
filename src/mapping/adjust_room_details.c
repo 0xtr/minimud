@@ -1,7 +1,3 @@
-const uint8_t VALID_DIRECTIONS[10][10] = {
-    "north", "south", "west", "east", "northeast", "southwest", "northwest",
-    "southeast", "up", "down"
-};
 static int32_t adjusting_room_exit (const int32_t pnum, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z);
 static int32_t get_direction_as_number (const uint8_t *dir);
 
@@ -29,11 +25,6 @@ int32_t adjust_room_details (const int32_t adjusting, const _Bool reverse, const
                 get_player_pname(pnum), (char)x, (char)y, (char)z);
     }
 
-    if (room == NULL) {
-        log_issue("Room query string not set - invalid option to adjust_room_details?");
-        return -2;
-    }
-
     lookup_room_exits(x, y, z, -1);
     if (sqlite3_exec(get_roomdb(), (char*)room, (char*)callback, 0, (char**)sqlerr) != SQLITE_OK) {
         fprintf(stdout, "SQLITE3 room update error:\n%s\n", sqlite3_errmsg(get_roomdb()));
@@ -45,16 +36,21 @@ int32_t adjust_room_details (const int32_t adjusting, const _Bool reverse, const
     return EXIT_SUCCESS;
 }
 
+const uint8_t VALID_DIRECTIONS[10][10] = {
+    "north", "south", "west", "east", "northeast", "southwest", "northwest",
+    "southeast", "up", "down"
+};
 int32_t get_opposite_dir (const uint8_t *dir) {
-    int32_t i, found = 0;
-    for (i = 0; i != VALID_DIRECTIONS; ++i) {
+    size_t i;
+    _Bool found = 0;
+    for (i = 0; i < 10; ++i) {
         if (strcmp((char*)VALID_DIRECTIONS[i], (char*)dir) == 0) {
-            found = 1;
+            found = true;
             break;
         }
     }
-    if (found == 0) {
-        return -1;
+    if (found == false) {
+        return EXIT_FAILURE;
     }
     if (strcmp((char*)dir, "south") == 0     ||
         strcmp((char*)dir, "east") == 0      ||
@@ -65,7 +61,7 @@ int32_t get_opposite_dir (const uint8_t *dir) {
     } else {
         return i + 1;
     }
-    return -1;
+    return EXIT_FAILURE;
 }
 
 #define NORTH_DIR       -9000

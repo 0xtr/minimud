@@ -16,7 +16,7 @@ int32_t insert_player (const uint8_t *pname, const uint8_t *pw, const int32_t pn
     // insert the above ^
     // player id in table, name, hash, salt, last ip, x, y, z
     uint8_t *querystr = sqlite3_mprintf("INSERT INTO PLAYERS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
-                        (char*)pnum, (char*)pname, (char*)hash_result, (char*)salt, (char*)get_player_store(pnum), "0", "0", "0");
+                        (char)pnum, (char*)pname, (char*)hash_result, (char*)salt, (char*)get_player_store(pnum), "0", "0", "0");
     if (sqlite3_exec(get_playerdb(), (char*)querystr, callback, 0, (char**)sqlerr) != SQLITE_OK) {
        fprintf(stdout, "SQLITE player insert error:\n%s\n", sqlite3_errmsg(get_playerdb()));
        print_output(pnum, PLAYER_CREATION_FAILED);

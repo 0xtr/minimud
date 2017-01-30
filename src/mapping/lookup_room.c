@@ -1,62 +1,49 @@
 Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32_t pnum) {
     uint8_t *sqlerr = NULL;
-    uint8_t s_x[3];
-    uint8_t s_y[3];
-    uint8_t s_z[3];
     uint8_t coords[10] = {0};
-    sprintf(s_x, "%d", x);
-    sprintf(s_y, "%d", y);
-    sprintf(s_z, "%d", z);
 
     Map *map = get_room();
-    uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", s_x, s_y, s_z);
+    uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
     if (sqlite3_exec(get_roomdb(), (char*)room, callback, map, (char**)sqlerr) != SQLITE_OK) {
         fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(room);
         sqlite3_free(sqlerr);
         free(map);
-        return EXIT_FAILURE;
+        return NULL;
     }
     sqlite3_free(room);
     if (pnum == -1) {
         return map;
     }
-    set_player_buffer_replace(pnum, "> ");
+
+    set_player_buffer_replace(pnum, (uint8_t*)"> ");
     if (get_sqlite_rows_count() == 0) {
         set_player_buffer_append(pnum, (uint8_t*)"NULL SPACE");
     } else {
         set_player_buffer_append(pnum, map->rname);
     }
-
     assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
 
     set_player_buffer_replace(pnum, (uint8_t*)"[");
     // room x
-    set_player_buffer_append(pnum, (uint8_t*)x);
+    set_player_buffer_append(pnum, (uint8_t)x);
     set_player_buffer_append(pnum, (uint8_t*)"][");
     // room y
-    set_player_buffer_append(pnum, (uint8_t*)y);
+    set_player_buffer_append(pnum, (uint8_t)y);
     set_player_buffer_append(pnum, (uint8_t*)"][");
     // room z
-    set_player_buffer_append(pnum, (uint8_t*)z);
+    set_player_buffer_append(pnum, (uint8_t)z);
     set_player_buffer_append(pnum, (uint8_t*)"]");
 
     assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
 
     if (map == NULL) {
-        set_player_buffer_replace(pnum, "It is pitch black. You are likely to be eaten by a null character.");
+        set_player_buffer_replace(pnum, (uint8_t*)"It is pitch black. You are likely to be eaten by a null character.");
     } else {
         set_player_buffer_replace(pnum, map->rdesc);
     }
-    /*
-    if (buf[strlen(buf)] == '\n') {
-        buf[strlen(buf)] = '\0';
-    }
-    if (buf[strlen(buf) - 1] == '\n') {
-        buf[strlen(buf) - 1] = '\0';
-    }
-    */
     assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
+
     return map;
 }
 

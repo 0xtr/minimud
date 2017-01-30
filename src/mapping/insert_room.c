@@ -1,6 +1,6 @@
 int32_t insert_room (const uint8_t *rname, const int32_t xloc, const int32_t yloc, const int32_t zloc, const uint8_t *rdesc,
                      const uint8_t *owner, const uint8_t *flags) {
-    int32_t room_total, status = 0;
+    int32_t room_total;
     uint8_t *sqlerr = NULL;
 
     uint8_t *check = sqlite3_mprintf("SELECT * FROM CORE_ROOMS;");
@@ -17,7 +17,7 @@ int32_t insert_room (const uint8_t *rname, const int32_t xloc, const int32_t ylo
     // 
     // check for rooms with the same coords
     check = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)xloc, (char)yloc, (char)zloc);
-    if (sqlite3_exec(get_roomdb(), check, callback, 0, (char**)sqlerr) != SQLITE_OK) {
+    if (sqlite3_exec(get_roomdb(), (char*)check, callback, 0, (char**)sqlerr) != SQLITE_OK) {
         fprintf(stdout, "SQLITE3 failure in insert_room:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(check);
         return -1;

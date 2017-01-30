@@ -114,8 +114,8 @@ struct Player* get_new_player () {
     return head;
 }
 
-int32_t get_num_of_players () {
-    int32_t list_size = 0;
+size_t get_num_of_players () {
+    size_t list_size = 0;
     Player *tmp = head;
     for (list_size = 0; tmp->prev != NULL; ++list_size) {
     }

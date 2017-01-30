@@ -8,11 +8,11 @@ int32_t remove_room (int32_t x, int32_t y, int32_t z, const int32_t pnum) {
     }
 
     Map *map = lookup_room(x, y, z, pnum);
-    if (get_sqlite_rows_count() == 0) {
+    if (map == NULL) {
         free_room(map);
         return -1;
     }
-    if (strcmp((char*)map->owner, (char*)get_player_pname(pnum) != 0)) {
+    if (strcmp((char*)map->owner, (char*)get_player_pname(pnum)) != 0) {
         free_room(map);
         return -2;
     }

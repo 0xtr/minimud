@@ -28,7 +28,7 @@ socklen_t *get_newest_player_address_len ();
 void remove_player_record (const int32_t pnum);
 int32_t get_player_wait_state (const int32_t pnum);
 int32_t getplayernum (const int32_t socknum);
-int32_t get_num_of_players ();
+size_t get_num_of_players ();
 int32_t get_player_socket (const int32_t pnum);
 _Bool get_player_in_use (const int32_t pnum);
 _Bool get_player_hold_for_input (const int32_t pnum);
