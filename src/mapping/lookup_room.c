@@ -1,9 +1,8 @@
 Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32_t pnum) {
     uint8_t *sqlerr = NULL;
-    uint8_t coords[10] = {0};
-
     Map *map = get_room();
     uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
+
     if (sqlite3_exec(get_roomdb(), (char*)room, callback, map, (char**)sqlerr) != SQLITE_OK) {
         fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
         sqlite3_free(room);
@@ -11,10 +10,11 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
         free(map);
         return NULL;
     }
+
     sqlite3_free(room);
-    if (pnum == -1) {
-        return map;
-    }
+
+    if (pnum == -1)
+    	    return map;
 
     set_player_buffer_replace(pnum, (uint8_t*)"> ");
     if (get_sqlite_rows_count() == 0) {
@@ -22,6 +22,7 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
     } else {
         set_player_buffer_append(pnum, map->rname);
     }
+
     assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
 
     set_player_buffer_replace(pnum, (uint8_t*)"[");

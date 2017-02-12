@@ -22,7 +22,7 @@
 #include "src/util/handling_incoming_players.h"
 #include "src/printing/write_greeting.h"
 #include "src/util/check_if_data_is_waiting.h"
-#include "src/commands/command_parsing.h"
+#include "src/commands/command_registration_handler.h"
 #include "src/sqlite/init_db.h"
 
 int32_t main (void) {

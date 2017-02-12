@@ -1,5 +1,9 @@
-int32_t interpret_command (const int32_t pnum) {
-    uint8_t *command = calloc(get_max_command_len(), sizeof(uint8_t));
+static uint8_t *process_command_from_pbuf(const size_t pnum);
+
+// TODO: split
+int32_t interpret_command(const size_t pnum)
+{
+    uint8_t *command;
     int32_t rv;
     int32_t x, y, z;
 
@@ -15,21 +19,15 @@ int32_t interpret_command (const int32_t pnum) {
 
     // -------------------------------------------------------
 
+    // clean up
     if (get_player_wait_state(pnum) != THEIR_NAME) {
-        for (size_t i = 0; i < (get_max_command_len() * 2); ++i) {
-            command[i] = get_player_buffer(pnum)[i];
-            if (isspace(get_player_buffer(pnum)[i]) != 0) {
-                command[i] = '\0';
-                break;
-            }
-        }
-    }
-    if (get_player_hold_for_input(pnum) == 1 && strcmp((char*)command, "quit") != 0) {
-        if (strlen((char*)command) > get_max_command_len() || 
-            ((check_clist(pnum, command)) != 1)) { // not a valid command, inform the player 
-            print_output(pnum, INVALCMD);
-            return -1;
-        }
+    	    command = process_command_from_pbuf(pnum);
+	    if (get_player_hold_for_input(pnum) == 1 && strcmp((char*)command, "quit") != 0) {
+		if (strlen((char*)command) > get_max_command_len() || ((check_clist(pnum, command)) != 1)) { // not a valid command, inform the player 
+		    print_output(pnum, INVALCMD);
+		    return -1;
+		}
+	    }
     }
 
     // should probably handle 'quit' if they want to exit this process
@@ -187,9 +185,8 @@ int32_t interpret_command (const int32_t pnum) {
             set_player_hold_for_input(pnum, 0);
             break;
         case WAIT_ENTER_EXIT_NAME:
-            if ((ensure_player_moving_valid_dir(pnum, command)) == EXIT_FAILURE) {
-                break;
-            }
+            if ((ensure_player_moving_valid_dir(pnum, command)) == EXIT_FAILURE)
+            	    break;
 
             init_player_store(pnum);
             set_player_store_replace(pnum, command);
@@ -222,4 +219,16 @@ int32_t interpret_command (const int32_t pnum) {
             return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
+}
+
+static uint8_t *process_command_from_pbuf (const size_t pnum) {
+ 	uint8_t *command = calloc(get_max_command_len(), sizeof(uint8_t));
+        for (size_t i = 0; i < get_max_command_len(); ++i) {
+        	command[i] = get_player_buffer(pnum)[i];
+		if (isspace(get_player_buffer(pnum)[i]) != 0) {
+			command[i] = '\0';
+			break;
+		}
+        }
+        return command;
 }

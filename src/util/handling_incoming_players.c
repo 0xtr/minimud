@@ -11,7 +11,7 @@ int32_t check_for_highest_socket_num (void) {
     return fdmax;
 }
 
-int32_t check_if_player_is_already_online (const int32_t pnum) {
+int32_t check_if_player_is_already_online (const size_t pnum) {
     for (size_t i = 0; i < get_num_of_players(); ++i) {
         if (strcmp((char*)get_player_pname(pnum), (char*)get_player_pname(i)) == 0 && i != pnum) {
             print_output(pnum, PLAYER_ALREADY_ONLINE);

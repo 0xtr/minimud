@@ -1,7 +1,10 @@
 #pragma once
 
+#include "command_struct.h"
+
+int32_t interpret_command(const size_t pnum);
+
 #include "../Map.h"
-#include <ctype.h>
 #include "../util/check_player_name.h"
 #include "../util/password_handling.h"
 #include "../mapping/calc_coord_from_playerloc_and_dir.h"
@@ -12,6 +15,5 @@
 #include "../players/lookup_player.h"
 #include "../mapping/lookup_room.h"
 #include "../players/insert_player.h"
-#include "../commands/command_parsing.h"
-int32_t interpret_command (const int32_t socket_num);
-#include "interpret_command.c"
+
+#include "command_interpretation_handler.c"

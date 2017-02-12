@@ -1,36 +1,33 @@
+static size_t MAX_COMMAND_LEN = 0;
+static size_t NUM_OF_AVAILABLE_COMMANDS = 0;
+static size_t TOTAL_LENGTH_OF_ALL_CMDS = 0;
+static _Bool  PARSED_ALREADY = false;
 clist *curr, *head;
+
+static void set_line_len_if_greater (const uint8_t *line);
 static int32_t line_begins_with_valid_chars(const uint8_t *line);
-static size_t is_line_len_greater(const uint8_t *line);
+static _Bool line_len_is_greater(const uint8_t *line);
 
-size_t set_max_command_len(void)
+size_t get_max_command_len(void)
 {
-	uint8_t *line = NULL;
-	ssize_t ret = 0;
-	size_t line_len = 0;
-	size_t newmax = 0;
-	FILE *fp = NULL;
-
-	assert(access("src/commands/COMMAND_LIST.txt", F_OK) == -1);
-	assert((fp = fopen("src/commands/COMMAND_LIST.txt", "r")) != NULL);
-
-	for (size_t i = 0; (ret = getline((char **)line, &line_len, fp)) != EOF; ++i)
-		newmax = is_line_len_greater(line);
-	return newmax;
+	return MAX_COMMAND_LEN;
 }
 
-static size_t is_line_len_greater(const uint8_t *line)
+static _Bool line_len_is_greater(const uint8_t *line)
 {
 	if (strlen((char *)line) > get_max_command_len())
-		return strlen((char *)line);
-	return EXIT_SUCCESS;
+		return true;
+	return false;
 }
 
 int32_t parse_clist(void)
 {
+	if (PARSED_ALREADY)
+		return EXIT_SUCCESS;
+
 	uint8_t *line = NULL;
 	ssize_t ret = 0;
 	size_t line_len = 0;
-	int32_t num_of_cmds = 0;
 	FILE *fp = NULL;
 
 	head = NULL;
@@ -38,24 +35,39 @@ int32_t parse_clist(void)
 	assert((fp = fopen("src/commands/COMMAND_LIST.txt", "r")) != NULL);
 
 	for (size_t i = 0; (ret = getline((char **)line, &line_len, fp)) != EOF; ++i) {
-		if (line_begins_with_valid_chars(line) == 0) {
-			const int32_t len = strlen((char *)line);
+		if (line_begins_with_valid_chars(line) != 0)
+			continue;
 
-			curr = (clist *)calloc(sizeof(clist), sizeof(clist));
-			curr->cname = calloc(len + 5, sizeof(uint8_t));
-			head->next = curr;
-			head = curr;
-			if (line[len] == '.')
-				line[len] = '\0';
-			if (isspace(line[len - 1]))
-				line[len - 1] = '\0';
-			strcpy((char *)curr->cname, (char *)line);
-			fprintf(stdout, "Added command: %s\n", curr->cname);
-			++num_of_cmds;
-		}
+		const int32_t len = strlen((char *)line);
+
+		curr = (clist *)calloc(sizeof(clist), sizeof(clist));
+		curr->cname = calloc(len + 5, sizeof(uint8_t));
+		head->next = curr;
+		head = curr;
+		if (line[len] == '.')
+			line[len] = '\0';
+		if (isspace(line[len - 1]))
+			line[len - 1] = '\0';
+		strcpy((char *)curr->cname, (char *)line);
+		fprintf(stdout, "Added command: %s\n", curr->cname);
+		++NUM_OF_AVAILABLE_COMMANDS;
+		TOTAL_LENGTH_OF_ALL_CMDS += strlen((char *)line);
+		set_line_len_if_greater(line);
 	}
 	free(line);
-	return num_of_cmds;
+	PARSED_ALREADY = true;
+	return EXIT_SUCCESS;
+}
+
+static void set_line_len_if_greater (const uint8_t *line)
+{
+	if (line_len_is_greater(line))
+		MAX_COMMAND_LEN = strlen((char *)line);
+}
+
+size_t get_num_of_available_cmds(void)
+{
+	return NUM_OF_AVAILABLE_COMMANDS;
 }
 
 static int32_t line_begins_with_valid_chars(const uint8_t *line)
@@ -66,12 +78,7 @@ static int32_t line_begins_with_valid_chars(const uint8_t *line)
 
 size_t get_total_length_of_all_cmds(void)
 {
-	clist *tmp = head;
-	int32_t len = 0;
-
-	while (tmp)
-		len += strlen((char *)tmp->cname);
-	return len;
+	return TOTAL_LENGTH_OF_ALL_CMDS;
 }
 
 // TODO: rework
