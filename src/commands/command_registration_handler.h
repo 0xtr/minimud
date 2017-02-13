@@ -13,7 +13,7 @@ uint8_t *get_command(const int32_t cmd);
 #include <stdio.h>
 #include <ctype.h>
 #include "../Players.h"
-#include "../util/move_player.h"
+#include "../players/player_movement.h"
 #include "../printing/print_player_speech.h"
 
 #include "command_registration_handler.c"
