@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "shutdown_socket.h"
+
 int32_t shutdown_socket (const int32_t pnum) {
     if (shutdown(get_player_socket(pnum), SHUT_RDWR) == -1) {
         if (errno != ENOTCONN) {

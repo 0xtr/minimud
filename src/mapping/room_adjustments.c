@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "room_adjustments.h"
+
 static int32_t adjusting_room_exit(const int32_t pnum, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z);
 static int32_t get_direction_as_number(const uint8_t *dir);
 
@@ -53,7 +56,7 @@ int32_t remove_room (int32_t x, int32_t y, int32_t z, const int32_t pnum) {
         z = get_player_coord(Z_COORD_REQUEST, pnum);
     }
 
-    Map *map = lookup_room(x, y, z, pnum);
+    struct Map *map = lookup_room(x, y, z, pnum);
     if (map == NULL) {
         free_room(map);
         return -1;
@@ -243,7 +246,7 @@ static int32_t adjusting_room_exit (const int32_t pnum, const _Bool reverse, con
     const int32_t direction = get_direction_as_number(get_player_store(pnum));
 
     assert(direction != 0);
-    Map *map = lookup_room(x, y, z, pnum);
+    struct Map *map = lookup_room(x, y, z, pnum);
 
     uint8_t *room = sqlite3_mprintf("UPDATE CORE_ROOMS SET %Q = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
             get_dir_string(direction), reverse_of_current(direction, reverse), get_player_pname(pnum), (char)x, (char)y, (char)z);

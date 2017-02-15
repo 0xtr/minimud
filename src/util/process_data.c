@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "process_data.h"
+
 int32_t process_data (const int32_t socket_num) {
     uint8_t *extra;
     int32_t retval;

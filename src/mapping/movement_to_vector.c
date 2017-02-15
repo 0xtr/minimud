@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "movement_to_vector.h"
+
 int32_t x_movement_to_vector (const uint8_t *cmd) {
     if (strcmp((char*)cmd, "east") == 0 ||
         strcmp((char*)cmd, "northeast") ||

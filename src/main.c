@@ -1,29 +1,4 @@
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <errno.h>
-#include <assert.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <stropts.h>
-#include <arpa/inet.h>
-#include <ifaddrs.h>
-#include <sqlite3.h>
-#include <stdint.h>
-#include <sys/select.h>
-
-#include "src/Players.h"
-#include "src/DEFINITIONS.h"
-#include "src/util/handling_incoming_players.h"
-#include "src/printing/write_greeting.h"
-#include "src/util/check_if_data_is_waiting.h"
-#include "src/commands/command_registration_handler.h"
-#include "src/sqlite/init_db.h"
+#include "common.h"
 
 int32_t main (void) {
     int32_t new_fd, fdmax;

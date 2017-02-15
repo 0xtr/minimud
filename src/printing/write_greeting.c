@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "write_greeting.h"
+
 int32_t write_greeting (const int32_t pnum) {
     set_player_buffer_replace(pnum, "> WELCOME.\n\n");
     set_player_buffer_append(pnum, (uint8_t*)"Please provide a NAME; this can be two words and up to ");

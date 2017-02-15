@@ -1,3 +1,4 @@
+#include "../common.h"
 /*	$OpenBSD: blf.c,v 1.7 2007/11/26 09:28:34 martynas Exp $	*/
 
 /*

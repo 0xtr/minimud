@@ -1,5 +1,8 @@
+#include "../common.h"
+#include "helper_funcs.h"
+
 int callback (void *map, int argc, char **argv, char **azColName) {
-    Map *map_ref = map;
+    struct Map *map_ref = map;
     increment_sqlite_rows_count();
     for (size_t i = 0; i < (size_t)argc; ++i) {
 

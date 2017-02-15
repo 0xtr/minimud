@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "handling_incoming_players.h"
+
 int32_t check_for_highest_socket_num (void) {
     int32_t fdmax = 0;
     for (size_t j = 0; j < get_num_of_players(); ++j) {

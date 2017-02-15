@@ -1,3 +1,6 @@
+#include "common.h"
+#include "Players.h"
+
 static Player *player;
 static Player *curr, *head, *root;
 

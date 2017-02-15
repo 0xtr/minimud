@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DEFINITIONS.h"
-#include <stdbool.h>
 struct Player_l {
     _Bool   in_use;
     _Bool   hold_for_input;
@@ -19,14 +18,14 @@ struct Player_l {
 };
 typedef struct Player_l Player;
 struct Player *get_player (const int32_t pnum);
-struct Player *get_new_player ();
-struct Player *get_newest_player ();
-struct sockaddr *restrict get_newest_player_address ();
-socklen_t *get_newest_player_address_len ();
+struct Player *get_new_player (void);
+struct Player *get_newest_player (void);
+struct sockaddr *restrict get_newest_player_address (void);
+socklen_t *get_newest_player_address_len (void);
 void remove_player_record (const int32_t pnum);
 int32_t get_player_wait_state (const int32_t pnum);
 int32_t getplayernum (const int32_t socknum);
-size_t get_num_of_players ();
+size_t get_num_of_players (void);
 int32_t get_player_socket (const int32_t pnum);
 _Bool get_player_in_use (const int32_t pnum);
 _Bool get_player_hold_for_input (const int32_t pnum);

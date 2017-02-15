@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "init_db.h"
+
 int32_t init_db (const int32_t DB_TYPE) {
     _Bool tables_needed = 0;
     if (access((char*)SQLITE_ROOMDB_LOC, F_OK) == -1 && DB_TYPE == ROOM_DB_TYPE) {

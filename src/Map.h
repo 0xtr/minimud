@@ -1,6 +1,6 @@
 #pragma once
 
-struct map_t {
+struct Map {
     uint8_t rname[NAMES_MAX];
     uint8_t rdesc[BUFFER_LENGTH];
     uint8_t owner[NAMES_MAX];
@@ -16,7 +16,5 @@ struct map_t {
     _Bool southwest;
     _Bool northwest;
 }; 
-typedef struct map_t Map;
-Map *get_room ();
-void free_room (Map *map);
-#include "Map.c"
+struct Map *get_room ();
+void free_room (struct Map *map);

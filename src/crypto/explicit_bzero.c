@@ -1,3 +1,5 @@
+#include "../common.h"
+
 /* OPENBSD ORIGINAL: lib/libc/string/explicit_bzero.c */
 /*	$OpenBSD: explicit_bzero.c,v 1.1 2014/01/22 21:06:45 tedu Exp $ */
 /*
@@ -17,4 +19,7 @@ explicit_bzero(void *p, size_t n)
 {
 	bzero(p, n);
 }
+
+#define HAVE_EXPLICIT_BZERO
+
 #endif

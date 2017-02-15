@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "command_interpretation_handler.h"
+
 static uint8_t *process_command_from_pbuf(const size_t pnum);
 
 // TODO: split
@@ -193,7 +196,7 @@ int32_t interpret_command(const size_t pnum)
             x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, pnum);
             y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, pnum);
             z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, pnum);
-            Map *map = lookup_room(x, y, z, -1);
+            struct Map *map = lookup_room(x, y, z, -1);
 
             if (rv == 1) {
                 rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 1, pnum, x, y, z);

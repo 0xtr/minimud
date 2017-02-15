@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "print_player_speech.h"
+
 int32_t print_player_speech (const int32_t pnum, const uint8_t *say) {
     #define TOKEN_SAY_CMD_LEN 4 // length req'd for the actual say command + the space after that
     #define TOKEN_YOU_SAY_LEN 9 // length req'd for player to see You say: 

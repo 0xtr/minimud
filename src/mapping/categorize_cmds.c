@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "categorize_cmds.h"
+
 int32_t is_direction (const uint8_t *cmd) {
     const uint8_t dirs[20][10] = {
         "north","n","east","e","south","s","west","w",

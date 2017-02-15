@@ -1,3 +1,7 @@
+#include "../common.h"
+#define CHARS_FOR_PROMPT_AND_NULL 2
+#include "outgoing_msg_handler.h"
+
 static double get_buffer_split_by_line_width (const int32_t expected);
 static int32_t check_for_prompt_chars (const int32_t pnum);
 static _Bool was_all_data_sent (const int32_t total, const int32_t expected);

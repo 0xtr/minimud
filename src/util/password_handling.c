@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "password_handling.h"
+
 int32_t handle_existing_pass (const int32_t pnum, const uint8_t *command) {
     if (get_existing_player_hash(pnum) == -1) {
         print_output(pnum, UNABLE_TO_RETRIEVE_CHAR);

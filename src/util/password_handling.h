@@ -2,7 +2,7 @@
 
 #include "../crypto/bcrypt.h"
 #include "../players/player_movement.h"
-#include "../players/insert_player.h"
+#include "../players/player_details.h"
 #include "../mapping/lookup_room.h"
 
 int32_t set_player_confirm_new_pw (const int32_t socket_num, const uint8_t *command);

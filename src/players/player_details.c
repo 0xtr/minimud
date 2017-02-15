@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "player_details.h"
+
 int32_t get_existing_player_hash (const int32_t pnum) {
     uint8_t *sqlerr = NULL;
     uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE pname LIKE %Q;", get_player_pname(pnum));

@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "bcrypt.h"
+
 // added by tom
 #pragma GCC system_header
 // end

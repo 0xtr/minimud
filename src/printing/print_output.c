@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "print_output.h"
+
 static _Bool set_buffer_for_movement (const int32_t pnum, const int32_t argument);
 static _Bool print_all_commands (const int32_t pnum);
 static _Bool build_room_image (const int32_t pnum);
@@ -215,7 +218,7 @@ static _Bool build_room_image (const int32_t pnum) {
     const int32_t room_x = get_player_coord(X_COORD_REQUEST, pnum);
     const int32_t room_y = get_player_coord(Y_COORD_REQUEST, pnum);
     const int32_t room_z = get_player_coord(Z_COORD_REQUEST, pnum);
-    Map *map = lookup_room(room_x, room_y, room_z, get_player_socket(pnum));
+    struct Map *map = lookup_room(room_x, room_y, room_z, get_player_socket(pnum));
 
     // now show the players in room here...
     for (size_t i = 0; i < get_num_of_players(); ++i) {

@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "calc_coord_from_playerloc_and_dir.h"
+
 int32_t calc_coord_from_playerloc_and_dir (const int32_t coord_type, const int32_t pnum) {
     int32_t x, y, z;
     x = get_player_coord(X_COORD_REQUEST, pnum);

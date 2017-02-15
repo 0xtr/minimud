@@ -1,6 +1,9 @@
-Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32_t pnum) {
+#include "../common.h"
+#include "lookup_room.h"
+
+struct Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32_t pnum) {
     uint8_t *sqlerr = NULL;
-    Map *map = get_room();
+    struct Map *map = get_room();
     uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
 
     if (sqlite3_exec(get_roomdb(), (char*)room, callback, map, (char**)sqlerr) != SQLITE_OK) {
@@ -49,7 +52,7 @@ Map *lookup_room (const int32_t x, const int32_t y, const int32_t z, const int32
 }
 
 int32_t lookup_room_exits (const int32_t pnum, const int32_t xadj, const int32_t yadj, const int32_t zadj) {
-    Map *map = lookup_room(get_player_coord(X_COORD_REQUEST, pnum), 
+    struct Map *map = lookup_room(get_player_coord(X_COORD_REQUEST, pnum), 
                            get_player_coord(X_COORD_REQUEST, pnum), 
                            get_player_coord(X_COORD_REQUEST, pnum), -1);
     if (map == NULL) {
@@ -67,7 +70,7 @@ _Bool is_vector_west (const int32_t x, const int32_t y) {
     return x == -1 && y == 0;
 }
 
-_Bool has_west_exit (const Map *map) {
+_Bool has_west_exit (const struct Map *map) {
     if (map->west == 0) {
         return EXIT_SUCCESS;
     }
@@ -75,7 +78,7 @@ _Bool has_west_exit (const Map *map) {
     //return map.west == 0;
 }
 
-int32_t has_exit_for_dir (const int32_t x, const int32_t y, const int32_t z, const Map *map) {
+int32_t has_exit_for_dir (const int32_t x, const int32_t y, const int32_t z, const struct Map *map) {
     if (is_vector_west(x, y) && !has_west_exit(map)) {
         return EXIT_FAILURE;
     }
@@ -128,7 +131,7 @@ int32_t has_exit_for_dir (const int32_t x, const int32_t y, const int32_t z, con
 }
 
 int32_t lookup_room_name_from_coords (const int32_t pnum, const int32_t x, const int32_t y, const int32_t z) {
-    Map *map = lookup_room(x, y, z, -1);
+    struct Map *map = lookup_room(x, y, z, -1);
     if (map != NULL) {
         // get_room_details(map);
         set_player_buffer_replace(pnum, map->rname);
@@ -140,11 +143,11 @@ int32_t lookup_room_name_from_coords (const int32_t pnum, const int32_t x, const
 }
 
 int32_t compare_room_owner (const int32_t pnum, const uint8_t *x, const uint8_t *y, const uint8_t *z) {
-    Map *map = lookup_room (x, y, z, -1);
+    struct Map *map = lookup_room (x, y, z, -1);
     if (map == NULL) {
         return -1;
     }
-    if (strcmp((char*)get_player_pname(pnum), map->owner) != 0) {
+    if (strcmp((char*)get_player_pname(pnum), (char*)map->owner) != 0) {
         free_room(map);
         return EXIT_FAILURE;
     }

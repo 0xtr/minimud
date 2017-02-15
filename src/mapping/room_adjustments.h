@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../players/player_movement.h"
 #include "../sqlite/helper_funcs.h"
 #include "lookup_room.h"
 

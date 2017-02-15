@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "player_movement.h"
+
 int32_t adjust_player_location (const int32_t pnum, int32_t x, int32_t y, int32_t z) {
     if (x == -1 && y == -1 && z == -1) {
         x = y = z = 0;

@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "command_registration_handler.h"
+
 static size_t MAX_COMMAND_LEN = 0;
 static size_t NUM_OF_AVAILABLE_COMMANDS = 0;
 static size_t TOTAL_LENGTH_OF_ALL_CMDS = 0;

@@ -1,3 +1,6 @@
+#include "../common.h"
+#include "echoaround_player.h"
+
 int32_t echoaround_player (const int32_t pnum, const uint8_t *buffer, const int32_t location)
 {
     int32_t X = get_player_coord(X_COORD_REQUEST, pnum);
