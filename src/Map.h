@@ -16,5 +16,5 @@ struct Map {
     _Bool southwest;
     _Bool northwest;
 }; 
-struct Map *get_room ();
-void free_room (struct Map *map);
+struct Map *get_room(void);
+void free_room(struct Map *map);
