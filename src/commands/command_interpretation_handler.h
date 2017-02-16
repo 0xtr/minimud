@@ -1,6 +1,8 @@
 #pragma once
 
 #include "command_struct.h"
+#include "command_registration_handler.h"
+#include "../players/player_movement.h"
 #include "../printing/echoaround_player.h"
 #include "../printing/print_output.h"
 #include "../Map.h"

@@ -59,14 +59,3 @@ int32_t find_and_set_new_player_struct (const int32_t wfd) {
     }
     return set;
 }
-
-int32_t ensure_player_moving_valid_dir (const int32_t pnum, const uint8_t *command) {
-    if (is_direction(command) == EXIT_FAILURE) {
-        print_output(pnum, INVALDIR);\
-        print_output(pnum, PRINT_EXITING_CMD_WAIT);\
-        set_player_wait_state(pnum, NO_WAIT_STATE);
-        set_player_hold_for_input(pnum, 0);
-        return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
-}

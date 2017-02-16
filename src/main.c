@@ -1,4 +1,9 @@
 #include "common.h"
+#include "sqlite/init_db.h"
+#include "commands/command_registration_handler.h"
+#include "util/check_if_data_is_waiting.h"
+#include "printing/write_greeting.h"
+#include "util/handling_incoming_players.h"
 
 int32_t main (void) {
     int32_t new_fd, fdmax;

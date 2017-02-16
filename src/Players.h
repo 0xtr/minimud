@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DEFINITIONS.h"
-struct Player_l {
+struct Player {
     _Bool   in_use;
     _Bool   hold_for_input;
     int32_t wait_state;
@@ -16,12 +16,12 @@ struct Player_l {
     struct  Player* prev;
     struct  Player* next;
 };
-typedef struct Player_l Player;
-struct Player *get_player (const int32_t pnum);
-struct Player *get_new_player (void);
-struct Player *get_newest_player (void);
-struct sockaddr *restrict get_newest_player_address (void);
-socklen_t *get_newest_player_address_len (void);
+typedef struct Player Player_struct;
+Player_struct *get_player (const int32_t pnum);
+Player_struct *get_new_player (void);
+Player_struct *get_newest_player (void);
+struct sockaddr *get_newest_player_address (void);
+socklen_t get_newest_player_address_len (void);
 void remove_player_record (const int32_t pnum);
 int32_t get_player_wait_state (const int32_t pnum);
 int32_t getplayernum (const int32_t socknum);
