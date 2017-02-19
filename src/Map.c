@@ -3,9 +3,7 @@
 
 struct Map *get_room(void)
 {
-	struct Map *map = (struct Map *)calloc(sizeof(struct Map), sizeof(struct Map));
-
-	return map;
+	return (struct Map *)calloc(sizeof(struct Map), sizeof(struct Map));
 }
 
 void free_room(struct Map *map)

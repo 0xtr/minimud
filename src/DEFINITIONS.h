@@ -90,4 +90,15 @@
 #define WAIT_ROOM_CREATION_DESC        -8745
 #define WAIT_ROOM_CREATION_CONF        -8746
 #define WAIT_ENTER_FLAG_NAME           -8747
-#define WAIT_ENTER_EXIT_NAME           -8748
+#define WAIT_ENTER_EXIT_NAME		-8748
+
+#define NORTH_DIR			-9000
+#define SOUTH_DIR			-9001
+#define EAST_DIR			-9002
+#define WEST_DIR			-9003
+#define UP_DIR				-9004
+#define DOWN_DIR			-9005
+#define NORTHEAST_DIR   		-9006
+#define SOUTHEAST_DIR   		-9007
+#define SOUTHWEST_DIR   		-9008
+#define NORTHWEST_DIR   		-9009

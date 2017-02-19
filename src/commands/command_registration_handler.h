@@ -1,10 +1,12 @@
 #pragma once
 
-#include "command_struct.h"
 #include "../common.h"
+
+#include "command_struct.h"
 #include "../Players.h"
 #include "../players/player_movement.h"
-#include "../printing/print_player_speech.h"
+#include "../printing/print_not_player.h"
+#include "../printing/print_to_player.h"
 
 size_t get_num_of_available_cmds(void);
 size_t get_total_length_of_all_cmds(void);

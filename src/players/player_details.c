@@ -1,5 +1,6 @@
-#include "../common.h"
 #include "player_details.h"
+
+static const uint8_t RESERVED_WORDS[10][15] = { "admin", "root", "TABLE", "ADMIN", "Admin", "Administrator" };
 
 int32_t get_existing_player_hash(const int32_t pnum)
 {
@@ -62,9 +63,9 @@ int32_t get_next_player_num(void)
 
 int32_t insert_player(const uint8_t *pname, const uint8_t *pw, const int32_t pnum)
 {
-	#define HASH_RESULT_LEN 70
+	size_t HASH_LEN = 70;
 	uint8_t *sqlerr = NULL;
-	uint8_t salt[SALTLEN] = {0}; /* get the salt, ainsley */
+	uint8_t salt[SALTLEN] = {0};
 
 	for (size_t i = 0; i != 10; ++i) {
 		memset(salt, '\0', SALTLEN);
@@ -72,8 +73,9 @@ int32_t insert_player(const uint8_t *pname, const uint8_t *pw, const int32_t pnu
 	}
 
 	// hash the salt + password, in that order
-	uint8_t *hash_result = calloc(HASH_RESULT_LEN, sizeof(uint8_t));
-	bcrypt_hashpass((char*)pw, (char*)salt, (char*)hash_result, HASH_RESULT_LEN);
+	uint8_t *hash_result = calloc(HASH_LEN, sizeof(uint8_t));
+	bcrypt_newhash((char*)pw, 10, (char*)hash_result, HASH_LEN);
+
 
 	// insert the above ^
 	// player id in table, name, hash, salt, last ip, x, y, z
@@ -82,7 +84,7 @@ int32_t insert_player(const uint8_t *pname, const uint8_t *pw, const int32_t pnu
 
 	if (sqlite3_exec(get_playerdb(), (char*)querystr, callback, 0, (char**)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE player insert error:\n%s\n", sqlite3_errmsg(get_playerdb()));
-		print_output(pnum, PLAYER_CREATION_FAILED);
+		print_to_player(pnum, PLAYER_CREATION_FAILED);
 
 		free(hash_result);
 
@@ -95,11 +97,11 @@ int32_t insert_player(const uint8_t *pname, const uint8_t *pw, const int32_t pnu
 	explicit_bzero(&salt, SALTLEN);
 	explicit_bzero(&pname, NAMES_MAX);
 	explicit_bzero(&pw, NAMES_MAX);
-	explicit_bzero(&hash_result, HASH_RESULT_LEN);
+	explicit_bzero(&hash_result, HASH_LEN);
 
 	free(hash_result);
 
-	print_output(pnum, PLAYER_CREATION_SUCCESS);
+	print_to_player(pnum, PLAYER_CREATION_SUCCESS);
 	return EXIT_SUCCESS;
 }
 
@@ -117,4 +119,28 @@ int32_t lookup_player(const uint8_t *pname)
 	}
 	sqlite3_free(pcheck);
 	return (get_sqlite_rows_count() != 0) ? 1 : 0;
+}
+
+int32_t check_if_name_is_reserved(const int32_t pnum, const uint8_t *name)
+{
+	for (size_t i = 0; i < 10; ++i) {
+		if (strcmp((char*)name, (char*)RESERVED_WORDS[i]) == 0) {
+			print_to_player(pnum, NAME_UNAVAILABLE);
+			return EXIT_FAILURE;
+		}
+	}
+	return EXIT_SUCCESS;
+}
+
+int32_t check_if_name_is_valid(const int32_t pnum, const uint8_t *name)
+{
+	if (strlen((char*)get_player_buffer(pnum)) > NAMES_MAX || strlen((char*)name) < NAMES_MIN) {
+		print_to_player(pnum, NAME_NOT_WITHIN_PARAMS);
+		return EXIT_FAILURE;
+	}
+	for (int32_t i = 0; i < NAMES_MAX; ++i) {
+		if (!isalpha(get_player_buffer(pnum)[i]))
+			return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
 }

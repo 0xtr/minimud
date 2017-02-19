@@ -1,11 +1,10 @@
-#include "../common.h"
-#include "print_output.h"
+#include "print_to_player.h"
 
 static _Bool set_buffer_for_movement(const int32_t pnum, const int32_t argument);
 static _Bool print_all_commands(const int32_t pnum);
 static _Bool build_room_image(const int32_t pnum);
 
-int32_t print_output(const int32_t pnum, const int32_t argument)
+int32_t print_to_player(const int32_t pnum, const int32_t argument)
 {
 	_Bool already_sent = 0;
 	#define IS_DIRECTION_ARG (argument >= 0 && argument <= 10)
@@ -33,7 +32,7 @@ int32_t print_output(const int32_t pnum, const int32_t argument)
 			set_player_buffer_append(pnum, get_player_pname(pnum));
 			set_player_buffer_append(pnum, (uint8_t *)"].\n");
 			set_player_buffer_append(pnum, (uint8_t *)"Please provide a password less than ");
-			set_player_buffer_append(pnum, get_PW_len_max());
+			set_player_buffer_append(pnum, (uint8_t *)BUFFER_LENGTH);
 			set_player_buffer_append(pnum, (uint8_t *)" characters long.\n");
 			break;
 		case REQUEST_PW_CONFIRM:
@@ -169,7 +168,7 @@ int32_t print_output(const int32_t pnum, const int32_t argument)
 			}
 	}
 	if (already_sent == false) {
-		assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
+		assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 	}
 	return EXIT_SUCCESS;
 }
@@ -235,7 +234,7 @@ static _Bool build_room_image (const int32_t pnum) {
 				if (strlen((char*)get_player_buffer(i)) == 0) {
 					set_player_buffer_replace(i, get_player_pname(i));
 					set_player_store_append(i, (uint8_t *)" is here too.\n");
-					assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
+					assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 				}
 			}
 		}
@@ -268,7 +267,7 @@ static _Bool build_room_image (const int32_t pnum) {
 
 	set_player_buffer_append(pnum, (uint8_t *)"\n");
 
-	return outgoing_msg_handler(pnum);
+	return outgoing_handler(pnum);
 }
 
 static _Bool print_all_commands(const int32_t pnum)
@@ -277,7 +276,7 @@ static _Bool print_all_commands(const int32_t pnum)
 	int32_t commands_on_line = 0;
 
 	set_player_buffer_replace(pnum, (uint8_t *)"> Available commands:\n");
-	assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
+	assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 
 	if (get_total_length_of_all_cmds() > BUFFER_LENGTH) {
 		c = get_total_length_of_all_cmds() % BUFFER_LENGTH;
@@ -286,7 +285,7 @@ static _Bool print_all_commands(const int32_t pnum)
 
 	for (size_t i = 0; i < get_num_of_available_cmds(); ++i) {
 		if (strlen((char*)get_player_buffer(pnum)) + strlen((char*)get_command(i)) > BUFFER_LENGTH) {
-			assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
+			assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 			continue;
 		}
 		if (strlen((char*)get_player_buffer(pnum)) == 0) {
@@ -299,9 +298,45 @@ static _Bool print_all_commands(const int32_t pnum)
 
 		if (commands_on_line == 5) {
 			commands_on_line = 0;
-			assert(outgoing_msg_handler(pnum) == EXIT_SUCCESS);
+			assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 		}
 	}
+
+	return EXIT_SUCCESS;
+}
+
+int32_t greet_player(const int32_t pnum)
+{
+	set_player_buffer_replace(pnum, "> WELCOME.\n\n");
+	set_player_buffer_append(pnum, (uint8_t*)"Please provide a NAME; this can be two words and up to ");
+	set_player_buffer_append(pnum, (uint8_t)NAMES_MAX);
+	set_player_buffer_append(pnum, (uint8_t*)" characters long in total.\nIf you've already created a character, enter your previous name to resume.");
+	assert(outgoing_handler(pnum) == EXIT_SUCCESS);
+
+	return EXIT_SUCCESS;
+}
+
+int32_t print_player_speech_to_player(const int32_t pnum, const uint8_t *say)
+{
+	#define TOKEN_SAY_CMD_LEN 4 // length req'd for the actual say command + the space after that
+	#define TOKEN_YOU_SAY_LEN 9 // length req'd for player to see You say: 
+	uint8_t *buffer = calloc(BUFFER_LENGTH, sizeof(uint8_t));
+
+	strncpy((char *)buffer, (char *)get_player_pname(pnum), strlen((char *)get_player_pname(pnum)));
+	strncat((char *)buffer, (char *)" says: ", BUFFER_LENGTH - strlen((char *)buffer));
+	strncat((char *)buffer, (char *)say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
+
+	print_not_player(pnum, buffer, ROOM_ONLY);
+#ifdef DEBUG
+	printf("print_player_speech: %s\n", buffer);
+#endif
+
+	free(buffer);
+
+	set_player_buffer_replace(pnum, (uint8_t*)"You say: ");
+	set_player_buffer_append(pnum, &say[TOKEN_SAY_CMD_LEN]);
+
+	assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 
 	return EXIT_SUCCESS;
 }

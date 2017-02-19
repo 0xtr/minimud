@@ -2,10 +2,12 @@
 
 #define _GNU_SOURCE
 
+#include <sys/ioctl.h>
+#include <bsd/stdlib.h>
+#include <strings.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <bsd/stdlib.h>
 #include <math.h>
 #include <sys/select.h>
 #include <dirent.h>

@@ -1,8 +1,8 @@
 #include "common.h"
 #include "sqlite/init_db.h"
 #include "commands/command_registration_handler.h"
-#include "util/check_if_data_is_waiting.h"
-#include "printing/write_greeting.h"
+#include "util/incoming_handler.h"
+#include "printing/print_to_player.h"
 #include "util/handling_incoming_players.h"
 
 int32_t main(void)
@@ -68,7 +68,7 @@ int32_t main(void)
 				perror("Error setting up the new player's connection");
 				return EXIT_FAILURE;
 			}
-			write_greeting(new_fd);
+			greet_player(new_fd);
 		}
 		
 		// don't need to account for EINTR/EAGAIN, no signals + nonblocking io

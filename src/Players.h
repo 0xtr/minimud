@@ -42,3 +42,5 @@ void set_player_buffer_replace (const int32_t pnum, const uint8_t *newbuf);
 void set_player_buffer_append (const int32_t pnum, const uint8_t *append);
 void set_player_store_replace (const int32_t pnum, const uint8_t *newval);
 void set_player_store_append (const int32_t pnum, const uint8_t *append);
+void set_player_in_use(const int32_t pnum, _Bool in_use);
+void set_player_socket(const int32_t pnum, const int32_t socket);

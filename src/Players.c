@@ -97,9 +97,19 @@ _Bool get_player_in_use(const int32_t pnum)
 	return player[pnum].in_use;
 }
 
+void set_player_in_use(const int32_t pnum, _Bool in_use)
+{
+	player[pnum].in_use = in_use;
+}
+
 int32_t get_player_socket(const int32_t pnum)
 {
 	return player[pnum].socket_num;
+}
+
+void set_player_socket(const int32_t pnum, const int32_t socket)
+{
+	player[pnum].socket_num = socket;
 }
 
 socklen_t get_newest_player_address_len(void)

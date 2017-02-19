@@ -1,4 +1,3 @@
-#include "../common.h"
 #include "player_movement.h"
 
 int32_t adjust_player_location(const int32_t pnum, int32_t x, int32_t y, int32_t z)
@@ -8,11 +7,11 @@ int32_t adjust_player_location(const int32_t pnum, int32_t x, int32_t y, int32_t
 	 }
 	 uint8_t *sqlerr = NULL;
 	 uint8_t *querystr = (uint8_t*)sqlite3_mprintf("UPDATE PLAYERS SET x = %Q, y = %Q, z = %Q WHERE pname = %Q;", 
-		                 (char*)x, (char*)y, (char*)z, (char*)get_player_pname(pnum));
+		                 (char)x, (char)y, (char)z, (char*)get_player_pname(pnum));
 
 	 if (sqlite3_exec(get_playerdb(), (char*)querystr, callback, 0, (char**)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE player location adjustment error:\n%s\n", sqlite3_errmsg(get_playerdb()));
-		print_output(pnum, INVALDIR);
+		print_to_player(pnum, INVALDIR);
 		sqlite3_free(querystr);
 		sqlite3_free(sqlerr);
 		return EXIT_FAILURE;
@@ -93,16 +92,16 @@ int32_t move_player(const int32_t socknum, const uint8_t command[])
 		 rv = lookup_room_exits(num, xadj, yadj, zadj);
 	 }
 	 if (rv == -1) {
-		 rv = print_output(num, INVALDIR);
+		 rv = print_to_player(num, INVALDIR);
 		 return -1;
 	 } else if (rv == -2) { // send them back to origin room, somewhere they shouldn't be
-		 rv = print_output(num, INVALDIR);
+		 rv = print_to_player(num, INVALDIR);
 		 x = -1;
 		 y = -1;
 		 z = -1;
 		 movedir = 0;
 	 }
-	 rv = print_output(num, movedir);
+	 rv = print_to_player(num, movedir);
 	 if (rv == 2) {
 		 rv = adjust_player_location(num, x, y, z);
 		 return 1;
@@ -117,8 +116,8 @@ int32_t move_player(const int32_t socknum, const uint8_t command[])
 int32_t ensure_player_moving_valid_dir(const int32_t pnum, const uint8_t *command)
 {
 	 if (is_direction(command) == EXIT_FAILURE) {
-		 print_output(pnum, INVALDIR);\
-		 print_output(pnum, PRINT_EXITING_CMD_WAIT);\
+		 print_to_player(pnum, INVALDIR);\
+		 print_to_player(pnum, PRINT_EXITING_CMD_WAIT);\
 		 set_player_wait_state(pnum, NO_WAIT_STATE);
 		 set_player_hold_for_input(pnum, 0);
 		 return EXIT_FAILURE;

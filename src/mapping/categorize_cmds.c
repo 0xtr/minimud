@@ -1,4 +1,3 @@
-#include "../common.h"
 #include "categorize_cmds.h"
 
 int32_t is_direction (const uint8_t *cmd) {

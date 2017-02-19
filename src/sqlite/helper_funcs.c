@@ -1,5 +1,7 @@
-#include "../common.h"
 #include "helper_funcs.h"
+
+static void handle_player_columns(char *azColName, char *arg1);
+static void handle_map_columns(char *azColName, char *arg1, struct Map *map);
 
 int callback (void *map, int argc, char **argv, char **azColName)
 {
@@ -8,49 +10,58 @@ int callback (void *map, int argc, char **argv, char **azColName)
 
 	for (size_t i = 0; i < (size_t)argc; ++i) {
 		if (map != NULL) {
-			if (strcmp(azColName[i], "rname") == 0) {
-				strncpy((char*)map_ref->rname, argv[i], NAMES_MAX);
-			} else if (strcmp(azColName[i], "rdesc") == 0) {
-				strncpy((char*)map_ref->rdesc, argv[i], BUFFER_LENGTH);
-			} else if (strcmp(azColName[i], "north") == 0) {
-				map_ref->north = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "east") == 0) {
-				map_ref->east = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "south") == 0) {
-				map_ref->south = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "west") == 0) {
-				map_ref->west = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "up") == 0) {
-				map_ref->up = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "down") == 0) {
-				map_ref->down = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "northeast") == 0) {
-				map_ref->northeast = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "southeast") == 0) {
-				map_ref->southeast = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "southwest") == 0) {
-				map_ref->southwest = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "northwest") == 0) {
-				map_ref->northwest = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "owner") == 0) {
-				strncpy((char*)map_ref->owner, argv[i], NAMES_MAX);
-			}
-		} else { // players
-			if (azColName[i][0] == 'x') {
-				//player_tmp.x = atoi(argv[i]);
-			} else if (azColName[i][0], "y") {
-				//player_tmp.y = atoi(argv[i]);
-			} else if (azColName[i][0] == 'z') {
-				//player_tmp.z = atoi(argv[i]);
-			} else if (strcmp(azColName[i], "hash") == 0) {
-				//strncpy(player_tmp.hash, (char*)argv[i], HASHSPACE);
-			}
+			handle_map_columns(azColName[i], argv[i], map_ref);
+		} else {
+			handle_player_columns(azColName[i], argv[i]);
 		}
-
 	}
 
 	// return 0 or callback will request an abort
 	return EXIT_SUCCESS;
+}
+
+static void handle_player_columns(char *azColName, char *arg1)
+{
+	if (azColName[0] == 'x') {
+		//player_tmp.x = atoi(argv[i]);
+	} else if (azColName[0] == 'y') {
+		//player_tmp.y = atoi(argv[i]);
+	} else if (azColName[0] == 'z') {
+		//player_tmp.z = atoi(argv[i]);
+	} else if (strcmp(azColName, "hash") == 0) {
+		//strncpy(player_tmp.hash, (char*)argv[i], HASHSPACE);
+	}
+}
+
+static void handle_map_columns(char *azColName, char *arg1, struct Map *map)
+{
+	if (strcmp(azColName, "rname") == 0) {
+		strncpy((char*)map->rname, arg1, NAMES_MAX);
+	} else if (strcmp(azColName, "rdesc") == 0) {
+		strncpy((char*)map->rdesc, arg1, BUFFER_LENGTH);
+	} else if (strcmp(azColName, "north") == 0) {
+		map->north = atoi(arg1);
+	} else if (strcmp(azColName, "east") == 0) {
+		map->east = atoi(arg1);
+	} else if (strcmp(azColName, "south") == 0) {
+		map->south = atoi(arg1);
+	} else if (strcmp(azColName, "west") == 0) {
+		map->west = atoi(arg1);
+	} else if (strcmp(azColName, "up") == 0) {
+		map->up = atoi(arg1);
+	} else if (strcmp(azColName, "down") == 0) {
+		map->down = atoi(arg1);
+	} else if (strcmp(azColName, "northeast") == 0) {
+		map->northeast = atoi(arg1);
+	} else if (strcmp(azColName, "southeast") == 0) {
+		map->southeast = atoi(arg1);
+	} else if (strcmp(azColName, "southwest") == 0) {
+		map->southwest = atoi(arg1);
+	} else if (strcmp(azColName, "northwest") == 0) {
+		map->northwest = atoi(arg1);
+	} else if (strcmp(azColName, "owner") == 0) {
+		strncpy((char*)map->owner, arg1, NAMES_MAX);
+	}
 }
 
 static int rows_count;

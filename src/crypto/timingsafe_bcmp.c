@@ -1,4 +1,4 @@
-#include "../common.h"
+#include "timingsafe_bcmp.h"
 
 /*	$OpenBSD: timingsafe_bcmp.c,v 1.1 2010/09/24 13:33:00 matthew Exp $	*/
 /*
@@ -19,9 +19,6 @@
 
 /* OPENBSD ORIGINAL: lib/libc/string/timingsafe_bcmp.c */
 
-//#include "includes.h"
-#ifndef HAVE_TIMINGSAFE_BCMP
-
 int
 timingsafe_bcmp(const void *b1, const void *b2, size_t n)
 {
@@ -32,7 +29,3 @@ timingsafe_bcmp(const void *b1, const void *b2, size_t n)
 		ret |= *p1++ ^ *p2++;
 	return (ret != 0);
 }
-
-#define HAVE_TIMINGSAFE_BCMP
-
-#endif /* TIMINGSAFE_BCMP */
