@@ -2,6 +2,7 @@
 
 #include "../common.h"
 
+#include "../mapping/room_adjustments.h"
 #include "../commands/command_interpretation_handler.h"
 #include "../util/outgoing_handler.h"
 #include "../util/incoming_handler.h"

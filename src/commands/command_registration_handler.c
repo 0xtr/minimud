@@ -83,40 +83,31 @@ size_t get_total_length_of_all_cmds(void)
 	return TOTAL_LENGTH_OF_ALL_CMDS;
 }
 
-// TODO: rework
 int32_t check_clist(const int32_t pnum, const uint8_t *command)
 {
 	clist *tmp = head;
 
-	while (tmp) {
+	while (tmp != NULL) {
 		if (strcmp((char *)command, (char *)tmp->cname) != 0) {
 			tmp = tmp->next;
-			if (tmp == NULL)
-				break;
 			continue;
 		}
-		if (is_direction(command)) {
-			// movement_handler(pnum, command);
-			if (move_player(pnum, command) != EXIT_FAILURE) {
-				print_to_player(pnum, SHOWROOM);
-				// check
-			}
-		}
+
+		if (is_direction(command))
+			assert(move_player(pnum, get_direction_as_number(command)));
+
 		// isroomcmd
 		// isgamecmd
 		if (strcmp((char *)command, "look") == 0 || command[0] == 'l') {
 			print_to_player(pnum, SHOWROOM);
 		} else if (strcmp((char *)command, "say") == 0 ||
 			strcmp((char *)command, "Say") == 0) {
-			print_to_player(pnum, command);
+			print_player_speech_to_player(pnum, command);
 			print_not_player(pnum, command, ROOM_ONLY);
 		} else if (strcmp((char *)command, "quit") == 0) {
 			shutdown_socket(pnum);
 		} else if (strcmp((char *)command, "commands") == 0) {
 			print_to_player(pnum, SHOWCMDS);
-		} else if (strcmp((char *)command, "return") == 0) {
-			move_player(pnum, command);
-			print_to_player(pnum, SHOWROOM);
 		} else if (strcmp((char *)command, "players") == 0) {
 			print_to_player(pnum, LISTPLAYERS);
 
@@ -152,10 +143,13 @@ int32_t check_clist(const int32_t pnum, const uint8_t *command)
 			set_player_wait_state(pnum, WAIT_ROOM_REMOVAL_CHECK);
 			set_player_hold_for_input(pnum, 1);
 		}
-		return EXIT_SUCCESS;
+
+		/* we only reach this if we found a match */
+		return EXIT_SUCCESS; 
 	}
+
 	return EXIT_FAILURE;
-	}
+}
 
 size_t set_num_of_available_cmds(void)
 {
@@ -164,6 +158,7 @@ size_t set_num_of_available_cmds(void)
 
 	while (tmp)
 		++commands;
+
 	return commands;
 }
 
@@ -173,5 +168,6 @@ uint8_t *get_command(const int32_t cmd)
 
 	for (size_t i = 0; i < (size_t)cmd; ++i)
 		tmp = tmp->next;
+
 	return tmp->cname;
 }

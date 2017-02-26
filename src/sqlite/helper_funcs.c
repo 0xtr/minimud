@@ -22,6 +22,7 @@ int callback (void *map, int argc, char **argv, char **azColName)
 
 static void handle_player_columns(char *azColName, char *arg1)
 {
+	printf("%s\n", arg1);
 	if (azColName[0] == 'x') {
 		//player_tmp.x = atoi(argv[i]);
 	} else if (azColName[0] == 'y') {

@@ -1,6 +1,7 @@
 #include "command_interpretation_handler.h"
 
 static uint8_t *process_command_from_pbuf(const size_t pnum);
+static _Bool handle_incoming_name(const int32_t pnum, const uint8_t *command);
 
 // TODO: split
 int32_t interpret_command(const size_t pnum)
@@ -35,17 +36,7 @@ int32_t interpret_command(const size_t pnum)
 	// should probably handle 'quit' if they want to exit this process
 	switch (get_player_wait_state(pnum)) {
 	case THEIR_NAME:
-		if (check_if_name_is_valid(pnum, command)) break;
-		if (check_if_name_is_reserved(pnum, command)) break;
-		set_player_pname(pnum, command);
-		if (lookup_player(get_player_pname(pnum)) == 1) {
-			print_to_player(pnum, REQUEST_PW_FOR_EXISTING);
-			set_player_wait_state(pnum, THEIR_PASSWORD_EXISTING);
-		} else {
-			print_to_player(pnum, REQUEST_PW_FOR_NEW);
-			set_player_wait_state(pnum, THEIR_PASSWORD_NEWPRELIM);
-		}
-		check_if_player_is_already_online(pnum);
+		handle_incoming_name(pnum, command);
 		break;
 	case THEIR_PASSWORD_EXISTING:
 		handle_existing_pass(pnum, command);
@@ -127,7 +118,7 @@ int32_t interpret_command(const size_t pnum)
 		break;
 	case WAIT_ROOM_REMOVAL_CONFIRM:
 		if (command[0] == 'y' || command[0] == 'Y') {
-			rv = remove_room(-1, -1, -1, pnum);
+			rv = remove_room(pnum);
 			if (rv == 1) {
 				print_to_player(pnum, PRINT_ROOM_REMOVAL_SUCCESS);
 			} else if (rv == -2) {
@@ -152,12 +143,17 @@ int32_t interpret_command(const size_t pnum)
 		break;
 	case WAIT_ROOM_CREATION_CONF:
 		if ((strcmp((char*)command, "y") == 0) || (strcmp((char*)command, "Y") == 0)) {
-			x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, pnum),
-			y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, pnum),
-			z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, pnum),
+			x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, pnum);
+			y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, pnum);
+			z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, pnum);
+
+			struct NewRoom rconfig;
+			rv = insert_room(rconfig);
+			/*
 			rv = insert_room((uint8_t*)"NULL SPACE", x, y, z, 
 					 (uint8_t*)"There's nothing here but a lack of oxygen and the sense of impending doom.",
 					 get_player_pname(pnum), (uint8_t*)"none");
+					 */
 			if (rv == 1) {
 				print_to_player(pnum, PRINT_ROOM_CREATION_SUCCESS);
 				rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 0, pnum, 
@@ -222,7 +218,8 @@ int32_t interpret_command(const size_t pnum)
 	return EXIT_SUCCESS;
 }
 
-static uint8_t *process_command_from_pbuf (const size_t pnum) {
+static uint8_t *process_command_from_pbuf(const size_t pnum)
+{
  	uint8_t *command = calloc(get_max_command_len(), sizeof(uint8_t));
 
 	for (size_t i = 0; i < get_max_command_len(); ++i) {
@@ -233,4 +230,25 @@ static uint8_t *process_command_from_pbuf (const size_t pnum) {
 		}
 	}
 	return command;
+}
+
+static _Bool handle_incoming_name(const int32_t pnum, const uint8_t *command)
+{
+	if (check_if_name_is_valid(pnum, command)) 
+		return false;
+	if (check_if_name_is_reserved(pnum, command))
+		return false;
+	if (check_if_player_is_already_online(pnum))
+		return false;
+
+	set_player_pname(pnum, command);
+	if (lookup_player(get_player_pname(pnum)) == true) {
+		print_to_player(pnum, REQUEST_PW_FOR_EXISTING);
+		set_player_wait_state(pnum, THEIR_PASSWORD_EXISTING);
+	} else {
+		print_to_player(pnum, REQUEST_PW_FOR_NEW);
+		set_player_wait_state(pnum, THEIR_PASSWORD_NEWPRELIM);
+	}
+
+	return true;
 }

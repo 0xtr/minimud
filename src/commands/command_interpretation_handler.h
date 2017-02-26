@@ -2,6 +2,7 @@
 
 #include "../common.h"
 
+#include "../mapping/NewRoom.h"
 #include "command_struct.h"
 #include "command_registration_handler.h"
 #include "../players/player_movement.h"

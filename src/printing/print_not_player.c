@@ -33,7 +33,7 @@ int32_t print_player_speech_to_others(const int32_t pnum, const uint8_t *say)
 
 	strncpy((char *)buffer, (char *)get_player_pname(pnum), strlen((char *)get_player_pname(pnum)));
 	strncat((char *)buffer, " says: ", BUFFER_LENGTH - strlen((char *)buffer));
-	strncat((char *)buffer, (char *)say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
+	strncat((char *)buffer, (char)&say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
 
 	print_not_player(pnum, buffer, ROOM_ONLY);
 #ifdef DEBUG

@@ -57,7 +57,7 @@ void clear_player_buffer(const int32_t pnum)
 
 uint8_t *get_player_pname(const int32_t pnum)
 {
-	return &player[pnum].pname;
+	return player[pnum].pname;
 }
 
 void init_player_store(const int32_t pnum)
@@ -112,9 +112,9 @@ void set_player_socket(const int32_t pnum, const int32_t socket)
 	player[pnum].socket_num = socket;
 }
 
-socklen_t get_newest_player_address_len(void)
+socklen_t *get_newest_player_address_len(void)
 {
-	return curr->address_len;
+	return &curr->address_len;
 }
 
 void set_player_buffer_replace(const int32_t pnum, const uint8_t *newbuf)

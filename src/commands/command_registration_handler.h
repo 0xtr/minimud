@@ -2,6 +2,7 @@
 
 #include "../common.h"
 
+#include "categorize_cmds.h"
 #include "command_struct.h"
 #include "../Players.h"
 #include "../players/player_movement.h"

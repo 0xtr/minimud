@@ -5,7 +5,8 @@ CFLAGS = -Wall -Wextra -g -O2 -std=c11
 BUILD_DIR = ./build
 SRC_DIR = ./src
 BINARY_NAME = minimud
-EXCLUDES = crypto
+#EXCLUDES = crypto
+EXCLUDES = 
 
 SRCS = $(shell find $(SRC_DIR) -name *.c $(foreach exclude, $(EXCLUDES), -and -not -path "*$(exclude)*"))
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)

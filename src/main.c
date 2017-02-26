@@ -59,7 +59,7 @@ int32_t main(void)
 		if (FD_ISSET(master_sockfd, &rfds)) {
 			get_new_player();
 			//Player *player = get_new_player();
-			new_fd = accept(master_sockfd, get_newest_player_address(), get_newest_player_address_len());
+			new_fd = accept(master_sockfd, (struct sockaddr *restrict)get_newest_player_address(), (socklen_t *restrict)get_newest_player_address_len());
 			if (new_fd == -1) {
 				perror("Failed to accept incoming connection");
 				break;

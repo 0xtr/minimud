@@ -21,7 +21,7 @@ Player_struct *get_player (const int32_t pnum);
 Player_struct *get_new_player (void);
 Player_struct *get_newest_player (void);
 struct sockaddr *get_newest_player_address (void);
-socklen_t get_newest_player_address_len (void);
+socklen_t *get_newest_player_address_len (void);
 void remove_player_record (const int32_t pnum);
 int32_t get_player_wait_state (const int32_t pnum);
 int32_t getplayernum (const int32_t socknum);

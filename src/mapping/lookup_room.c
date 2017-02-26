@@ -16,7 +16,7 @@ static _Bool has_exit(const int32_t exit_value);
 struct Map *lookup_room(const int32_t x, const int32_t y, const int32_t z, const int32_t pnum)
 {
 	uint8_t *sqlerr = NULL;
-	uint8_t *room = sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
+	uint8_t *room = (uint8_t *)sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
 
 	struct Map *map = get_room();
 
@@ -32,30 +32,30 @@ struct Map *lookup_room(const int32_t x, const int32_t y, const int32_t z, const
 	if (pnum == -1)
 		return map;
 
-	set_player_buffer_replace(pnum, (uint8_t*)"> ");
+	set_player_buffer_replace(pnum, (uint8_t *)"> ");
 	if (get_sqlite_rows_count() == 0) {
-		set_player_buffer_append(pnum, (uint8_t*)"NULL SPACE");
+		set_player_buffer_append(pnum, (uint8_t *)"NULL SPACE");
 	} else {
 		set_player_buffer_append(pnum, map->rname);
 	}
 
 	assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 
-	set_player_buffer_replace(pnum, (uint8_t*)"[");
+	set_player_buffer_replace(pnum, (uint8_t *)"[");
 	// room x
-	set_player_buffer_append(pnum, (uint8_t*)(char*)&x);
-	set_player_buffer_append(pnum, (uint8_t*)"][");
+	set_player_buffer_append(pnum, (uint8_t *)(char*)&x);
+	set_player_buffer_append(pnum, (uint8_t *)"][");
 	// room y
-	set_player_buffer_append(pnum, (uint8_t)y);
-	set_player_buffer_append(pnum, (uint8_t*)"][");
+	set_player_buffer_append(pnum, (uint8_t *)(char*)&y);
+	set_player_buffer_append(pnum, (uint8_t *)"][");
 	// room z
-	set_player_buffer_append(pnum, (uint8_t)z);
-	set_player_buffer_append(pnum, (uint8_t*)"]");
+	set_player_buffer_append(pnum, (uint8_t *)(char*)&z);
+	set_player_buffer_append(pnum, (uint8_t *)"]");
 
 	assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 
 	if (map == NULL) {
-		set_player_buffer_replace(pnum, (uint8_t*)"It is pitch black. You are likely to be eaten by a null character.");
+		set_player_buffer_replace(pnum, (uint8_t *)"It is pitch black. You are likely to be eaten by a null character.");
 	} else {
 		set_player_buffer_replace(pnum, map->rdesc);
 	}
@@ -67,8 +67,8 @@ struct Map *lookup_room(const int32_t x, const int32_t y, const int32_t z, const
 int32_t lookup_room_exits(const int32_t pnum, const int32_t xadj, const int32_t yadj, const int32_t zadj)
 {
 	struct Map *map = lookup_room(get_player_coord(X_COORD_REQUEST, pnum), 
-			               get_player_coord(X_COORD_REQUEST, pnum), 
-			               get_player_coord(X_COORD_REQUEST, pnum), -1);
+			               get_player_coord(Y_COORD_REQUEST, pnum), 
+			               get_player_coord(Z_COORD_REQUEST, pnum), -1);
 
 	if (map == NULL)
 		return -2;
@@ -171,7 +171,7 @@ int32_t lookup_room_name_from_coords(const int32_t pnum, const int32_t x, const 
 		set_player_buffer_replace(pnum, map->rname);
 		free_room(map);
 	} else {
-		set_player_buffer_replace(pnum, (uint8_t*)"an unknown location");
+		set_player_buffer_replace(pnum, (uint8_t *)"an unknown location");
 	}
 
 	return EXIT_SUCCESS;

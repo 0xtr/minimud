@@ -12,7 +12,7 @@ int32_t check_if_data_is_waiting(const fd_set rfds)
 
 int32_t incoming_handler(const int32_t socket_num)
 {
-	uint8_t *extra;
+	uint8_t *extra = NULL;
 	int32_t retval;
 	int32_t pnum = getplayernum(socket_num);
 	int32_t incoming_data_len = 0;

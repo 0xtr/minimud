@@ -7,7 +7,7 @@ static _Bool build_room_image(const int32_t pnum);
 int32_t print_to_player(const int32_t pnum, const int32_t argument)
 {
 	_Bool already_sent = 0;
-	#define IS_DIRECTION_ARG (argument >= 0 && argument <= 10)
+	#define IS_DIRECTION_ARG (argument >= NORTH_DIR && argument <= RETURN_ORIGIN_DIR)
 
 	switch (argument) {
 		case PROMPT: 
@@ -231,7 +231,7 @@ static _Bool build_room_image (const int32_t pnum) {
 				get_player_coord(X_COORD_REQUEST, i) == room_x &&
 				get_player_coord(Y_COORD_REQUEST, i) == room_y &&
 				get_player_coord(Z_COORD_REQUEST, i) == room_z) {
-				if (strlen((char*)get_player_buffer(i)) == 0) {
+				if (strlen((char *)get_player_buffer(i)) == 0) {
 					set_player_buffer_replace(i, get_player_pname(i));
 					set_player_store_append(i, (uint8_t *)" is here too.\n");
 					assert(outgoing_handler(pnum) == EXIT_SUCCESS);
@@ -261,7 +261,7 @@ static _Bool build_room_image (const int32_t pnum) {
 		set_player_buffer_append(pnum, (uint8_t *)" SW");
 	if (map->northwest == 1)
 		set_player_buffer_append(pnum, (uint8_t *)" NW");
-	if (strlen((char*)get_player_buffer(pnum)) == 6) {
+	if (strlen((char *)get_player_buffer(pnum)) == 6) {
 		set_player_buffer_append(pnum, (uint8_t *)" NONE");
 	}
 
@@ -284,11 +284,11 @@ static _Bool print_all_commands(const int32_t pnum)
 	}
 
 	for (size_t i = 0; i < get_num_of_available_cmds(); ++i) {
-		if (strlen((char*)get_player_buffer(pnum)) + strlen((char*)get_command(i)) > BUFFER_LENGTH) {
+		if (strlen((char *)get_player_buffer(pnum)) + strlen((char *)get_command(i)) > BUFFER_LENGTH) {
 			assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 			continue;
 		}
-		if (strlen((char*)get_player_buffer(pnum)) == 0) {
+		if (strlen((char *)get_player_buffer(pnum)) == 0) {
 			set_player_buffer_replace(pnum, get_command(i));
 		} else {
 			set_player_buffer_append(pnum, get_command(i));
@@ -307,10 +307,10 @@ static _Bool print_all_commands(const int32_t pnum)
 
 int32_t greet_player(const int32_t pnum)
 {
-	set_player_buffer_replace(pnum, "> WELCOME.\n\n");
-	set_player_buffer_append(pnum, (uint8_t*)"Please provide a NAME; this can be two words and up to ");
-	set_player_buffer_append(pnum, (uint8_t)NAMES_MAX);
-	set_player_buffer_append(pnum, (uint8_t*)" characters long in total.\nIf you've already created a character, enter your previous name to resume.");
+	set_player_buffer_replace(pnum, (uint8_t *)"> WELCOME.\n\n");
+	set_player_buffer_append(pnum, (uint8_t *)"Please provide a NAME; this can be two words and up to ");
+	set_player_buffer_append(pnum, (uint8_t *)(char *)NAMES_MAX);
+	set_player_buffer_append(pnum, (uint8_t *)" characters long in total.\nIf you've already created a character, enter your previous name to resume.");
 	assert(outgoing_handler(pnum) == EXIT_SUCCESS);
 
 	return EXIT_SUCCESS;
@@ -333,7 +333,7 @@ int32_t print_player_speech_to_player(const int32_t pnum, const uint8_t *say)
 
 	free(buffer);
 
-	set_player_buffer_replace(pnum, (uint8_t*)"You say: ");
+	set_player_buffer_replace(pnum, (uint8_t *)"You say: ");
 	set_player_buffer_append(pnum, &say[TOKEN_SAY_CMD_LEN]);
 
 	assert(outgoing_handler(pnum) == EXIT_SUCCESS);

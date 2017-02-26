@@ -3,6 +3,7 @@
 #define SALTLEN   50
 #include "../common.h"
 
+#include "../printing/print_to_player.h"
 #include "../sqlite/helper_funcs.h"
 #include "../Players.h"
 #include "../sqlite/set_get_dbs.h"

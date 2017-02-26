@@ -1,31 +1,32 @@
 #include "room_adjustments.h"
 
 static int32_t adjusting_room_exit(const int32_t pnum, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z);
-static int32_t get_direction_as_number(const uint8_t *dir);
 static int32_t get_new_room_id(void);
 
-// TODO: split overloaded function up
-int32_t insert_room(const uint8_t *rname, const int32_t xloc, const int32_t yloc, const int32_t zloc, 
-			const uint8_t *rdesc, const uint8_t *owner, const uint8_t *flags)
+int32_t insert_room(struct NewRoom rconfig)
 {
 	const int32_t new_room_id = get_new_room_id();
 	uint8_t *sqlerr = NULL;
 
-	struct Map *map = lookup_room(xloc, zloc, yloc, -1);
+	struct Map *map = lookup_room(rconfig.x, rconfig.y, rconfig.z, -1);
+
 	if (map == NULL)
 		return -2;
+
 	free(map);
 
-	uint8_t *querystr = (uint8_t *)sqlite3_mprintf("INSERT INTO CORE_ROOMS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
-			(char)new_room_id, (char *)rname, (char *)rdesc, (char)xloc, (char)yloc, (char)zloc, 
+	uint8_t *querystr = (uint8_t *)sqlite3_mprintf(
+			"INSERT INTO CORE_ROOMS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
+			(char)new_room_id, (char *)rconfig.name, (char *)rconfig.desc, (char)rconfig.x, (char)rconfig.y, (char)rconfig.z, 
 			"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", 
-			owner, owner, flags);
+			(char *)rconfig.owner, (char *)rconfig.flags);
 	if (sqlite3_exec(get_roomdb(), (char *)querystr, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 room_insert error!\n%s\n", sqlite3_errmsg(get_roomdb()));
 		sqlite3_free(sqlerr);
 		return EXIT_FAILURE;
 	}
 	sqlite3_free(querystr);
+
 	return EXIT_SUCCESS;
 }
 
@@ -38,16 +39,12 @@ static int32_t get_new_room_id(void)
 	return new_id;
 }
 
-int32_t remove_room(int32_t x, int32_t y, int32_t z, const int32_t pnum)
+int32_t remove_room(const int32_t pnum)
 {
 	uint8_t *sqlerr = NULL;
-
-	if (x == -1 && y == -1 && z == -1) {
-		x = get_player_coord(X_COORD_REQUEST, pnum);
-		y = get_player_coord(Y_COORD_REQUEST, pnum);
-		z = get_player_coord(Z_COORD_REQUEST, pnum);
-	}
-
+	int32_t x = get_player_coord(X_COORD_REQUEST, pnum);
+	int32_t y = get_player_coord(Y_COORD_REQUEST, pnum);
+	int32_t z = get_player_coord(Z_COORD_REQUEST, pnum);
 	struct Map *map = lookup_room(x, y, z, pnum);
 
 	if (map == NULL)
@@ -68,27 +65,27 @@ int32_t remove_room(int32_t x, int32_t y, int32_t z, const int32_t pnum)
 	}
 	sqlite3_free(querystr);
 
-	if (map->north == 1)
+	if (map->north == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -2, x, y + 1, z);
-	if (map->south == 1)
+	if (map->south == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -1, x, y - 1, z);
-	if (map->east == 1)
+	if (map->east == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -4, x + 1, y, z);
-	if (map->west == 1)
+	if (map->west == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -3, x + 1, y, z);
 
-	if (map->up == 1)
+	if (map->up == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -6, x, y, z + 1);
-	if (map->down == 1)
+	if (map->down == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -5, x, y - 1, z);
 
-	if (map->northeast == 1)
+	if (map->northeast == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -9, x + 1, y + 1, z);
-	if (map->southeast == 1)
+	if (map->southeast == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -10, x + 1, y - 1, z);
-	if (map->southwest == 1)
+	if (map->southwest == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -7, x - 1, y - 1, z);
-	if (map->northwest == 1)
+	if (map->northwest == true)
 		adjust_room_details(ADJUSTING_ROOM_EXIT, 0, -8, x - 1, y + 1, z);
 	//status = check_exits_and_adjust(ADJUSTING_ROOM_EXIT, x, y, z);
 
@@ -180,7 +177,7 @@ int32_t get_opposite_dir(const uint8_t *dir)
 	return EXIT_FAILURE;
 }
 
-static int32_t get_direction_as_number(const uint8_t *dir)
+int32_t get_direction_as_number(const uint8_t *dir)
 {
 	if (strcmp((char *)dir, "north") || strcmp((char *)dir,"North"))
 		return NORTH_DIR;
@@ -202,18 +199,50 @@ static int32_t get_direction_as_number(const uint8_t *dir)
 		return SOUTHWEST_DIR;
 	if (strcmp((char *)dir, "northwest") || strcmp((char *)dir,"Northwest"))
 		return NORTHWEST_DIR;
+	if (strcmp((char *)dir, "return") || strcmp((char *)dir, "Return"))
+		return RETURN_ORIGIN_DIR;
 	return EXIT_FAILURE;
+}
+
+uint8_t *get_dir_string(const int32_t dir)
+{
+	if (dir == RETURN_ORIGIN_DIR)
+		return (uint8_t *)"back to the core.";
+	if (dir == NORTH_DIR)
+		return (uint8_t *)"north";
+	if (dir == SOUTH_DIR)
+		return (uint8_t *)"south";
+	if (dir == EAST_DIR)
+		return (uint8_t *)"east";
+	if (dir == WEST_DIR)
+		return (uint8_t *)"west";
+	if (dir == UP_DIR)
+		return (uint8_t *)"up";
+	if (dir == DOWN_DIR)
+		return (uint8_t *)"down";
+	if (dir == NORTHEAST_DIR)
+		return (uint8_t *)"northeast";
+	if (dir == SOUTHEAST_DIR)
+		return (uint8_t *)"southeast";
+	if (dir == SOUTHWEST_DIR)
+		return (uint8_t *)"southwest";
+	if (dir == NORTHWEST_DIR)
+		return (uint8_t *)"northwest";
+	return (uint8_t *)"EMPTY";
 }
 
 static int32_t adjusting_room_exit(const int32_t pnum, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z)
 {
+	printf("%d %d %d %d\n", pnum, x, y, z);
+	if (reverse) 
+		printf(".\n");
+	// TODO: use newroom 
 	/*
 	if (strlen((char *)get_player_store(pnum)) == 0 || get_player_store(pnum) == NULL)
 		return -1;
 
 	const int32_t direction = get_direction_as_number(get_player_store(pnum));
 
-	assert(direction != 0);
 	struct Map *map = lookup_room(x, y, z, pnum);
 
 	uint8_t *room = sqlite3_mprintf("UPDATE CORE_ROOMS SET %Q = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 

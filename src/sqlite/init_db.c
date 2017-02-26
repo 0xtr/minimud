@@ -1,8 +1,5 @@
 #include "init_db.h"
 
-static const uint8_t *BASE_ROOM_NAME = (uint8_t*)"The Core of the World";
-static const uint8_t *BASE_ROOM_DESC = (uint8_t*)"It is pitch black. You are likely to be eaten by a null character." ;
-
 int32_t init_db(const int32_t DB_TYPE)
 {
 	_Bool tables_needed = false;
@@ -13,9 +10,12 @@ int32_t init_db(const int32_t DB_TYPE)
 	if (access((char*)SQLITE_PLAYERDB_LOC, F_OK) == -1 && DB_TYPE == PLAYER_DB_TYPE)
 		tables_needed = true;
 
-	assert(sqlite3_open_v2((DB_TYPE == ROOM_DB_TYPE) 
+	if (sqlite3_open_v2((DB_TYPE == ROOM_DB_TYPE) 
 		?  SQLITE_ROOMDB_LOC 
-		: SQLITE_PLAYERDB_LOC, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL) == 0);
+		: SQLITE_PLAYERDB_LOC, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL) != SQLITE_OK) {
+		printf("%s %s\n", SQLITE_ROOMDB_LOC, SQLITE_PLAYERDB_LOC);
+		perror("db error!");
+	}
 	(DB_TYPE == ROOM_DB_TYPE) ? set_roomdb(db) : set_playerdb(db);
 
 	if (tables_needed == true) {
@@ -34,6 +34,15 @@ int32_t init_db(const int32_t DB_TYPE)
 	}
 
 	// check that we have at least the origin room
-	assert(insert_room(BASE_ROOM_NAME, 0, 0, 0, BASE_ROOM_DESC, (uint8_t*)"admin", (uint8_t*)"none"));
+	struct NewRoom rconfig;
+	rconfig.name = (uint8_t*)"The Core of the World";
+	rconfig.desc = (uint8_t*)"It is pitch black. You are likely to be eaten by a null character.";
+	rconfig.x = 0;
+	rconfig.y = 0;
+	rconfig.z = 0;
+	rconfig.owner = (uint8_t *)"admin";
+	rconfig.flags = (uint8_t *)"none";
+	//assert(insert_room(BASE_ROOM_NAME, 0, 0, 0, BASE_ROOM_DESC, (uint8_t*)"admin", (uint8_t*)"none"));
+	assert(insert_room(rconfig));
 	return EXIT_SUCCESS;
 }

@@ -102,3 +102,4 @@
 #define SOUTHEAST_DIR   		-9007
 #define SOUTHWEST_DIR   		-9008
 #define NORTHWEST_DIR   		-9009
+#define RETURN_ORIGIN_DIR   		-9010
