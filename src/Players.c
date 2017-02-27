@@ -158,7 +158,7 @@ size_t get_num_of_players(void)
 {
 	size_t list_size = 0;
 	Player_struct *tmp = head;
-	for (list_size = 0; tmp->prev != NULL; ++list_size) {
+	for (list_size = 0; (tmp = tmp->prev) != NULL; ++list_size) {
 	}
 	return list_size;
 }

@@ -5,21 +5,21 @@ static int32_t get_new_room_id(void);
 
 int32_t insert_room(struct NewRoom rconfig)
 {
-	const int32_t new_room_id = get_new_room_id();
 	uint8_t *sqlerr = NULL;
+	const int32_t new_room_id = get_new_room_id();
 
 	struct Map *map = lookup_room(rconfig.x, rconfig.y, rconfig.z, -1);
 
-	if (map == NULL)
-		return -2;
-
-	free(map);
+	if (map != NULL) {
+		free(map);
+		return EXIT_SUCCESS;
+	}
 
 	uint8_t *querystr = (uint8_t *)sqlite3_mprintf(
-			"INSERT INTO CORE_ROOMS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
-			(char)new_room_id, (char *)rconfig.name, (char *)rconfig.desc, (char)rconfig.x, (char)rconfig.y, (char)rconfig.z, 
-			"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", 
-			(char *)rconfig.owner, (char *)rconfig.flags);
+		"INSERT INTO ROOMS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
+		(char)new_room_id, (char *)rconfig.name, (char *)rconfig.desc, (char)rconfig.x, (char)rconfig.y, (char)rconfig.z, 
+		"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", 
+		(char *)rconfig.owner, (char *)rconfig.flags);
 	if (sqlite3_exec(get_roomdb(), (char *)querystr, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 room_insert error!\n%s\n", sqlite3_errmsg(get_roomdb()));
 		sqlite3_free(sqlerr);
@@ -55,7 +55,7 @@ int32_t remove_room(const int32_t pnum)
 		return -2;
 	}
 
-	uint8_t *querystr = (uint8_t *)sqlite3_mprintf("DELETE FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
+	uint8_t *querystr = (uint8_t *)sqlite3_mprintf("DELETE FROM ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
 	if (sqlite3_exec(get_roomdb(), (char *)querystr, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 failure in remove_room; could not delete the room:\n%s\n", sqlite3_errmsg(get_roomdb()));
 		sqlite3_free(querystr);
@@ -120,17 +120,17 @@ int32_t adjust_room_details(const int32_t adjusting, const _Bool reverse, const 
 		return -3;
 
 	if (adjusting == ADJUSTING_ROOM_DESC) {
-		room = (uint8_t *)sqlite3_mprintf("UPDATE CORE_ROOMS SET rdesc = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
+		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rdesc = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
 			get_player_store(pnum), get_player_pname(pnum), (char)x, (char)y, (char)z);
 	} else if (adjusting == ADJUSTING_ROOM_NAME) {
-		room = (uint8_t *)sqlite3_mprintf("UPDATE CORE_ROOMS SET rname = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
+		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rname = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
 			get_player_store(pnum), get_player_pname(pnum), (char)x, (char)y, (char)z);
 	} else if (adjusting == ADJUSTING_ROOM_EXIT) {
 		// room = adjusting_room_exit(pnum);
 	} else if (adjusting == ADJUSTING_ROOM_FLAG) {
 		// got to get current, then add to rflags
 		// room = adjusting_room_flag(pnum);
-		room = (uint8_t *)sqlite3_mprintf("UPDATE CORE_ROOMS SET rflags = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
+		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rflags = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
 			get_player_pname(pnum), (char)x, (char)y, (char)z);
 	}
 
@@ -245,7 +245,7 @@ static int32_t adjusting_room_exit(const int32_t pnum, const _Bool reverse, cons
 
 	struct Map *map = lookup_room(x, y, z, pnum);
 
-	uint8_t *room = sqlite3_mprintf("UPDATE CORE_ROOMS SET %Q = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
+	uint8_t *room = sqlite3_mprintf("UPDATE ROOMS SET %Q = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
 			get_dir_string(direction), reverse_of_current(direction, reverse), get_player_pname(pnum), (char)x, (char)y, (char)z);
 			*/
 

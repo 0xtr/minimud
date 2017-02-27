@@ -16,7 +16,7 @@ static _Bool has_exit(const int32_t exit_value);
 struct Map *lookup_room(const int32_t x, const int32_t y, const int32_t z, const int32_t pnum)
 {
 	uint8_t *sqlerr = NULL;
-	uint8_t *room = (uint8_t *)sqlite3_mprintf("SELECT * FROM CORE_ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
+	uint8_t *room = (uint8_t *)sqlite3_mprintf("SELECT * FROM ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
 
 	struct Map *map = get_room();
 

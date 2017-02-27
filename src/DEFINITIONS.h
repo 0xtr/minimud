@@ -1,5 +1,7 @@
 #pragma once
 
+#define DEBUG
+
 #define BUFFER_LENGTH    512
 #define PRINT_LINE_WIDTH 56
 #define NAMES_MIN        5

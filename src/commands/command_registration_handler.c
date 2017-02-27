@@ -33,7 +33,7 @@ int32_t parse_clist(void)
 	FILE *fp = NULL;
 
 	head = NULL;
-	assert(access("src/commands/COMMAND_LIST.txt", F_OK) == -1);
+	assert(access("src/commands/COMMAND_LIST.txt", F_OK) == 0);
 	assert((fp = fopen("src/commands/COMMAND_LIST.txt", "r")) != NULL);
 
 	for (size_t i = 0; (ret = getline((char **)line, &line_len, fp)) != EOF; ++i) {

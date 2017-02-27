@@ -13,8 +13,7 @@ int32_t main(void)
 	fd_set rfds;
 
 	// open the sqlite3 db connections for rooms & players 
-	assert(init_db(ROOM_DB_TYPE) == EXIT_SUCCESS);
-	assert(init_db(PLAYER_DB_TYPE) == EXIT_SUCCESS);
+	assert(init_dbs() == EXIT_SUCCESS);
 	// build the list of commands from text file into memory
 	assert(parse_clist() == EXIT_SUCCESS);
 

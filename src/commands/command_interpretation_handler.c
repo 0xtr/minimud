@@ -2,6 +2,7 @@
 
 static uint8_t *process_command_from_pbuf(const size_t pnum);
 static _Bool handle_incoming_name(const int32_t pnum, const uint8_t *command);
+static void handle_room_creation(const int32_t pnum, const uint8_t *command);
 
 // TODO: split
 int32_t interpret_command(const size_t pnum)
@@ -10,26 +11,13 @@ int32_t interpret_command(const size_t pnum)
 	int32_t rv = 0;
 	int32_t x, y, z;
 
-	#define ANNOUNCE_LOGIN_TO_OTHER_PLAYERS \
-		 x = get_player_coord(X_COORD_REQUEST, get_player_socket(pnum));\
-		 y = get_player_coord(Y_COORD_REQUEST, get_player_socket(pnum));\
-		 z = get_player_coord(Z_COORD_REQUEST, get_player_socket(pnum));\
-		 strncpy(get_player_buffer(pnum), get_player_pname(pnum), NAMES_MAX);\
-		 strcat((char*)get_player_buffer(pnum), " has connected, in location [");\
-		 rv = lookup_room_name_from_coords(x, y, z);\
-		 strcat(get_player_buffer(pnum), "].");\
-		 print_not_player(pnum, ALL_PLAYERS, ALL_PLAYERS);\
-
-	// -------------------------------------------------------
-
 	// clean up
-	if (get_player_wait_state(pnum) != THEIR_NAME) {
-		command = process_command_from_pbuf(pnum);
-		if (get_player_hold_for_input(pnum) == 1 && strcmp((char*)command, "quit") != 0) {
-			if (strlen((char*)command) > get_max_command_len() || ((check_clist(pnum, command)) != 1)) { // not a valid command, inform the player 
-				print_to_player(pnum, INVALCMD);
-				return -1;
-			}
+	command = process_command_from_pbuf(pnum);
+	if (get_player_hold_for_input(pnum) == 1 && strcmp((char*)command, "quit") != 0) {
+		if (strlen((char*)command) > get_max_command_len() || 
+		   ((check_clist(pnum, command)) != 1)) { // not a valid command, inform the player 
+			print_to_player(pnum, INVALCMD);
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -142,37 +130,7 @@ int32_t interpret_command(const size_t pnum)
 		print_to_player(pnum, PRINT_ROOM_CREATION_CONFIRMALL);
 		break;
 	case WAIT_ROOM_CREATION_CONF:
-		if ((strcmp((char*)command, "y") == 0) || (strcmp((char*)command, "Y") == 0)) {
-			x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, pnum);
-			y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, pnum);
-			z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, pnum);
-
-			struct NewRoom rconfig;
-			rv = insert_room(rconfig);
-			/*
-			rv = insert_room((uint8_t*)"NULL SPACE", x, y, z, 
-					 (uint8_t*)"There's nothing here but a lack of oxygen and the sense of impending doom.",
-					 get_player_pname(pnum), (uint8_t*)"none");
-					 */
-			if (rv == 1) {
-				print_to_player(pnum, PRINT_ROOM_CREATION_SUCCESS);
-				rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 0, pnum, 
-					get_player_coord(X_COORD_REQUEST, pnum),
-					get_player_coord(Y_COORD_REQUEST, pnum),
-					get_player_coord(Z_COORD_REQUEST, pnum));
-				rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 1, pnum, x, y, z);
-				print_to_player(pnum, SHOWROOM);
-			} else if (rv == -3) {
-			    	print_to_player(pnum, PRINT_INSUFFICIENT_PERMISSIONS);
-			} else {
-			    	print_to_player(pnum, PRINT_ROOM_CREATION_FAILURE);
-			}
-		} else {
-			print_to_player(pnum, PRINT_EXITING_CMD_WAIT);
-		}
-		clear_player_store(pnum);
-		set_player_wait_state(pnum, NO_WAIT_STATE);
-		set_player_hold_for_input(pnum, 0);
+		handle_room_creation(pnum, command);
 		break;
 
 	case WAIT_ENTER_FLAG_NAME:
@@ -216,6 +174,44 @@ int32_t interpret_command(const size_t pnum)
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
+}
+
+static void handle_room_creation(const int32_t pnum, const uint8_t *command)
+{
+	if ((strcmp((char*)command, "y") != 0) && (strcmp((char*)command, "Y") != 0)) {
+		print_to_player(pnum, PRINT_EXITING_CMD_WAIT);
+	}
+	int32_t x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, pnum);
+	int32_t y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, pnum);
+	int32_t z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, pnum);
+
+	struct NewRoom rconfig;
+	rconfig.name = (uint8_t*)"NULL SPACE";
+	rconfig.x = x;
+	rconfig.y = y;
+	rconfig.z = z;
+	rconfig.desc = (uint8_t*)"There's nothing here but a lack of oxygen and the sense of impending doom.";
+	rconfig.owner = get_player_pname(pnum);
+	rconfig.flags = (uint8_t*)"none";
+	int rv = insert_room(rconfig);
+
+	if (rv == 1) {
+		print_to_player(pnum, PRINT_ROOM_CREATION_SUCCESS);
+		rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 0, pnum, 
+			get_player_coord(X_COORD_REQUEST, pnum),
+			get_player_coord(Y_COORD_REQUEST, pnum),
+			get_player_coord(Z_COORD_REQUEST, pnum));
+		rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 1, pnum, x, y, z);
+		print_to_player(pnum, SHOWROOM);
+	} else if (rv == -3) {
+		print_to_player(pnum, PRINT_INSUFFICIENT_PERMISSIONS);
+	} else {
+		print_to_player(pnum, PRINT_ROOM_CREATION_FAILURE);
+	}
+
+	clear_player_store(pnum);
+	set_player_wait_state(pnum, NO_WAIT_STATE);
+	set_player_hold_for_input(pnum, 0);
 }
 
 static uint8_t *process_command_from_pbuf(const size_t pnum)
