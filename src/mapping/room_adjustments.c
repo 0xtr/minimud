@@ -1,6 +1,6 @@
 #include "room_adjustments.h"
 
-static int32_t adjusting_room_exit(const int32_t pnum, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z);
+static int32_t adjusting_room_exit(const int32_t socket, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z);
 static int32_t get_new_room_id(void);
 
 int32_t insert_room(struct NewRoom rconfig)
@@ -39,18 +39,18 @@ static int32_t get_new_room_id(void)
 	return new_id;
 }
 
-int32_t remove_room(const int32_t pnum)
+int32_t remove_room(const int32_t socket)
 {
 	uint8_t *sqlerr = NULL;
-	int32_t x = get_player_coord(X_COORD_REQUEST, pnum);
-	int32_t y = get_player_coord(Y_COORD_REQUEST, pnum);
-	int32_t z = get_player_coord(Z_COORD_REQUEST, pnum);
-	struct Map *map = lookup_room(x, y, z, pnum);
+	int32_t x = get_player_coord(X_COORD_REQUEST, socket);
+	int32_t y = get_player_coord(Y_COORD_REQUEST, socket);
+	int32_t z = get_player_coord(Z_COORD_REQUEST, socket);
+	struct Map *map = lookup_room(x, y, z, socket);
 
 	if (map == NULL)
 		return -1;
 
-	if (strcmp((char *)map->owner, (char *)get_player_pname(pnum)) != 0) {
+	if (strcmp((char *)map->owner, (char *)get_player_name(socket)) != 0) {
 		free_room(map);
 		return -2;
 	}
@@ -98,40 +98,38 @@ int32_t remove_players_from_room(const int32_t x, const int32_t y, const int32_t
 {
 	// get_players_in_room(x, y, z);
 	for (size_t i = 0; i < get_num_of_players(); ++i) {
-		if (get_player_in_use(i) == 1) {
-			if (get_player_coord(X_COORD_REQUEST, i) == x &&
-				get_player_coord(Y_COORD_REQUEST, i) == y &&
-				get_player_coord(Z_COORD_REQUEST, i) == z) {
-				print_to_player(i, PRINT_REMOVED_FROM_ROOM);
-				adjust_player_location(i, -1, -1, -1);
-				print_to_player(i, SHOWROOM);
-			}
+		if (get_player_coord(X_COORD_REQUEST, i) == x &&
+			get_player_coord(Y_COORD_REQUEST, i) == y &&
+			get_player_coord(Z_COORD_REQUEST, i) == z) {
+			print_to_player(i, PRINT_REMOVED_FROM_ROOM);
+			adjust_player_location(i, -1, -1, -1);
+			print_to_player(i, SHOWROOM);
 		}
 	}
 	return EXIT_SUCCESS;
 }
 
-int32_t adjust_room_details(const int32_t adjusting, const _Bool reverse, const int32_t pnum, const int32_t x, const int32_t y, const int32_t z)
+int32_t adjust_room_details(const int32_t adjusting, const _Bool reverse, const int32_t socket, const int32_t x, const int32_t y, const int32_t z)
 {
 	uint8_t *sqlerr = NULL;
 	uint8_t *room   = NULL;
 
-	if (compare_room_owner(pnum, x, y, z) == -1)
+	if (compare_room_owner(socket, x, y, z) == -1)
 		return -3;
 
 	if (adjusting == ADJUSTING_ROOM_DESC) {
 		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rdesc = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
-			get_player_store(pnum), get_player_pname(pnum), (char)x, (char)y, (char)z);
+			get_player_store(socket), get_player_name(socket), (char)x, (char)y, (char)z);
 	} else if (adjusting == ADJUSTING_ROOM_NAME) {
 		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rname = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
-			get_player_store(pnum), get_player_pname(pnum), (char)x, (char)y, (char)z);
+			get_player_store(socket), get_player_name(socket), (char)x, (char)y, (char)z);
 	} else if (adjusting == ADJUSTING_ROOM_EXIT) {
-		// room = adjusting_room_exit(pnum);
+		// room = adjusting_room_exit(socket);
 	} else if (adjusting == ADJUSTING_ROOM_FLAG) {
 		// got to get current, then add to rflags
-		// room = adjusting_room_flag(pnum);
+		// room = adjusting_room_flag(socket);
 		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rflags = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
-			get_player_pname(pnum), (char)x, (char)y, (char)z);
+			get_player_name(socket), (char)x, (char)y, (char)z);
 	}
 
 	lookup_room_exits(x, y, z, -1);
@@ -231,22 +229,22 @@ uint8_t *get_dir_string(const int32_t dir)
 	return (uint8_t *)"EMPTY";
 }
 
-static int32_t adjusting_room_exit(const int32_t pnum, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z)
+static int32_t adjusting_room_exit(const int32_t socket, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z)
 {
-	printf("%d %d %d %d\n", pnum, x, y, z);
+	printf("%d %d %d %d\n", socket, x, y, z);
 	if (reverse) 
 		printf(".\n");
 	// TODO: use newroom 
 	/*
-	if (strlen((char *)get_player_store(pnum)) == 0 || get_player_store(pnum) == NULL)
+	if (strlen((char *)get_player_store(socket)) == 0 || get_player_store(socket) == NULL)
 		return -1;
 
-	const int32_t direction = get_direction_as_number(get_player_store(pnum));
+	const int32_t direction = get_direction_as_number(get_player_store(socket));
 
-	struct Map *map = lookup_room(x, y, z, pnum);
+	struct Map *map = lookup_room(x, y, z, socket);
 
 	uint8_t *room = sqlite3_mprintf("UPDATE ROOMS SET %Q = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
-			get_dir_string(direction), reverse_of_current(direction, reverse), get_player_pname(pnum), (char)x, (char)y, (char)z);
+			get_dir_string(direction), reverse_of_current(direction, reverse), get_player_name(socket), (char)x, (char)y, (char)z);
 			*/
 
 	//free_room(map);

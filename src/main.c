@@ -56,14 +56,13 @@ int32_t main(void)
 		// status = poll(
 
 		if (FD_ISSET(master_sockfd, &rfds)) {
-			get_new_player();
 			//Player *player = get_new_player();
-			new_fd = accept(master_sockfd, (struct sockaddr *restrict)get_newest_player_address(), (socklen_t *restrict)get_newest_player_address_len());
+			new_fd = accept(master_sockfd, NULL, NULL);
 			if (new_fd == -1) {
 				perror("Failed to accept incoming connection");
 				break;
 			}
-			if ((find_and_set_new_player_struct(new_fd)) == 0) {
+			if ((add_new_player(new_fd)) == EXIT_FAILURE) {
 				perror("Error setting up the new player's connection");
 				return EXIT_FAILURE;
 			}

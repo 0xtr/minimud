@@ -1,53 +1,53 @@
 #include "outgoing_handler.h"
 
 static float get_buffer_split_by_line_width(const int32_t expected);
-static int32_t check_for_prompt_chars(const int32_t pnum);
+static int32_t check_for_prompt_chars(const int32_t socket);
 static _Bool all_data_was_sent(const int32_t total, const int32_t expected);
-static _Bool is_there_another_space(const int32_t pnum, const int32_t buffer_pos, const int32_t plus);
-static size_t find_reasonable_line_end(const int32_t pnum, const int32_t buffer_pos);
+static _Bool is_there_another_space(const int32_t socket, const int32_t buffer_pos, const int32_t plus);
+static size_t find_reasonable_line_end(const int32_t socket, const int32_t buffer_pos);
 static _Bool is_space_or_newline(const uint8_t character);
-static int32_t send_and_handle_errors(const int32_t pnum, const int32_t expected);
+static int32_t send_and_handle_errors(const int32_t socket, const int32_t expected);
 
-int32_t outgoing_handler(const int32_t pnum)
+int32_t outgoing_handler(const int32_t socket)
 {
-	size_t expected = strlen((char *)get_player_buffer(pnum));
+	size_t expected = strlen((char *)get_player_buffer(socket));
 	int32_t buffer_pos = 0;
 
-	if ((CHARS_FOR_PROMPT_AND_NULL + strlen((char *)get_player_buffer(pnum))) <= PRINT_LINE_WIDTH) {
-		expected += check_for_prompt_chars(pnum);
-		return send_and_handle_errors(pnum, expected);
+	if ((CHARS_FOR_PROMPT_AND_NULL + strlen((char *)get_player_buffer(socket))) <= PRINT_LINE_WIDTH) {
+		expected += check_for_prompt_chars(socket);
+		return send_and_handle_errors(socket, expected);
 	}
 
-	const double LINES_REQUIRED_FOR_MSG = get_buffer_split_by_line_width(strlen((char *)get_player_buffer(pnum)));
+	const double LINES_REQUIRED_FOR_MSG = get_buffer_split_by_line_width(strlen((char *)get_player_buffer(socket)));
 	uint8_t *processed_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
 
 	for (size_t iters = LINES_REQUIRED_FOR_MSG; iters > 0; iters--) {
-		const size_t stop_at_char = find_reasonable_line_end(pnum, buffer_pos);
+		const size_t stop_at_char = find_reasonable_line_end(socket, buffer_pos);
 
 		if (strlen((char *)processed_buf) == 0) {
-			strncpy((char *)processed_buf, (char *)get_player_buffer(pnum)[buffer_pos], stop_at_char);
+			strncpy((char *)processed_buf, (char *)get_player_buffer(socket)[buffer_pos], stop_at_char);
 		} else {
-			strncat((char *)processed_buf, (char *)get_player_buffer(pnum)[buffer_pos], stop_at_char);
+			strncat((char *)processed_buf, (char *)get_player_buffer(socket)[buffer_pos], stop_at_char);
 		}
 		strncat((char *)processed_buf, "\n", BUFFER_LENGTH - strlen((char *)processed_buf) - 1);
 		buffer_pos += stop_at_char;
 	}
 
 	processed_buf[BUFFER_LENGTH] = '\0';
-	set_player_buffer_replace(pnum, processed_buf);
+	set_player_buffer_replace(socket, processed_buf);
 	free(processed_buf);
 
-	return send_and_handle_errors(pnum, expected);
+	return send_and_handle_errors(socket, expected);
 }
 
-static size_t find_reasonable_line_end(const int32_t pnum, const int32_t buffer_pos)
+static size_t find_reasonable_line_end(const int32_t socket, const int32_t buffer_pos)
 {
 	int32_t last_space = 0;
 
 	for (size_t i = 0; i < PRINT_LINE_WIDTH; ++i) {
-		if (is_space_or_newline(get_player_buffer(pnum)[buffer_pos + i]) == true) {
+		if (is_space_or_newline(get_player_buffer(socket)[buffer_pos + i]) == true) {
 			last_space = i;
-			if (is_there_another_space(pnum, buffer_pos, i) == false)
+			if (is_there_another_space(socket, buffer_pos, i) == false)
 				break;
 		} 
 	}
@@ -63,10 +63,10 @@ static _Bool is_space_or_newline(const uint8_t character)
 	return character == 32 || character == 10;
 }
 
-static _Bool is_there_another_space(const int32_t pnum, const int32_t buffer_pos, const int32_t plus)
+static _Bool is_there_another_space(const int32_t socket, const int32_t buffer_pos, const int32_t plus)
 {
 	for (size_t i = plus+1; i < PRINT_LINE_WIDTH; ++i) {
-		if (get_player_buffer(pnum)[buffer_pos + i] == ' ')
+		if (get_player_buffer(socket)[buffer_pos + i] == ' ')
 			return true;
 	}
 
@@ -88,13 +88,13 @@ static float get_buffer_split_by_line_width(const int32_t expected)
 	return integral;
 }
 
-static int32_t send_and_handle_errors(const int32_t pnum, const int32_t expected)
+static int32_t send_and_handle_errors(const int32_t socket, const int32_t expected)
 {
 	#define MAX_ATTEMPTS 10
 	int32_t returned, total = 0;
 
 	for (int i = 0; i < MAX_ATTEMPTS; ++i) {
-		returned = send(get_player_socket(pnum), &get_player_buffer(pnum)[total], expected, 0);
+		returned = send(socket, &get_player_buffer(socket)[total], expected, 0);
 		if (returned != -1) {
 			if (all_data_was_sent((total += returned), expected) == EXIT_SUCCESS) {
 				break;
@@ -106,7 +106,7 @@ static int32_t send_and_handle_errors(const int32_t pnum, const int32_t expected
 			case ENOTCONN:
 			case ECONNRESET:
 				perror("Socket needs to be terminated; client left");
-				shutdown_socket(pnum);
+				shutdown_socket(socket);
 				break;
 			case EMSGSIZE:
 				perror("Tried to send a message that was too large");
@@ -117,7 +117,7 @@ static int32_t send_and_handle_errors(const int32_t pnum, const int32_t expected
 		}
 	}
 
-	clear_player_buffer(pnum);
+	clear_player_buffer(socket);
 	return EXIT_SUCCESS;
 }
 
@@ -126,20 +126,20 @@ static _Bool all_data_was_sent(const int32_t total, const int32_t expected)
 	return total == expected;
 }
 
-static int32_t check_for_prompt_chars(const int32_t pnum)
+static int32_t check_for_prompt_chars(const int32_t socket)
 {
-	if (get_player_buffer(pnum)[0] == '>' && get_player_buffer(pnum)[1] == ' ')
+	if (get_player_buffer(socket)[0] == '>' && get_player_buffer(socket)[1] == ' ')
 		return EXIT_SUCCESS; // +0 to expected
 	uint8_t *tmp_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
 
 	tmp_buf[0] = '>'; 
 	tmp_buf[1] = ' '; 
 
-	strncat((char *)tmp_buf, (char *)get_player_buffer(pnum), BUFFER_LENGTH - CHARS_FOR_PROMPT_AND_NULL);
+	strncat((char *)tmp_buf, (char *)get_player_buffer(socket), BUFFER_LENGTH - CHARS_FOR_PROMPT_AND_NULL);
 	if (tmp_buf[strlen((char *)tmp_buf)] == '\n')
 		tmp_buf[strlen((char *)tmp_buf)] = '\0';
 
-	set_player_buffer_replace(pnum, tmp_buf);
+	set_player_buffer_replace(socket, tmp_buf);
 
 	free(tmp_buf);
 

@@ -2,10 +2,10 @@
 
 static const uint8_t RESERVED_WORDS[10][15] = { "admin", "root", "TABLE", "ADMIN", "Admin", "Administrator" };
 
-int32_t get_existing_player_hash(const int32_t pnum)
+int32_t get_existing_player_hash(const int32_t socket)
 {
 	uint8_t *sqlerr = NULL;
-	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE pname LIKE %Q;", get_player_pname(pnum));
+	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", get_player_name(socket));
 	if (sqlite3_exec(get_playerdb(), (char *)pcheck, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 error! Failed to get player's hash:\n%s\n", sqlite3_errmsg(get_playerdb()));
 		sqlite3_free(sqlerr);
@@ -14,15 +14,15 @@ int32_t get_existing_player_hash(const int32_t pnum)
 	}
 	sqlite3_free(pcheck);
 	if (get_sqlite_rows_count() == 0) {
-		fprintf(stdout, "Couldn't retrieve the hash for player %d.\n", pnum);
+		fprintf(stdout, "Couldn't retrieve the hash for player %d.\n", socket);
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
 }
 
-int32_t get_player_coord(const int32_t coord_type, const int32_t pnum)
+int32_t get_player_coord(const int32_t coord_type, const int32_t socket)
 {
-	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE pname LIKE %Q;", get_player_pname(pnum));
+	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", get_player_name(socket));
 	uint8_t *sqlerr = NULL;
 	if (sqlite3_exec(get_playerdb(), (char *)pcheck, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 	#ifdef DEBUG
@@ -61,7 +61,7 @@ int32_t get_next_player_num(void)
 	return get_sqlite_rows_count() + 1;
 }
 
-int32_t insert_player(const uint8_t *pname, const uint8_t *pw, const int32_t pnum)
+int32_t insert_player(const uint8_t *name, const uint8_t *pw, const int32_t socket)
 {
 	size_t HASH_LEN = 70;
 	uint8_t *sqlerr = NULL;
@@ -80,11 +80,11 @@ int32_t insert_player(const uint8_t *pname, const uint8_t *pw, const int32_t pnu
 	// insert the above ^
 	// player id in table, name, hash, salt, last ip, x, y, z
 	uint8_t *querystr = (uint8_t *)sqlite3_mprintf("INSERT INTO PLAYERS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
-		(char)pnum, (char *)pname, (char *)hash_result, (char *)salt, (char *)get_player_store(pnum), "0", "0", "0");
+		(char)socket, (char *)name, (char *)hash_result, (char *)salt, (char *)get_player_store(socket), "0", "0", "0");
 
 	if (sqlite3_exec(get_playerdb(), (char *)querystr, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE player insert error:\n%s\n", sqlite3_errmsg(get_playerdb()));
-		print_to_player(pnum, PLAYER_CREATION_FAILED);
+		print_to_player(socket, PLAYER_CREATION_FAILED);
 
 		free(hash_result);
 
@@ -95,21 +95,21 @@ int32_t insert_player(const uint8_t *pname, const uint8_t *pw, const int32_t pnu
 
 	sqlite3_free(querystr);
 	explicit_bzero(&salt, SALTLEN);
-	explicit_bzero(&pname, NAMES_MAX);
+	explicit_bzero(&name, NAMES_MAX);
 	explicit_bzero(&pw, NAMES_MAX);
 	explicit_bzero(&hash_result, HASH_LEN);
 
 	free(hash_result);
 
-	print_to_player(pnum, PLAYER_CREATION_SUCCESS);
+	print_to_player(socket, PLAYER_CREATION_SUCCESS);
 	return EXIT_SUCCESS;
 }
 
-int32_t lookup_player(const uint8_t *pname)
+int32_t lookup_player(const uint8_t *name)
 {
 	uint8_t *sqlerr = NULL;
 	// check for players with the same name 
-	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE pname LIKE %Q;", pname);
+	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", name);
 
 	if (sqlite3_exec(get_playerdb(), (char *)pcheck, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 error in lookup_player:\n%s\n", sqlite3_errmsg(get_playerdb()));
@@ -121,25 +121,25 @@ int32_t lookup_player(const uint8_t *pname)
 	return (get_sqlite_rows_count() != 0) ? 1 : 0;
 }
 
-int32_t check_if_name_is_reserved(const int32_t pnum, const uint8_t *name)
+int32_t check_if_name_is_reserved(const int32_t socket, const uint8_t *name)
 {
 	for (size_t i = 0; i < 10; ++i) {
 		if (strcmp((char *)name, (char *)RESERVED_WORDS[i]) == 0) {
-			print_to_player(pnum, NAME_UNAVAILABLE);
+			print_to_player(socket, NAME_UNAVAILABLE);
 			return EXIT_FAILURE;
 		}
 	}
 	return EXIT_SUCCESS;
 }
 
-int32_t check_if_name_is_valid(const int32_t pnum, const uint8_t *name)
+int32_t check_if_name_is_valid(const int32_t socket, const uint8_t *name)
 {
-	if (strlen((char *)get_player_buffer(pnum)) > NAMES_MAX || strlen((char *)name) < NAMES_MIN) {
-		print_to_player(pnum, NAME_NOT_WITHIN_PARAMS);
+	if (strlen((char *)get_player_buffer(socket)) > NAMES_MAX || strlen((char *)name) < NAMES_MIN) {
+		print_to_player(socket, NAME_NOT_WITHIN_PARAMS);
 		return EXIT_FAILURE;
 	}
 	for (size_t i = 0; i < NAMES_MAX; ++i) {
-		if (!isalpha(get_player_buffer(pnum)[i]))
+		if (!isalpha(get_player_buffer(socket)[i]))
 			return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;

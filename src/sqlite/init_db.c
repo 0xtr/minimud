@@ -29,9 +29,6 @@ int32_t init_dbs(void)
 	rconfig.flags = (uint8_t *)"none";
 	assert(insert_room(rconfig) == 0);
 
-	#ifdef DEBUG
-	printf("db init done\n");
-	#endif
 	return EXIT_SUCCESS;
 }
 

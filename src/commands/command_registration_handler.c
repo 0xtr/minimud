@@ -83,7 +83,7 @@ size_t get_total_length_of_all_cmds(void)
 	return TOTAL_LENGTH_OF_ALL_CMDS;
 }
 
-int32_t check_clist(const int32_t pnum, const uint8_t *command)
+int32_t check_clist(const int32_t socket, const uint8_t *command)
 {
 	clist *tmp = head;
 
@@ -94,54 +94,54 @@ int32_t check_clist(const int32_t pnum, const uint8_t *command)
 		}
 
 		if (is_direction(command))
-			assert(move_player(pnum, get_direction_as_number(command)));
+			assert(move_player(socket, get_direction_as_number(command)));
 
 		// isroomcmd
 		// isgamecmd
 		if (strcmp((char *)command, "look") == 0 || command[0] == 'l') {
-			print_to_player(pnum, SHOWROOM);
+			print_to_player(socket, SHOWROOM);
 		} else if (strcmp((char *)command, "say") == 0 ||
 			strcmp((char *)command, "Say") == 0) {
-			print_player_speech_to_player(pnum, command);
-			print_not_player(pnum, command, ROOM_ONLY);
+			print_player_speech_to_player(socket, command);
+			print_not_player(socket, command, ROOM_ONLY);
 		} else if (strcmp((char *)command, "quit") == 0) {
-			shutdown_socket(pnum);
+			shutdown_socket(socket);
 		} else if (strcmp((char *)command, "commands") == 0) {
-			print_to_player(pnum, SHOWCMDS);
+			print_to_player(socket, SHOWCMDS);
 		} else if (strcmp((char *)command, "players") == 0) {
-			print_to_player(pnum, LISTPLAYERS);
+			print_to_player(socket, LISTPLAYERS);
 
 		////////// ROOMS //////////
 		// if (issetcmd(command[0]) == 0) {
 		//     set_room(socket_num, command);
 		// }
 		} else if (strcmp((char *)command, "setrname") == 0) {
-			print_to_player(pnum, PRINT_PROVIDE_NEW_ROOM_NAME);
-			set_player_wait_state(pnum, WAIT_ENTER_NEW_ROOM_NAME);
-			set_player_hold_for_input(pnum, 1);
+			print_to_player(socket, PRINT_PROVIDE_NEW_ROOM_NAME);
+			set_player_wait_state(socket, WAIT_ENTER_NEW_ROOM_NAME);
+			set_player_holding_for_input(socket, 1);
 		} else if (strcmp((char *)command, "setrdesc") == 0) {
-			print_to_player(pnum, PRINT_PROVIDE_NEW_ROOM_DESC);
-			set_player_wait_state(pnum, WAIT_ENTER_NEW_ROOM_DESC);
-			set_player_hold_for_input(pnum, 1);
+			print_to_player(socket, PRINT_PROVIDE_NEW_ROOM_DESC);
+			set_player_wait_state(socket, WAIT_ENTER_NEW_ROOM_DESC);
+			set_player_holding_for_input(socket, 1);
 		} else if (strcmp((char *)command, "setrexit") == 0) {
-			print_to_player(pnum, PRINT_PROVIDE_ROOM_EXIT_NAME);
-			set_player_wait_state(pnum, WAIT_ENTER_EXIT_NAME);
-			set_player_hold_for_input(pnum, 1);
+			print_to_player(socket, PRINT_PROVIDE_ROOM_EXIT_NAME);
+			set_player_wait_state(socket, WAIT_ENTER_EXIT_NAME);
+			set_player_holding_for_input(socket, 1);
 		} else if (strcmp((char *)command, "setrflag") == 0) {
-			print_to_player(pnum, PRINT_PROVIDE_ROOM_FLAG_NAME);
-			set_player_wait_state(pnum, WAIT_ENTER_FLAG_NAME);
-			set_player_hold_for_input(pnum, 1);
+			print_to_player(socket, PRINT_PROVIDE_ROOM_FLAG_NAME);
+			set_player_wait_state(socket, WAIT_ENTER_FLAG_NAME);
+			set_player_holding_for_input(socket, 1);
 			// if (isroomexistcmd(command[0]) == 0) {
 			//     something
 			// }
 		} else if (strcmp((char *)command, "mkroom") == 0) {
-			print_to_player(pnum, PRINT_ROOM_CREATION_GIVE_DIR);
-			set_player_wait_state(pnum, WAIT_ROOM_CREATION_DIR);
-			set_player_hold_for_input(pnum, 1);
+			print_to_player(socket, PRINT_ROOM_CREATION_GIVE_DIR);
+			set_player_wait_state(socket, WAIT_ROOM_CREATION_DIR);
+			set_player_holding_for_input(socket, 1);
 		} else if (strcmp((char *)command, "rmroom") == 0) {
-			print_to_player(pnum, PRINT_ROOM_REMOVAL_CHECK);
-			set_player_wait_state(pnum, WAIT_ROOM_REMOVAL_CHECK);
-			set_player_hold_for_input(pnum, 1);
+			print_to_player(socket, PRINT_ROOM_REMOVAL_CHECK);
+			set_player_wait_state(socket, WAIT_ROOM_REMOVAL_CHECK);
+			set_player_holding_for_input(socket, 1);
 		}
 
 		/* we only reach this if we found a match */

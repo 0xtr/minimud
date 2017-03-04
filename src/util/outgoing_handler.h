@@ -6,4 +6,4 @@
 #include "../Players.h"
 #include "incoming_handler.h"
 
-int32_t outgoing_handler(const int32_t player_num);
+int32_t outgoing_handler(const int32_t socket);

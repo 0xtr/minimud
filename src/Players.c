@@ -1,183 +1,282 @@
 #include "common.h"
 #include "Players.h"
 
-static Player_struct *player;
-static Player_struct *curr, *head;
+static struct Player *head = NULL;
+static struct Player *tail = NULL;
 
-Player_struct *get_player(const int32_t pnum)
+#define find_player_node \
+	struct Player *curr = head;\
+	while ((curr = curr->next) != NULL) {\
+		if (curr->socket_num == socket)\
+			break;\
+	}\
+
+#define player_not_found\
+	curr->socket_num != socket || curr == NULL
+
+struct Player *get_player_head(void)
 {
-	return &player[pnum];
+	return head;
 }
 
-Player_struct *get_newest_player(void)
+int32_t remove_last_player_record(void)
 {
-	return curr;
+	if (tail == NULL)
+		return EXIT_FAILURE;
+
+	struct Player *curr = tail;
+
+	curr = tail->prev;
+	free(tail);
+
+	curr->next = NULL;
+	tail = curr;
+
+	return EXIT_SUCCESS;
 }
 
-uint8_t *get_player_store(const int32_t pnum)
+int32_t remove_player_by_socket(const int32_t socket)
 {
-	return player[pnum].store;
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	struct Player *prev = curr->prev;
+	struct Player *next = curr->next;
+
+	free(curr);
+	prev->next = next;
+	next->prev = prev;
+
+	return EXIT_SUCCESS;
 }
 
-void set_player_hold_for_input(const int32_t pnum, const _Bool hold)
+int32_t add_new_player(const int32_t socket)
 {
-	player[pnum].hold_for_input = hold;
+	struct Player *curr = (struct Player *)malloc(sizeof(struct Player));
+	if (curr == NULL)
+		return EXIT_FAILURE;
+
+	memset(curr, 0, sizeof(struct Player));
+
+    	curr->socket_num = socket;
+    	curr->inventory = get_new_player_inventory(socket);
+	curr->holding_for_input = true;
+	curr->wait_state = THEIR_NAME;
+	curr->prev = tail;
+
+	tail->next = curr;
+	tail = curr;
+
+	return EXIT_SUCCESS;
 }
 
-int32_t get_player_wait_state(const int32_t pnum)
+uint8_t *get_player_store(const int32_t socket)
 {
-	return player[pnum].wait_state;
+	find_player_node;
+
+	if (player_not_found)
+		return NULL;
+
+	return curr->store;
 }
 
-void set_player_wait_state(const int32_t pnum, const int32_t wait_state)
+int32_t set_player_holding_for_input(const int32_t socket, const _Bool hold)
 {
-	player[pnum].wait_state = wait_state;
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	curr->holding_for_input = hold;
+
+	return EXIT_SUCCESS;
 }
 
-void set_player_pname(const int32_t pnum, const uint8_t *name)
+int32_t get_player_wait_state(const int32_t socket)
 {
-	strncpy((char *)player[pnum].pname, (char *)name, NAMES_MAX);
+	find_player_node;
+
+	if (player_not_found)
+		return -1;
+
+	return curr->wait_state;
 }
 
-void set_player_store_replace(const int32_t pnum, const uint8_t *newval)
+int32_t set_player_wait_state(const int32_t socket, const int32_t wait_state)
 {
-	strncpy((char *)player[pnum].store, (char *)newval, BUFFER_LENGTH);
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	curr->wait_state = wait_state;
+
+	return EXIT_SUCCESS;
 }
 
-void set_player_store_append(const int32_t pnum, const uint8_t *new)
+int32_t set_player_name(const int32_t socket, const uint8_t *name)
 {
-	strncat((char *)player[pnum].store, (char *)new, BUFFER_LENGTH 
-			- strlen((char *)player[pnum].store));
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	strncpy((char *)curr->name, (char *)name, NAMES_MAX);
+
+	return EXIT_SUCCESS;
 }
 
-void clear_player_buffer(const int32_t pnum)
+int32_t set_player_store_replace(const int32_t socket, const uint8_t *newval)
 {
-	memset(player[pnum].buffer, 0, BUFFER_LENGTH);
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	strncpy((char *)curr->store, (char *)newval, BUFFER_LENGTH);
+
+	return EXIT_SUCCESS;
 }
 
-uint8_t *get_player_pname(const int32_t pnum)
+int32_t set_player_store_append(const int32_t socket, const uint8_t *new)
 {
-	return player[pnum].pname;
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	strncat((char *)curr->store, (char *)new, BUFFER_LENGTH 
+			- strlen((char *)curr->store));
+
+	return EXIT_SUCCESS;
 }
 
-void init_player_store(const int32_t pnum)
+int32_t clear_player_buffer(const int32_t socket)
 {
-	player[pnum].store = calloc(BUFFER_LENGTH, sizeof(uint8_t));
-	player[pnum].store_size = strlen((char *)player[pnum].buffer);
-	strncpy((char *)player[pnum].store, (char *)player[pnum].buffer, 
-			strlen((char *)player[pnum].buffer));
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	memset(curr->buffer, 0, BUFFER_LENGTH);
+
+	return EXIT_SUCCESS;
 }
 
-void clear_player_store(const int32_t pnum)
+uint8_t *get_player_name(const int32_t socket)
 {
-	assert(player[pnum].store_size != 0);
-	memset(player[pnum].store, '\0', player[pnum].store_size);
-	free(player[pnum].store);
-	player[pnum].store = NULL;
-	player[pnum].store_size = 0;
+	find_player_node;
+
+	if (player_not_found)
+		return NULL;
+
+	return curr->name;
 }
 
-_Bool get_player_hold_for_input(const int32_t pnum)
+int32_t init_player_store(const int32_t socket)
 {
-	return player[pnum].hold_for_input;
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	curr->store = calloc(BUFFER_LENGTH, sizeof(uint8_t));
+	curr->store_size = strlen((char *)curr->buffer);
+	strncpy((char *)curr->store, (char *)curr->buffer, 
+			strlen((char *)curr->buffer));
+
+	return EXIT_SUCCESS;
 }
 
-struct sockaddr *get_newest_player_address(void)
+int32_t clear_player_store(const int32_t socket)
 {
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	assert(curr->store_size != 0);
+	memset(curr->store, '\0', curr->store_size);
+	free(curr->store);
+	curr->store = NULL;
+	curr->store_size = 0;
+
+	return EXIT_SUCCESS;
+}
+
+_Bool get_player_holding_for_input(const int32_t socket)
+{
+	find_player_node;
+
+	if (player_not_found)
+		return NULL;
+
+	return curr->holding_for_input;
+}
+
+struct sockaddr *get_player_address(const int32_t socket)
+{
+	find_player_node;
+// trying to pass it an arg with void
+
+	if (player_not_found)
+		return NULL;
+
 	return curr->address;
 }
 
-uint8_t *get_player_buffer(const int32_t pnum)
+uint8_t *get_player_buffer(const int32_t socket)
 {
-	return player[pnum].buffer;
+	find_player_node;
+
+	if (player_not_found)
+		return NULL;
+
+	return curr->buffer;
 }
 
-_Bool get_player_in_use(const int32_t pnum)
+socklen_t *get_player_address_len(const int32_t socket)
 {
-	return player[pnum].in_use;
-}
+	find_player_node;
 
-void set_player_in_use(const int32_t pnum, _Bool in_use)
-{
-	player[pnum].in_use = in_use;
-}
+	if (player_not_found)
+		return 0;
 
-int32_t get_player_socket(const int32_t pnum)
-{
-	return player[pnum].socket_num;
-}
-
-void set_player_socket(const int32_t pnum, const int32_t socket)
-{
-	player[pnum].socket_num = socket;
-}
-
-socklen_t *get_newest_player_address_len(void)
-{
 	return &curr->address_len;
 }
 
-void set_player_buffer_replace(const int32_t pnum, const uint8_t *newbuf)
+int32_t set_player_buffer_replace(const int32_t socket, const uint8_t *newbuf)
 {
-	strncpy((char *)player[pnum].buffer, (char *)newbuf, BUFFER_LENGTH);
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	strncpy((char *)curr->buffer, (char *)newbuf, BUFFER_LENGTH);
+
+	return EXIT_SUCCESS;
 }
 
-void set_player_buffer_append(const int32_t pnum, const uint8_t *append)
+int32_t set_player_buffer_append(const int32_t socket, const uint8_t *append)
 {
-	strncat((char *)player[pnum].buffer, (char *)append, 
-		strlen((char *)player[pnum].buffer) - strlen((char *)append));
-}
+	find_player_node;
 
-void remove_player_record(const int32_t pnum)
-{
-	// remove prev and next and set surrounding records to each other
-}
+	if (player_not_found)
+		return EXIT_FAILURE;
 
-void remove_last_player_record(void)
-{
-	printf("players taking %lu bytes space\n", sizeof(player));
-	free(head);
-	head = curr->prev;
-	head->next = NULL;
-	head = curr;
-	printf("players now taking %lu bytes space\n", sizeof(player));
-}
+	strncat((char *)curr->buffer, (char *)append, 
+		strlen((char *)curr->buffer) - strlen((char *)append));
 
-Player_struct *get_new_player(void)
-{
-	printf("players taking %lu bytes space\n", sizeof(player));
-	curr = (Player_struct *)malloc(sizeof(Player_struct));
-	curr->prev = head;
-	head->next = curr;
-	head = curr;
-	printf("players now taking %lu bytes space\n", sizeof(player));
-	return head;
+	return EXIT_SUCCESS;
 }
 
 size_t get_num_of_players(void)
 {
 	size_t list_size = 0;
-	Player_struct *tmp = head;
-	for (list_size = 0; (tmp = tmp->prev) != NULL; ++list_size) {
+	struct Player *tmp = head;
+	for (list_size = 0; (tmp = tmp->next) != NULL; ++list_size) {
 	}
 	return list_size;
-}
-
-int32_t getplayernum(const int32_t socknum)
-{
-	int32_t i;
-	_Bool found = false;
-	Player_struct *tmp = head;
-	for (i = 0; tmp->prev != NULL; ++i) {
-		if (player[i].socket_num == socknum) {
-			found = true;
-			break;
-		}
-		tmp = tmp->prev;
-	}
-	if (found == 1) {
-		return i;
-	} else {
-		return -1; 
-	}
 }

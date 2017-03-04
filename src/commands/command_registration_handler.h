@@ -13,5 +13,5 @@ size_t get_num_of_available_cmds(void);
 size_t get_total_length_of_all_cmds(void);
 size_t get_max_command_len(void);
 int32_t parse_clist(void);
-int32_t check_clist(const int32_t pnum, const uint8_t *command);
+int32_t check_clist(const int32_t socket, const uint8_t *command);
 uint8_t *get_command(const int32_t cmd);

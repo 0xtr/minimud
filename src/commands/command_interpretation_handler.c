@@ -13,7 +13,7 @@ int32_t interpret_command(const size_t pnum)
 
 	// clean up
 	command = process_command_from_pbuf(pnum);
-	if (get_player_hold_for_input(pnum) == 1 && strcmp((char*)command, "quit") != 0) {
+	if (get_player_holding_for_input(pnum) == 1 && strcmp((char*)command, "quit") != 0) {
 		if (strlen((char*)command) > get_max_command_len() || 
 		   ((check_clist(pnum, command)) != 1)) { // not a valid command, inform the player 
 			print_to_player(pnum, INVALCMD);
@@ -57,12 +57,12 @@ int32_t interpret_command(const size_t pnum)
 			print_to_player(pnum, PRINT_EXITING_CMD_WAIT);
 		}
 		set_player_wait_state(pnum, NO_WAIT_STATE);
-		set_player_hold_for_input(pnum, 0);
+		set_player_holding_for_input(pnum, 0);
 		clear_player_store(pnum);
 
 		print_to_player(pnum, SHOWROOM);
 		uint8_t room_echo[BUFFER_LENGTH] = {0};
-		strncpy((char*)room_echo, (char*)get_player_pname(pnum), BUFFER_LENGTH);
+		strncpy((char*)room_echo, (char*)get_player_name(pnum), BUFFER_LENGTH);
 		strncat((char*)room_echo, " changes the room name.", BUFFER_LENGTH - strlen((char*)room_echo));
 		print_not_player(pnum, room_echo, ROOM_ONLY);
 		break;
@@ -89,7 +89,7 @@ int32_t interpret_command(const size_t pnum)
 			print_to_player(pnum, PRINT_EXITING_CMD_WAIT);
 		}
 		set_player_wait_state(pnum, NO_WAIT_STATE);
-		set_player_hold_for_input(pnum, 0);
+		set_player_holding_for_input(pnum, 0);
 		clear_player_store(pnum);
 		print_to_player(pnum, SHOWROOM);
 		break;
@@ -101,7 +101,7 @@ int32_t interpret_command(const size_t pnum)
 		} else {
 			print_to_player(pnum, PRINT_EXITING_CMD_WAIT);
 			set_player_wait_state(pnum, NO_WAIT_STATE);
-			set_player_hold_for_input(pnum, 0);
+			set_player_holding_for_input(pnum, 0);
 		}
 		break;
 	case WAIT_ROOM_REMOVAL_CONFIRM:
@@ -118,7 +118,7 @@ int32_t interpret_command(const size_t pnum)
 			print_to_player(pnum, PRINT_EXITING_CMD_WAIT);
 		}
 		set_player_wait_state(pnum, NO_WAIT_STATE);
-		set_player_hold_for_input(pnum, 0);
+		set_player_holding_for_input(pnum, 0);
 		break;
 	case WAIT_ROOM_CREATION_DIR:
 		if ((ensure_player_moving_valid_dir(pnum, command)) == EXIT_FAILURE)
@@ -137,7 +137,7 @@ int32_t interpret_command(const size_t pnum)
 		// CHECK_IF_IS_VALID_FLAG;
 		// finish
 		set_player_wait_state(pnum, NO_WAIT_STATE);
-		set_player_hold_for_input(pnum, 0);
+		set_player_holding_for_input(pnum, 0);
 		break;
 	case WAIT_ENTER_EXIT_NAME:
 		if ((ensure_player_moving_valid_dir(pnum, command)) == EXIT_FAILURE)
@@ -166,11 +166,11 @@ int32_t interpret_command(const size_t pnum)
 
 		clear_player_store(pnum);
 		set_player_wait_state(pnum, NO_WAIT_STATE);
-		set_player_hold_for_input(pnum, 0);
+		set_player_holding_for_input(pnum, 0);
 		break;
 
 	default:
-		fprintf(stdout, "Unhandled wait state %d on player %s.\n", get_player_wait_state(pnum), get_player_pname(pnum));
+		fprintf(stdout, "Unhandled wait state %d on player %s.\n", get_player_wait_state(pnum), get_player_name(pnum));
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
@@ -191,7 +191,7 @@ static void handle_room_creation(const int32_t pnum, const uint8_t *command)
 	rconfig.y = y;
 	rconfig.z = z;
 	rconfig.desc = (uint8_t*)"There's nothing here but a lack of oxygen and the sense of impending doom.";
-	rconfig.owner = get_player_pname(pnum);
+	rconfig.owner = get_player_name(pnum);
 	rconfig.flags = (uint8_t*)"none";
 	int rv = insert_room(rconfig);
 
@@ -211,7 +211,7 @@ static void handle_room_creation(const int32_t pnum, const uint8_t *command)
 
 	clear_player_store(pnum);
 	set_player_wait_state(pnum, NO_WAIT_STATE);
-	set_player_hold_for_input(pnum, 0);
+	set_player_holding_for_input(pnum, 0);
 }
 
 static uint8_t *process_command_from_pbuf(const size_t pnum)
@@ -237,8 +237,8 @@ static _Bool handle_incoming_name(const int32_t pnum, const uint8_t *command)
 	if (check_if_player_is_already_online(pnum))
 		return false;
 
-	set_player_pname(pnum, command);
-	if (lookup_player(get_player_pname(pnum)) == true) {
+	set_player_name(pnum, command);
+	if (lookup_player(get_player_name(pnum)) == true) {
 		print_to_player(pnum, REQUEST_PW_FOR_EXISTING);
 		set_player_wait_state(pnum, THEIR_PASSWORD_EXISTING);
 	} else {
