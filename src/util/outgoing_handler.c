@@ -20,20 +20,21 @@ int32_t outgoing_handler(const int32_t socket)
 
 	const double LINES_REQUIRED_FOR_MSG = get_buffer_split_by_line_width(strlen((char *)get_player_buffer(socket)));
 	uint8_t *processed_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
+	void *loc_in_buf = NULL;
 
-	for (size_t iters = LINES_REQUIRED_FOR_MSG; iters > 0; iters--) {
+	for (size_t iters = 0; iters < LINES_REQUIRED_FOR_MSG; ++iters) {
 		const size_t stop_at_char = find_reasonable_line_end(socket, buffer_pos);
 
 		if (strlen((char *)processed_buf) == 0) {
-			strncpy((char *)processed_buf, (char *)get_player_buffer(socket)[buffer_pos], stop_at_char);
+			loc_in_buf = mempcpy(processed_buf, &get_player_buffer(socket)[buffer_pos], stop_at_char);
 		} else {
-			strncat((char *)processed_buf, (char *)get_player_buffer(socket)[buffer_pos], stop_at_char);
+			loc_in_buf = mempcpy(loc_in_buf, &get_player_buffer(socket)[buffer_pos], stop_at_char);
+			// accepting outgoing as incoming, giving valgrind Invalid command buffer
 		}
-		strncat((char *)processed_buf, "\n", BUFFER_LENGTH - strlen((char *)processed_buf) - 1);
+		loc_in_buf = memcpy(loc_in_buf, "\n", BUFFER_LENGTH - strlen((char *)processed_buf) - 1);
 		buffer_pos += stop_at_char;
 	}
 
-	processed_buf[BUFFER_LENGTH] = '\0';
 	set_player_buffer_replace(socket, processed_buf);
 	free(processed_buf);
 

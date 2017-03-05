@@ -1,7 +1,5 @@
 #include "bcrypt.h"
 
-#pragma GCC system_header
-
 /*	$OpenBSD: bcrypt.c,v 1.55 2015/09/13 15:33:48 guenther Exp $	*/
 
 /*

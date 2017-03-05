@@ -68,22 +68,22 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 			break;
 		case NAME_TOO_LONG:
 			set_player_buffer_replace(socket, (uint8_t *)"Name too long. Maximum length is ");
-			set_player_buffer_append(socket, (uint8_t *)NAMES_MAX);
+			set_player_buffer_append(socket, (uint8_t *)NAMES_MAX_STR);
 			set_player_buffer_append(socket, (uint8_t *)" characters. Try again.\nPlease provide a NAME.\n");
 			break;
 		case NAME_TOO_SHORT:
 			set_player_buffer_replace(socket, (uint8_t *)"Name too short. Minimum length is ");
-			set_player_buffer_append(socket, (uint8_t *)NAMES_MIN);
+			set_player_buffer_append(socket, (uint8_t *)NAMES_MIN_STR);
 			set_player_buffer_append(socket, (uint8_t *)" characters. Try again.\nPlease provide a NAME.\n");
 			break;
 		case PRINT_PROVIDE_NEW_ROOM_NAME:
 			set_player_buffer_replace(socket, (uint8_t *)"Enter a new room name, of up to ");
-			set_player_buffer_append(socket, (uint8_t *)MAX_ROOM_NAME);
+			set_player_buffer_append(socket, (uint8_t *)MAX_ROOM_NAME_STR);
 			set_player_buffer_append(socket, (uint8_t *)" chars.\n");
 			break;
 		case PRINT_PROVIDE_NEW_ROOM_DESC:
 			set_player_buffer_replace(socket, (uint8_t *)"Enter a new room description, of up to ");
-			set_player_buffer_append(socket, (uint8_t *)BUFFER_LENGTH);
+			set_player_buffer_append(socket, (uint8_t *)BUFFER_LENGTH_STR);
 			set_player_buffer_append(socket, (uint8_t *)" chars.\n");
 			break;
 		case PRINT_CONFIRM_NEW_ROOM_DESC:
@@ -308,7 +308,7 @@ int32_t greet_player(const int32_t socket)
 {
 	set_player_buffer_replace(socket, (uint8_t *)"> WELCOME.\n\n");
 	set_player_buffer_append(socket, (uint8_t *)"Please provide a NAME; this can be two words and up to ");
-	set_player_buffer_append(socket, (uint8_t *)(char *)NAMES_MAX);
+	set_player_buffer_append(socket, (uint8_t *)NAMES_MAX_STR);
 	set_player_buffer_append(socket, (uint8_t *)" characters long in total.\nIf you've already created a character, enter your previous name to resume.");
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 

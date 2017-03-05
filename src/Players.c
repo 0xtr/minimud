@@ -6,10 +6,13 @@ static struct Player *tail = NULL;
 
 #define find_player_node \
 	struct Player *curr = head;\
-	while ((curr = curr->next) != NULL) {\
-		if (curr->socket_num == socket)\
-			break;\
-	}\
+	if (curr != NULL) {\
+		while (curr != NULL) {\
+			if (curr->socket_num == socket)\
+				break;\
+			curr = curr->next;\
+		}\
+	}
 
 #define player_not_found\
 	curr->socket_num != socket || curr == NULL
@@ -65,8 +68,12 @@ int32_t add_new_player(const int32_t socket)
 	curr->holding_for_input = true;
 	curr->wait_state = THEIR_NAME;
 	curr->prev = tail;
+	memset(curr->buffer, 0, BUFFER_LENGTH);
 
-	tail->next = curr;
+	if (head == NULL)
+		head = curr;
+	if (tail != NULL)
+		tail->next = curr;
 	tail = curr;
 
 	return EXIT_SUCCESS;
@@ -123,7 +130,7 @@ int32_t set_player_name(const int32_t socket, const uint8_t *name)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	strncpy((char *)curr->name, (char *)name, NAMES_MAX);
+	memcpy(curr->name, name, NAMES_MAX);
 
 	return EXIT_SUCCESS;
 }
@@ -135,7 +142,7 @@ int32_t set_player_store_replace(const int32_t socket, const uint8_t *newval)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	strncpy((char *)curr->store, (char *)newval, BUFFER_LENGTH);
+	memcpy(curr->store, newval, BUFFER_LENGTH);
 
 	return EXIT_SUCCESS;
 }
@@ -147,6 +154,7 @@ int32_t set_player_store_append(const int32_t socket, const uint8_t *new)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
+	// TODO: use mempcpy
 	strncat((char *)curr->store, (char *)new, BUFFER_LENGTH 
 			- strlen((char *)curr->store));
 
@@ -184,8 +192,7 @@ int32_t init_player_store(const int32_t socket)
 
 	curr->store = calloc(BUFFER_LENGTH, sizeof(uint8_t));
 	curr->store_size = strlen((char *)curr->buffer);
-	strncpy((char *)curr->store, (char *)curr->buffer, 
-			strlen((char *)curr->buffer));
+	memcpy(curr->store, curr->buffer, strlen((char *)curr->buffer));
 
 	return EXIT_SUCCESS;
 }
@@ -219,7 +226,6 @@ _Bool get_player_holding_for_input(const int32_t socket)
 struct sockaddr *get_player_address(const int32_t socket)
 {
 	find_player_node;
-// trying to pass it an arg with void
 
 	if (player_not_found)
 		return NULL;
@@ -254,7 +260,7 @@ int32_t set_player_buffer_replace(const int32_t socket, const uint8_t *newbuf)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	strncpy((char *)curr->buffer, (char *)newbuf, BUFFER_LENGTH);
+	memcpy(curr->buffer, newbuf, BUFFER_LENGTH);
 
 	return EXIT_SUCCESS;
 }
@@ -266,6 +272,7 @@ int32_t set_player_buffer_append(const int32_t socket, const uint8_t *append)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
+	// TODO: mempcpy
 	strncat((char *)curr->buffer, (char *)append, 
 		strlen((char *)curr->buffer) - strlen((char *)append));
 

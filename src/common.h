@@ -2,6 +2,7 @@
 
 #define _GNU_SOURCE
 
+#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <bsd/stdlib.h>
 #include <strings.h>
@@ -9,7 +10,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#include <sys/select.h>
+#include <sys/epoll.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
