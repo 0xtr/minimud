@@ -7,6 +7,7 @@ static _Bool is_in_same_room(const int32_t x, const int32_t y, const int32_t z, 
 
 int32_t print_to_player(const int32_t socket, const int32_t argument)
 {
+	printf("print to: %d with arg %d\n", socket, argument);
 	_Bool already_sent = 0;
 	#define IS_DIRECTION_ARG (argument >= NORTH_DIR && argument <= RETURN_ORIGIN_DIR)
 
@@ -19,12 +20,10 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 			break;
 		case SHOWCMDS:
 			print_all_commands(socket);
-			already_sent = true;
-			break;
+			return EXIT_SUCCESS;
 		case SHOWROOM:
 			build_room_image(socket);
-			already_sent = true;
-			break;
+			return EXIT_SUCCESS;
 		case INVALDIR:
 			set_player_buffer_replace(socket, (uint8_t *)"Cannot move in that direction. Type 'look' to view room.");
 			break;
@@ -33,7 +32,7 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 			set_player_buffer_append(socket, get_player_name(socket));
 			set_player_buffer_append(socket, (uint8_t *)"].\n");
 			set_player_buffer_append(socket, (uint8_t *)"Please provide a password less than ");
-			set_player_buffer_append(socket, (uint8_t *)BUFFER_LENGTH);
+			set_player_buffer_append(socket, (uint8_t *)BUFFER_LENGTH_STR);
 			set_player_buffer_append(socket, (uint8_t *)" characters long.\n");
 			break;
 		case REQUEST_PW_CONFIRM:
@@ -309,7 +308,7 @@ int32_t greet_player(const int32_t socket)
 	set_player_buffer_replace(socket, (uint8_t *)"> WELCOME.\n\n");
 	set_player_buffer_append(socket, (uint8_t *)"Please provide a NAME; this can be two words and up to ");
 	set_player_buffer_append(socket, (uint8_t *)NAMES_MAX_STR);
-	set_player_buffer_append(socket, (uint8_t *)" characters long in total.\nIf you've already created a character, enter your previous name to resume.");
+	set_player_buffer_append(socket, (uint8_t *)" characters long in total.\n\nIf you've already created a character, enter your previous name to resume.");
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 
 	return EXIT_SUCCESS;
@@ -320,10 +319,11 @@ int32_t print_player_speech_to_player(const int32_t socket, const uint8_t *say)
 	#define TOKEN_SAY_CMD_LEN 4 // length req'd for the actual say command + the space after that
 	#define TOKEN_YOU_SAY_LEN 9 // length req'd for player to see You say: 
 	uint8_t *buffer = calloc(BUFFER_LENGTH, sizeof(uint8_t));
+	void *loc_in_buf = NULL;
 
-	strncpy((char *)buffer, (char *)get_player_name(socket), strlen((char *)get_player_name(socket)));
-	strncat((char *)buffer, (char *)" says: ", BUFFER_LENGTH - strlen((char *)buffer));
-	strncat((char *)buffer, (char *)say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
+	loc_in_buf = mempcpy(buffer, get_player_name(socket), strlen((char *)get_player_name(socket)));
+	loc_in_buf = mempcpy(loc_in_buf, " says: ", BUFFER_LENGTH - strlen((char *)buffer));
+	loc_in_buf = mempcpy(loc_in_buf, &say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
 
 	print_not_player(socket, buffer, ROOM_ONLY);
 #ifdef DEBUG

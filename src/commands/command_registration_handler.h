@@ -2,8 +2,13 @@
 
 #include "../common.h"
 
+struct Command {
+	uint8_t *cname;
+	struct Command *next; 
+	struct Command *prev; 
+};
+
 #include "categorize_cmds.h"
-#include "command_struct.h"
 #include "../Players.h"
 #include "../players/player_movement.h"
 #include "../printing/print_not_player.h"

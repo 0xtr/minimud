@@ -9,15 +9,17 @@ struct Player {
 
     uint8_t name[NAMES_MAX];
     uint8_t buffer[BUFFER_LENGTH];
+    void *loc_in_buf;
 
     struct  sockaddr *restrict address;
     socklen_t address_len;
 
     uint8_t *store;
+    void *loc_in_store;
     int32_t store_size;
-    struct  Player *prev;
-    struct  Player *next;
 
+    struct Player *prev;
+    struct Player *next;
     struct Inventory *inventory;
 };
 

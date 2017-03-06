@@ -11,7 +11,7 @@ int32_t calc_coord_from_playerloc_and_dir(const int32_t coord_type, const int32_
 		return EXIT_FAILURE;
 
 	uint8_t tmp[BUFFER_LENGTH] = {0};
-	strncpy((char *)tmp, (char *)get_player_store(socket), strlen((char *)get_player_store(socket)));
+	memcpy(tmp, get_player_store(socket), strlen((char *)get_player_store(socket)));
 
 	for (size_t i = 0; i < strlen((char *)tmp); ++i) {
 		if (isalpha(tmp[i]) == 0) {

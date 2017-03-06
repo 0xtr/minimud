@@ -3,10 +3,9 @@
 static float get_buffer_split_by_line_width(const int32_t expected);
 static int32_t check_for_prompt_chars(const int32_t socket);
 static _Bool all_data_was_sent(const int32_t total, const int32_t expected);
-static _Bool is_there_another_space(const int32_t socket, const int32_t buffer_pos, const int32_t plus);
 static size_t find_reasonable_line_end(const int32_t socket, const int32_t buffer_pos);
-static _Bool is_space_or_newline(const uint8_t character);
 static int32_t send_and_handle_errors(const int32_t socket, const int32_t expected);
+static size_t num_of_newlines(const int32_t socket);
 
 int32_t outgoing_handler(const int32_t socket)
 {
@@ -18,21 +17,33 @@ int32_t outgoing_handler(const int32_t socket)
 		return send_and_handle_errors(socket, expected);
 	}
 
-	const double LINES_REQUIRED_FOR_MSG = get_buffer_split_by_line_width(strlen((char *)get_player_buffer(socket)));
-	uint8_t *processed_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
 	void *loc_in_buf = NULL;
+	const double LINES_REQUIRED_FOR_MSG = 
+		get_buffer_split_by_line_width(strlen((char *)get_player_buffer(socket)))
+		+ num_of_newlines(socket);
+
+	uint8_t *processed_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
 
 	for (size_t iters = 0; iters < LINES_REQUIRED_FOR_MSG; ++iters) {
-		const size_t stop_at_char = find_reasonable_line_end(socket, buffer_pos);
+	const size_t stop_at_char = find_reasonable_line_end(socket, buffer_pos);
+	printf("stop at: %lu\n", stop_at_char);
 
+			printf("processed_buf:\n[%s]\n", processed_buf);
 		if (strlen((char *)processed_buf) == 0) {
-			loc_in_buf = mempcpy(processed_buf, &get_player_buffer(socket)[buffer_pos], stop_at_char);
+			//loc_in_buf = mempcpy(processed_buf, &get_player_buffer(socket)[buffer_pos], stop_at_char);
+			memcpy(&processed_buf[strlen((char *)processed_buf)], &get_player_buffer(socket)[buffer_pos], stop_at_char);
 		} else {
-			loc_in_buf = mempcpy(loc_in_buf, &get_player_buffer(socket)[buffer_pos], stop_at_char);
+			memcpy(&processed_buf[strlen((char *)processed_buf)], &get_player_buffer(socket)[buffer_pos], stop_at_char);
+			//loc_in_buf = mempcpy(loc_in_buf, &get_player_buffer(socket)[buffer_pos], stop_at_char);
 			// accepting outgoing as incoming, giving valgrind Invalid command buffer
 		}
-		loc_in_buf = memcpy(loc_in_buf, "\n", BUFFER_LENGTH - strlen((char *)processed_buf) - 1);
-		buffer_pos += stop_at_char;
+			printf("post processed_buf:\n[%s]\n", processed_buf);
+
+		//loc_in_buf = mempcpy(loc_in_buf, "\n", 1);
+		memcpy(&processed_buf[strlen((char *)processed_buf)], "\n", 1);
+		buffer_pos += stop_at_char + 1;
+		if (buffer_pos > expected)
+			break;
 	}
 
 	set_player_buffer_replace(socket, processed_buf);
@@ -41,37 +52,43 @@ int32_t outgoing_handler(const int32_t socket)
 	return send_and_handle_errors(socket, expected);
 }
 
+static size_t num_of_newlines(const int32_t socket)
+{
+	size_t newlines = 0;
+	for (size_t i = 0; i < strlen((char *)get_player_buffer(socket)); ++i) {
+		if (get_player_buffer(socket)[i] == '\n')
+			++newlines;
+	}
+	return newlines;
+}
+
 static size_t find_reasonable_line_end(const int32_t socket, const int32_t buffer_pos)
 {
 	int32_t last_space = 0;
+	uint8_t *last_match, *substr = calloc(PRINT_LINE_WIDTH, sizeof(uint8_t));
+	printf("got their buffer: %s\n", get_player_buffer(socket));
+	printf("buffer pos: %d\n", buffer_pos);
 
-	for (size_t i = 0; i < PRINT_LINE_WIDTH; ++i) {
-		if (is_space_or_newline(get_player_buffer(socket)[buffer_pos + i]) == true) {
-			last_space = i;
-			if (is_there_another_space(socket, buffer_pos, i) == false)
-				break;
-		} 
+	memcpy(substr, &get_player_buffer(socket)[buffer_pos], PRINT_LINE_WIDTH - 20);
+	printf("substr: [[%s]]\n", substr);
+
+	if ((last_match = (uint8_t *)strrchr((char *)substr, ' ')) != NULL)
+		last_space = last_match - substr;
+
+	if ((last_match = (uint8_t *)strchr((char *)substr, '\n')) != NULL) {
+		last_space = last_match - substr;
+		free(substr);
+		printf("newline last space %d\n", last_space);
+		return last_space;
 	}
+
+	free(substr);
 
 	if (((last_space/(double)PRINT_LINE_WIDTH)*100) < 80)
 		return PRINT_LINE_WIDTH;
 
+	printf("newline last space %d\n", last_space);
 	return last_space;
-}
-
-static _Bool is_space_or_newline(const uint8_t character)
-{
-	return character == 32 || character == 10;
-}
-
-static _Bool is_there_another_space(const int32_t socket, const int32_t buffer_pos, const int32_t plus)
-{
-	for (size_t i = plus+1; i < PRINT_LINE_WIDTH; ++i) {
-		if (get_player_buffer(socket)[buffer_pos + i] == ' ')
-			return true;
-	}
-
-	return false;
 }
 
 static float get_buffer_split_by_line_width(const int32_t expected)
@@ -79,7 +96,6 @@ static float get_buffer_split_by_line_width(const int32_t expected)
 	float integral;
 	float lines = expected / PRINT_LINE_WIDTH;
 
-	printf("lines: %f\n", lines);
 	modff (lines, &integral);
 	lines -= integral;
 

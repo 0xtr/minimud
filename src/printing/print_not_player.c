@@ -28,10 +28,11 @@ int32_t print_player_speech_to_others(const int32_t socket, const uint8_t *say)
 	#define TOKEN_SAY_CMD_LEN 4 // length req'd for the actual say command + the space after that
 	#define TOKEN_YOU_SAY_LEN 9 // length req'd for player to see You say: 
 	uint8_t *buffer = calloc(BUFFER_LENGTH, sizeof(uint8_t));
+	void *loc_in_buf = NULL; 
 
-	strncpy((char *)buffer, (char *)get_player_name(socket), strlen((char *)get_player_name(socket)));
-	strncat((char *)buffer, " says: ", BUFFER_LENGTH - strlen((char *)buffer));
-	strncat((char *)buffer, (char)&say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
+	loc_in_buf = mempcpy(buffer, get_player_name(socket), strlen((char *)get_player_name(socket)));
+	loc_in_buf = mempcpy(loc_in_buf, " says: ", BUFFER_LENGTH - strlen((char *)buffer));
+	loc_in_buf = mempcpy(loc_in_buf, &say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
 
 	print_not_player(socket, buffer, ROOM_ONLY);
 	#ifdef DEBUG

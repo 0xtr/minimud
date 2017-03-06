@@ -30,16 +30,16 @@ static void handle_player_columns(char *azColName, char *arg1)
 	} else if (azColName[0] == 'z') {
 		//player_tmp.z = atoi(argv[i]);
 	} else if (strcmp(azColName, "hash") == 0) {
-		//strncpy(player_tmp.hash, (char*)argv[i], HASHSPACE);
+		//memcpy(player_tmp.hash, argv[i], HASHSPACE);
 	}
 }
 
 static void handle_map_columns(char *azColName, char *arg1, struct Map *map)
 {
 	if (strcmp(azColName, "rname") == 0) {
-		strncpy((char*)map->rname, arg1, NAMES_MAX);
+		memcpy(map->rname, arg1, NAMES_MAX);
 	} else if (strcmp(azColName, "rdesc") == 0) {
-		strncpy((char*)map->rdesc, arg1, BUFFER_LENGTH);
+		memcpy(map->rdesc, arg1, BUFFER_LENGTH);
 	} else if (strcmp(azColName, "north") == 0) {
 		map->north = atoi(arg1);
 	} else if (strcmp(azColName, "east") == 0) {
@@ -61,7 +61,7 @@ static void handle_map_columns(char *azColName, char *arg1, struct Map *map)
 	} else if (strcmp(azColName, "northwest") == 0) {
 		map->northwest = atoi(arg1);
 	} else if (strcmp(azColName, "owner") == 0) {
-		strncpy((char*)map->owner, arg1, NAMES_MAX);
+		memcpy(map->owner, arg1, NAMES_MAX);
 	}
 }
 

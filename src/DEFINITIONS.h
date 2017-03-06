@@ -5,7 +5,7 @@
 #define MAX_SIMULTANEOUS_EPOLL_EVENTS 10
 #define BUFFER_LENGTH    512
 #define BUFFER_LENGTH_STR "512"
-#define PRINT_LINE_WIDTH 56
+#define PRINT_LINE_WIDTH 80
 #define NAMES_MIN        5
 #define NAMES_MIN_STR    "5"
 #define NAMES_MAX        45

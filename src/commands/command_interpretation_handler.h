@@ -3,7 +3,6 @@
 #include "../common.h"
 
 #include "../mapping/NewRoom.h"
-#include "command_struct.h"
 #include "command_registration_handler.h"
 #include "../players/player_movement.h"
 #include "../printing/print_not_player.h"
@@ -15,4 +14,4 @@
 #include "../mapping/lookup_room.h"
 #include "../players/player_details.h"
 
-int32_t interpret_command(const size_t pnum);
+int32_t interpret_command(const size_t socket);

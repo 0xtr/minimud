@@ -154,9 +154,10 @@ int32_t set_player_store_append(const int32_t socket, const uint8_t *new)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	// TODO: use mempcpy
-	strncat((char *)curr->store, (char *)new, BUFFER_LENGTH 
-			- strlen((char *)curr->store));
+	if (strlen((char *)curr->store) + strlen((char *)new) > BUFFER_LENGTH)
+		return EXIT_FAILURE;
+
+	memcpy(&curr->store[strlen((char *)curr->store)], new, strlen((char *)new));
 
 	return EXIT_SUCCESS;
 }
@@ -169,6 +170,7 @@ int32_t clear_player_buffer(const int32_t socket)
 		return EXIT_FAILURE;
 
 	memset(curr->buffer, 0, BUFFER_LENGTH);
+	curr->loc_in_buf = NULL;
 
 	return EXIT_SUCCESS;
 }
@@ -272,9 +274,12 @@ int32_t set_player_buffer_append(const int32_t socket, const uint8_t *append)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	// TODO: mempcpy
-	strncat((char *)curr->buffer, (char *)append, 
-		strlen((char *)curr->buffer) - strlen((char *)append));
+	if (strlen((char *)curr->buffer) + strlen((char *)append) > BUFFER_LENGTH)
+		return EXIT_FAILURE;
+
+	printf("appending: %s\n", append);
+	memcpy(&curr->buffer[strlen(curr->buffer)], append, strlen(append));
+	printf("buff post append: %s\n", curr->buffer);
 
 	return EXIT_SUCCESS;
 }

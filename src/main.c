@@ -1,4 +1,5 @@
 #include "common.h"
+#include "util/epollfd_storage.h"
 #include "sqlite/init_db.h"
 #include "commands/command_registration_handler.h"
 #include "util/incoming_handler.h"
@@ -38,8 +39,8 @@ int32_t main(void)
 		return EXIT_FAILURE;
 	}
 
-	const int32_t epollfd = epoll_create1(0);
-	if (epollfd == -1) {
+	set_epollfd(epoll_create1(0));
+	if (get_epollfd() == -1) {
 		perror("Epoll instance creation failed");
 		return EXIT_FAILURE;
 	}
@@ -49,13 +50,13 @@ int32_t main(void)
 	ev.events = EPOLLIN;
 	ev.data.fd = listen_socket;
 
-	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_socket, &ev) == -1) {
+	if (epoll_ctl(get_epollfd(), EPOLL_CTL_ADD, listen_socket, &ev) == -1) {
 		perror("Epoll ctl ops for epollfd failed");
 		return EXIT_FAILURE;
 	}
 
 	for (;;) {
-		nfds = epoll_wait(epollfd, events, MAX_SIMULTANEOUS_EPOLL_EVENTS, -1);
+		nfds = epoll_wait(get_epollfd(), events, MAX_SIMULTANEOUS_EPOLL_EVENTS, -1);
 		if (nfds == -1) {
 			perror("Epoll wait failed");
 			return EXIT_FAILURE;
@@ -70,9 +71,9 @@ int32_t main(void)
 				}
 
 				set_socket_nonblocking(new_fd);
-				ev.events = EPOLLIN | EPOLLET | EPOLLOUT;
+				ev.events = EPOLLIN | EPOLLET;
 				ev.data.fd = new_fd;
-				if (epoll_ctl(epollfd, EPOLL_CTL_ADD, new_fd, &ev) == -1) {
+				if (epoll_ctl(get_epollfd(), EPOLL_CTL_ADD, new_fd, &ev) == -1) {
 					perror("Epoll ctl ops failed");
 					return EXIT_FAILURE;
 				}
