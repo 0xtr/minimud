@@ -1,6 +1,5 @@
 #pragma once
 
-#define SALTLEN   50
 #include "../common.h"
 
 #include "../printing/print_to_player.h"

@@ -7,8 +7,6 @@ static _Bool is_in_same_room(const int32_t x, const int32_t y, const int32_t z, 
 
 int32_t print_to_player(const int32_t socket, const int32_t argument)
 {
-	printf("print to: %d with arg %d\n", socket, argument);
-	_Bool already_sent = 0;
 	#define IS_DIRECTION_ARG (argument >= NORTH_DIR && argument <= RETURN_ORIGIN_DIR)
 
 	switch (argument) {
@@ -25,7 +23,7 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 		build_room_image(socket);
 		return EXIT_SUCCESS;
 	case INVALDIR:
-		set_player_buffer_replace(socket, "Cannot move in that direction. Type 'look' to view room.");
+		set_player_buffer_replace(socket, "Cannot move in that direction. Type 'look' to view room.\n");
 		break;
 	case REQUEST_PW_FOR_NEW:
 		set_player_buffer_replace(socket, "You've provided the name [");
@@ -39,7 +37,7 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 		set_player_buffer_replace(socket, "Please confirm your password by typing it out once more.\n");
 		break;
 	case REQUEST_PW_FOR_EXISTING:
-		set_player_buffer_replace(socket, "Please provide your password.");
+		set_player_buffer_replace(socket, "Please provide your password.\n");
 		break;
 	case ATTEMPT_CREATE_USR:
 		set_player_buffer_replace(socket, "Attempting to create your character...\n");
@@ -85,12 +83,12 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 	case PRINT_CONFIRM_NEW_ROOM_DESC:
 		set_player_buffer_replace(socket, "Confirm the new description by typing Y/y. You entered:");
 		set_player_buffer_append(socket, get_player_store(socket));
-		set_player_buffer_replace(socket, "\nIf this is wrong, type something other than Y/y.");
+		set_player_buffer_replace(socket, "\nIf this is wrong, type something other than Y/y.\n");
 		break;
 	case PRINT_CONFIRM_NEW_ROOM_NAME:
 		set_player_buffer_replace(socket, "Confirm the new name by typing Y/y. You entered:");
 		set_player_buffer_append(socket, get_player_store(socket));
-		set_player_buffer_replace(socket, "\nIf this is wrong, type something other than Y/y.");
+		set_player_buffer_replace(socket, "\nIf this is wrong, type something other than Y/y.\n");
 		break;
 	case PRINT_ADJUSTMENT_SUCCESSFUL:
 		set_player_buffer_replace(socket, "Room adjusted successfully. Exiting editor.\n");
@@ -111,7 +109,7 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 		set_player_buffer_replace(socket, "Room flag toggled.\n");
 		break;
 	case PRINT_ROOM_REMOVAL_CHECK:
-		set_player_buffer_replace(socket, "You're trying to delete this room. Are you sure you want to do this?\nType only y/Y to confirm.");
+		set_player_buffer_replace(socket, "You're trying to delete this room. Are you sure you want to do this?\nType only y/Y to confirm.\n");
 		break;
 	case PRINT_ROOM_REMOVAL_CONFIRM:
 		set_player_buffer_replace(socket, "Again, confirm room deletion with y/Y - deleting: ");
@@ -164,9 +162,7 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 			set_buffer_for_movement(socket, argument);
 		}
 	}
-	if (already_sent == false) {
-		assert(outgoing_handler(socket) == EXIT_SUCCESS);
-	}
+	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 	return EXIT_SUCCESS;
 }
 

@@ -22,8 +22,6 @@ int32_t interpret_command(const size_t socket)
 		}
 	}
 
-	printf("wait state %d\n", get_player_wait_state(socket));
-
 	// should probably handle 'quit' if they want to exit this process
 	switch (get_player_wait_state(socket)) {
 	case THEIR_NAME:
@@ -37,6 +35,7 @@ int32_t interpret_command(const size_t socket)
 		break;
 	case THEIR_PASSWORD_NEWFINAL:
 		handle_new_pass(socket, command);
+		clear_player_store(socket);
 		break;
 	case WAIT_ENTER_NEW_ROOM_NAME:
 		init_player_store(socket);

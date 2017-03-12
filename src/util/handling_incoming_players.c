@@ -49,11 +49,12 @@ int32_t handle_new_pass(const int32_t socket, const uint8_t *command)
 	   (strlen((char *)command) != strlen((char *)get_player_store(socket)))) {
 		print_to_player(socket, MISMATCH_PW_SET);
 		set_player_wait_state(socket, THEIR_NAME);
+		clear_player_store(socket);
 		return EXIT_FAILURE;
 	}
 
 	print_to_player(socket, ATTEMPT_CREATE_USR);
-	if ((insert_player(get_player_name(socket), get_player_store(socket), socket)) == -1) {
+	if ((insert_player(get_player_name(socket), command, socket)) == -1) {
 		print_to_player(socket, PLAYER_CREATION_FAILED);
 		shutdown_socket(socket);
 		return EXIT_FAILURE;
@@ -69,14 +70,10 @@ int32_t handle_new_pass(const int32_t socket, const uint8_t *command)
 
 int32_t set_player_confirm_new_pw(const int32_t socket, const uint8_t *command)
 {
+	init_player_store(socket);
 	set_player_store_replace(socket, command);
-	if ((print_to_player(socket, REQUEST_PW_CONFIRM)) == 0) {
-		// TODO: confirm return of print_to_player
-		// shutdown_socket
-	}
-
+	print_to_player(socket, REQUEST_PW_CONFIRM);
 	set_player_wait_state(socket, THEIR_PASSWORD_NEWFINAL);
-
 	return EXIT_SUCCESS;
 }
 

@@ -45,6 +45,7 @@ int32_t get_next_player_num(void)
 {
 	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS;");
 	uint8_t *sqlerr = NULL;
+	reset_sqlite_rows_count();
 
 	if (sqlite3_exec(get_playerdb(), (char *)pcheck, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		sqlite3_free(pcheck);
@@ -59,31 +60,41 @@ int32_t get_next_player_num(void)
 	return get_sqlite_rows_count() + 1;
 }
 
+#define HASH_LENGTH 	70
+#define SALT_LENGTH   	50
+#define SECURELY_CLEAR_VARS \
+	explicit_bzero(&salt, SALT_LENGTH);\
+	explicit_bzero(&name, NAMES_MAX);\
+	explicit_bzero(&pw, NAMES_MAX);\
+	explicit_bzero(&hash_result, HASH_LENGTH);
 int32_t insert_player(const uint8_t *name, const uint8_t *pw, const int32_t socket)
 {
-	size_t HASH_LEN = 70;
 	uint8_t *sqlerr = NULL;
-	uint8_t salt[SALTLEN] = {0};
+	uint8_t salt[SALT_LENGTH] = {0};
 
 	for (size_t i = 0; i != 10; ++i) {
-		memset(salt, '\0', SALTLEN);
+		memset(salt, '\0', SALT_LENGTH);
 		strcpy((char *)salt, bcrypt_gensalt(10)); // pretty weak
 	}
 
 	// hash the salt + password, in that order
-	uint8_t *hash_result = calloc(HASH_LEN, sizeof(uint8_t));
-	bcrypt_newhash((char *)pw, 10, (char *)hash_result, HASH_LEN);
+	uint8_t *hash_result = calloc(HASH_LENGTH, sizeof(uint8_t));
+	// TODO: prepend salt
+	bcrypt_newhash((char *)pw, 10, (char *)hash_result, HASH_LENGTH);
 
-
-	// insert the above ^
-	// player id in table, name, hash, salt, last ip, x, y, z
 	uint8_t *querystr = (uint8_t *)sqlite3_mprintf("INSERT INTO PLAYERS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
-		(char)socket, (char *)name, (char *)hash_result, (char *)salt, (char *)get_player_store(socket), "0", "0", "0");
+		(char)get_next_player_num(), (char *)name, (char *)hash_result, (char *)salt, "-", "0", "0", "0");
+	/*
+	"CREATE TABLE PLAYERS (pnum INTEGER PRIMARY KEY," 
+	"name TEXT, hash TEXT," "salt TEXT," "last_ip TEXT,"
+	"x INT, y INT, z INT)", callback, 0, NULL) == SQLITE_OK); 
+	 */
 
 	if (sqlite3_exec(get_playerdb(), (char *)querystr, callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE player insert error:\n%s\n", sqlite3_errmsg(get_playerdb()));
 		print_to_player(socket, PLAYER_CREATION_FAILED);
 
+		SECURELY_CLEAR_VARS;
 		free(hash_result);
 
 		sqlite3_free(sqlerr);
@@ -92,11 +103,7 @@ int32_t insert_player(const uint8_t *name, const uint8_t *pw, const int32_t sock
 	}
 
 	sqlite3_free(querystr);
-	explicit_bzero(&salt, SALTLEN);
-	explicit_bzero(&name, NAMES_MAX);
-	explicit_bzero(&pw, NAMES_MAX);
-	explicit_bzero(&hash_result, HASH_LEN);
-
+	SECURELY_CLEAR_VARS;
 	free(hash_result);
 
 	print_to_player(socket, PLAYER_CREATION_SUCCESS);

@@ -46,7 +46,7 @@ static void open_playerdb(void)
 	if (tables_needed)
 		assert(sqlite3_exec(get_playerdb(), 
 			"CREATE TABLE PLAYERS (pnum INTEGER PRIMARY KEY," 
-			"pname  TEXT, hash TEXT," "salt   TEXT," "last_ip TEXT,"
+			"name TEXT, hash TEXT," "salt TEXT," "last_ip TEXT,"
 			"x INT, y INT, z INT)", callback, 0, NULL) == SQLITE_OK); 
 }
 
