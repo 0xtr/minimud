@@ -10,6 +10,10 @@ static int32_t set_socket_nonblocking(const int32_t socket);
 
 int32_t main(void)
 {
+	// get a suitable port
+	srand(time(NULL));
+	const int32_t port = rand() % (6000 + 1 - 4500) + 4500;
+	
 	// open the sqlite3 db connections for rooms & players 
 	assert(init_dbs() == EXIT_SUCCESS);
 	// build the list of commands from text file into memory
@@ -23,11 +27,11 @@ int32_t main(void)
 	}
 	set_socket_nonblocking(listen_socket);
 
-	// bind it to a port
+	// bind it to our chosen port
 	struct sockaddr_in address;
 	address.sin_family	= AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port	= htons(5000);
+	address.sin_port	= htons(port);
 	if (bind(listen_socket, (struct sockaddr *)&address, sizeof(address)) != 0) {
 		perror("Problem binding socket to a port");
 		return EXIT_FAILURE;
@@ -55,6 +59,7 @@ int32_t main(void)
 		return EXIT_FAILURE;
 	}
 
+	printf("Use port %d for connections\n", port);
 	for (;;) {
 		nfds = epoll_wait(get_epollfd(), events, MAX_SIMULTANEOUS_EPOLL_EVENTS, -1);
 		if (nfds == -1) {
