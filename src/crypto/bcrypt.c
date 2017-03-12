@@ -1,5 +1,8 @@
 #include "bcrypt.h"
 
+#pragma GCC diagnostic ignored "-Wpointer-sign"
+#pragma GCC diagnostic ignored "-Wimplicit-int"
+
 /*	$OpenBSD: bcrypt.c,v 1.55 2015/09/13 15:33:48 guenther Exp $	*/
 
 /*
@@ -222,7 +225,7 @@ bcrypt_newhash(const char *pass, int log_rounds, char *hash, size_t hashlen)
 	explicit_bzero(salt, sizeof(salt));
 	return 0;
 }
-DEF_WEAK(bcrypt_newhash);
+//DEF_WEAK(bcrypt_newhash);
 
 int
 bcrypt_checkpass(const char *pass, const char *goodhash)
@@ -240,7 +243,7 @@ bcrypt_checkpass(const char *pass, const char *goodhash)
 	explicit_bzero(hash, sizeof(hash));
 	return 0;
 }
-DEF_WEAK(bcrypt_checkpass);
+//DEF_WEAK(bcrypt_checkpass);
 
 /*
  * Measure this system's performance by measuring the time for 8 rounds.
@@ -400,4 +403,4 @@ bcrypt(const char *pass, const char *salt)
 
 	return gencrypted;
 }
-DEF_WEAK(bcrypt);
+//DEF_WEAK(bcrypt);

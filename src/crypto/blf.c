@@ -44,7 +44,7 @@
 #include <sys/param.h>
 //#include <sys/systm.h>
 
-#include <blf.h>
+#include "blf.h"
 
 #undef inline
 #ifdef __GNUC__
