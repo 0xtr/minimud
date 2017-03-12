@@ -135,7 +135,7 @@ int32_t set_player_name(const int32_t socket, const uint8_t *name)
 	return EXIT_SUCCESS;
 }
 
-int32_t set_player_store_replace(const int32_t socket, const uint8_t *newval)
+int32_t set_player_store_replace(const int32_t socket, const void *newval)
 {
 	find_player_node;
 
@@ -147,7 +147,7 @@ int32_t set_player_store_replace(const int32_t socket, const uint8_t *newval)
 	return EXIT_SUCCESS;
 }
 
-int32_t set_player_store_append(const int32_t socket, const uint8_t *new)
+int32_t set_player_store_append(const int32_t socket, const void *new)
 {
 	find_player_node;
 
@@ -255,19 +255,23 @@ socklen_t *get_player_address_len(const int32_t socket)
 	return &curr->address_len;
 }
 
-int32_t set_player_buffer_replace(const int32_t socket, const uint8_t *newbuf)
+int32_t set_player_buffer_replace(const int32_t socket, const void *newbuf)
 {
 	find_player_node;
 
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	memcpy(curr->buffer, newbuf, BUFFER_LENGTH);
+	int32_t len = strlen((char *)newbuf);
+	if (len > BUFFER_LENGTH)
+		len = BUFFER_LENGTH;
+
+	curr->loc_in_buf = mempcpy(curr->buffer, newbuf, len);
 
 	return EXIT_SUCCESS;
 }
 
-int32_t set_player_buffer_append(const int32_t socket, const uint8_t *append)
+int32_t set_player_buffer_append(const int32_t socket, const void *append)
 {
 	find_player_node;
 
@@ -277,9 +281,7 @@ int32_t set_player_buffer_append(const int32_t socket, const uint8_t *append)
 	if (strlen((char *)curr->buffer) + strlen((char *)append) > BUFFER_LENGTH)
 		return EXIT_FAILURE;
 
-	printf("appending: %s\n", append);
-	memcpy(&curr->buffer[strlen(curr->buffer)], append, strlen(append));
-	printf("buff post append: %s\n", curr->buffer);
+	curr->loc_in_buf = mempcpy(curr->loc_in_buf, append, strlen((char *)append));
 
 	return EXIT_SUCCESS;
 }
