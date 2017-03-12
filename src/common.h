@@ -2,6 +2,7 @@
 
 #define _GNU_SOURCE
 
+#include <time.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <bsd/stdlib.h>

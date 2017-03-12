@@ -1,7 +1,5 @@
 #include "player_details.h"
 
-static const uint8_t RESERVED_WORDS[10][15] = { "admin", "root", "TABLE", "ADMIN", "Admin", "Administrator" };
-
 int32_t get_existing_player_hash(const int32_t socket)
 {
 	uint8_t *sqlerr = NULL;
@@ -119,28 +117,4 @@ int32_t lookup_player(const uint8_t *name)
 	}
 	sqlite3_free(pcheck);
 	return (get_sqlite_rows_count() != 0) ? 1 : 0;
-}
-
-int32_t check_if_name_is_reserved(const int32_t socket, const uint8_t *name)
-{
-	for (size_t i = 0; i < 10; ++i) {
-		if (strcmp((char *)name, (char *)RESERVED_WORDS[i]) == 0) {
-			print_to_player(socket, NAME_UNAVAILABLE);
-			return EXIT_FAILURE;
-		}
-	}
-	return EXIT_SUCCESS;
-}
-
-int32_t check_if_name_is_valid(const int32_t socket, const uint8_t *name)
-{
-	if (strlen((char *)get_player_buffer(socket)) > NAMES_MAX || strlen((char *)name) < NAMES_MIN) {
-		print_to_player(socket, NAME_NOT_WITHIN_PARAMS);
-		return EXIT_FAILURE;
-	}
-	for (size_t i = 0; i < NAMES_MAX; ++i) {
-		if (!isalpha(get_player_buffer(socket)[i]))
-			return EXIT_FAILURE;
-	}
-	return EXIT_SUCCESS;
 }

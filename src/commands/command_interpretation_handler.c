@@ -1,19 +1,21 @@
 #include "command_interpretation_handler.h"
 
-static uint8_t *process_command_from_pbuf(const size_t socket);
+static uint8_t *process_buffer(const size_t socket);
 static _Bool handle_incoming_name(const int32_t socket, const uint8_t *command);
 static void handle_room_creation(const int32_t socket, const uint8_t *command);
 
+#define player_is_not_quitting memcmp(command, "quit", 4) != 0 
+
 int32_t interpret_command(const size_t socket)
 {
-	uint8_t *command;
+	uint8_t *command = {0};
 	int32_t rv = 0;
 	int32_t x, y, z;
 	void *loc_in_echo = NULL;
 
-	// clean up
-	command = process_command_from_pbuf(socket);
-	if (get_player_holding_for_input(socket) == 1 && memcmp(command, "quit", 4) != 0) {
+	command = process_buffer(socket);
+
+	if (get_player_holding_for_input(socket) == false && player_is_not_quitting) {
 		if (strlen((char*)command) > get_max_command_len() || check_clist(socket, command) == EXIT_FAILURE) { 
 			print_to_player(socket, INVALCMD);
 			return EXIT_FAILURE;
@@ -215,30 +217,46 @@ static void handle_room_creation(const int32_t socket, const uint8_t *command)
 	set_player_holding_for_input(socket, 0);
 }
 
-static uint8_t *process_command_from_pbuf(const size_t socket)
+static uint8_t *process_buffer(const size_t socket)
 {
- 	uint8_t *command = calloc(get_max_command_len(), sizeof(uint8_t));
+	size_t len = get_max_command_len();
+	
+	if (get_player_wait_state(socket) == THEIR_NAME)
+		len = NAMES_MAX;
 
-	for (size_t i = 0; i < get_max_command_len(); ++i) {
+	uint8_t *command = calloc(len, sizeof(uint8_t));
+
+	for (size_t i = 0; i < len; ++i) {
 		command[i] = get_player_buffer(socket)[i];
-		if (isspace(get_player_buffer(socket)[i]) != 0) {
-			command[i] = '\0';
+
+		if (command[i] == '\0')
 			break;
+
+		if (get_player_wait_state(socket) != THEIR_NAME) {
+			if (isspace(get_player_buffer(socket)[i]) != 0) {
+				command[i] = '\0';
+				break;
+			}
 		}
+
 	}
+
 	return command;
 }
 
 static _Bool handle_incoming_name(const int32_t socket, const uint8_t *command)
 {
-	if (check_if_name_is_valid(socket, command)) 
+	if (check_if_name_is_valid(socket, command) == false) 
 		return false;
-	if (check_if_name_is_reserved(socket, command))
+
+	if (check_if_name_is_reserved(socket, command) == true)
 		return false;
-	if (check_if_player_is_already_online(socket))
+
+	if (check_if_player_is_already_online(socket) == true)
 		return false;
 
 	set_player_name(socket, command);
+
 	if (lookup_player(get_player_name(socket)) == true) {
 		print_to_player(socket, REQUEST_PW_FOR_EXISTING);
 		set_player_wait_state(socket, THEIR_PASSWORD_EXISTING);

@@ -16,5 +16,3 @@ int32_t get_existing_player_hash(const int32_t socket);
 int32_t get_player_coord(int32_t coord_type, int32_t socket);
 int32_t get_next_player_num(void);
 int32_t lookup_player(const uint8_t *pname);
-int32_t check_if_name_is_valid(const int32_t socket, const uint8_t *name);
-int32_t check_if_name_is_reserved(const int32_t socket, const uint8_t *name);

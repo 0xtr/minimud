@@ -1,6 +1,6 @@
 #pragma once
 
-#define CHARS_FOR_PROMPT_AND_NULL 2
+#define CHARS_FOR_PROMPT_AND_NULL 3
 #include "../common.h"
 
 #include "../Players.h"
