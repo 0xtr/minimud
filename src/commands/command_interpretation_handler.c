@@ -35,7 +35,6 @@ int32_t interpret_command(const size_t socket)
 		break;
 	case THEIR_PASSWORD_NEWFINAL:
 		handle_new_pass(socket, command);
-		clear_player_store(socket);
 		break;
 	case WAIT_ENTER_NEW_ROOM_NAME:
 		init_player_store(socket);
@@ -237,7 +236,6 @@ static uint8_t *process_buffer(const size_t socket)
 				break;
 			}
 		}
-
 	}
 
 	return command;
