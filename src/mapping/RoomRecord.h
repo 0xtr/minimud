@@ -1,6 +1,8 @@
 #pragma once
 
-struct Map {
+#include "../common.h"
+
+struct RoomRecord {
 	int32_t id;
 	uint8_t rname[NAMES_MAX];
 	uint8_t rdesc[BUFFER_LENGTH];
@@ -17,5 +19,5 @@ struct Map {
 	_Bool southwest;
 	_Bool northwest;
 }; 
-struct Map *get_room(void);
-void free_room(struct Map *map);
+struct RoomRecord *get_room(void);
+void free_room(struct RoomRecord *room);

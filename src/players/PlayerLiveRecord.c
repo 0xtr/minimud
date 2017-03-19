@@ -1,11 +1,10 @@
-#include "common.h"
-#include "Players.h"
+#include "PlayerLiveRecord.h"
 
-static struct Player *head = NULL;
-static struct Player *tail = NULL;
+static struct PlayerLiveRecord *head = NULL;
+static struct PlayerLiveRecord *tail = NULL;
 
 #define find_player_node \
-	struct Player *curr = head;\
+	struct PlayerLiveRecord *curr = head;\
 	if (curr != NULL) {\
 		while (curr != NULL) {\
 			if (curr->socket_num == socket)\
@@ -17,7 +16,7 @@ static struct Player *tail = NULL;
 #define player_not_found\
 	curr->socket_num != socket || curr == NULL
 
-struct Player *get_player_head(void)
+struct PlayerLiveRecord *get_player_head(void)
 {
 	return head;
 }
@@ -27,7 +26,7 @@ int32_t remove_last_player_record(void)
 	if (tail == NULL)
 		return EXIT_FAILURE;
 
-	struct Player *curr = tail;
+	struct PlayerLiveRecord *curr = tail;
 
 	curr = tail->prev;
 	free(tail);
@@ -45,23 +44,31 @@ int32_t remove_player_by_socket(const int32_t socket)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	struct Player *prev = curr->prev;
-	struct Player *next = curr->next;
+	struct PlayerLiveRecord *prev = curr->prev;
+	struct PlayerLiveRecord *next = curr->next;
+
+	if (tail == curr)
+		tail = NULL;
+	if (head == curr)
+		head = NULL;
 
 	free(curr);
-	prev->next = next;
-	next->prev = prev;
+
+	if (prev != NULL)
+		prev->next = next;
+	if (next != NULL)
+		next->prev = prev;
 
 	return EXIT_SUCCESS;
 }
 
 int32_t add_new_player(const int32_t socket)
 {
-	struct Player *curr = (struct Player *)malloc(sizeof(struct Player));
+	struct PlayerLiveRecord *curr = (struct PlayerLiveRecord *)malloc(sizeof(struct PlayerLiveRecord));
 	if (curr == NULL)
 		return EXIT_FAILURE;
 
-	memset(curr, 0, sizeof(struct Player));
+	memset(curr, 0, sizeof(struct PlayerLiveRecord));
 
     	curr->socket_num = socket;
     	curr->inventory = get_new_player_inventory(socket);
@@ -210,7 +217,7 @@ int32_t clear_player_store(const int32_t socket)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	assert(curr->store_size != 0);
+	assert(curr->store_size > 0);
 	memset(curr->store, '\0', curr->store_size);
 	free(curr->store);
 	curr->store = NULL;
@@ -293,8 +300,9 @@ int32_t set_player_buffer_append(const int32_t socket, const void *append)
 size_t get_num_of_players(void)
 {
 	size_t list_size = 0;
-	struct Player *tmp = head;
+	struct PlayerLiveRecord *tmp = head;
 	for (list_size = 0; (tmp = tmp->next) != NULL; ++list_size) {
+		printf("tmp->name: %s\n", tmp->name);
 	}
 	return list_size;
 }

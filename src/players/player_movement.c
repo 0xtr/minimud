@@ -9,7 +9,7 @@ int32_t adjust_player_location(const int32_t socket, int32_t x, int32_t y, int32
 	uint8_t *querystr = (uint8_t*)sqlite3_mprintf("UPDATE PLAYERS SET x = %Q, y = %Q, z = %Q WHERE name = %Q;", 
 		            (char)x, (char)y, (char)z, (char*)get_player_name(socket));
 
-	if (sqlite3_exec(get_playerdb(), (char*)querystr, callback, 0, (char**)sqlerr) != SQLITE_OK) {
+	if (sqlite3_exec(get_playerdb(), (char*)querystr, player_callback, 0, (char**)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE player location adjustment error:\n%s\n", sqlite3_errmsg(get_playerdb()));
 		print_to_player(socket, INVALDIR);
 		sqlite3_free(querystr);

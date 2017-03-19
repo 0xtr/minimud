@@ -1,45 +1,70 @@
 #include "helper_funcs.h"
 
-static void handle_player_columns(char *azColName, char *arg1);
-static void handle_map_columns(char *azColName, char *arg1, struct Map *map);
+static void handle_player_columns(char *azColName, char *arg1, struct PlayerDBRecord *player);
+static void handle_map_columns(char *azColName, char *arg1, struct RoomRecord *map);
 
-int callback (void *map, int argc, char **argv, char **azColName)
+int room_callback (void *data, int argc, char **argv, char **azColName)
 {
-	struct Map *map_ref = map;
+	struct RoomRecord *map_ref = data;
+
 	increment_sqlite_rows_count();
 
-	for (size_t i = 0; i < (size_t)argc; ++i) {
-		if (map != NULL) {
-			handle_map_columns(azColName[i], argv[i], map_ref);
-		} else {
-			handle_player_columns(azColName[i], argv[i]);
-		}
-	}
+	if (data == NULL)
+		return EXIT_SUCCESS;
+
+	for (size_t i = 0; i < (size_t)argc; ++i)
+		handle_map_columns(azColName[i], argv[i], map_ref);
 
 	// return 0 or callback will request an abort
 	return EXIT_SUCCESS;
 }
 
-static void handle_player_columns(char *azColName, char *arg1)
+int player_callback (void *data, int argc, char **argv, char **azColName)
 {
-	printf("%s\n", arg1);
+	struct PlayerDBRecord *player_ref = data;
+
+	increment_sqlite_rows_count();
+
+	if (data == NULL)
+		return EXIT_SUCCESS;
+
+	for (size_t i = 0; i < (size_t)argc; ++i)
+		handle_player_columns(azColName[i], argv[i], player_ref);
+
+	// return 0 or callback will request an abort
+	return EXIT_SUCCESS;
+}
+
+
+static void handle_player_columns(char *azColName, char *arg1, struct PlayerDBRecord *player)
+{
+	const size_t len = strlen(azColName);
+
 	if (azColName[0] == 'x') {
-		//player_tmp.x = atoi(argv[i]);
+		player->x = atoi(arg1);
 	} else if (azColName[0] == 'y') {
-		//player_tmp.y = atoi(argv[i]);
+		player->y = atoi(arg1);
 	} else if (azColName[0] == 'z') {
-		//player_tmp.z = atoi(argv[i]);
+		player->z = atoi(arg1);
 	} else if (strcmp(azColName, "hash") == 0) {
-		//memcpy(player_tmp.hash, argv[i], HASHSPACE);
+		player->hash = (uint8_t *)arg1;
+	} else if (memcmp(azColName, "name", len) == 0) {
+		player->name = (uint8_t *)arg1;
+	} else if (memcmp(azColName, "salt", len) == 0) {
+		player->salt = (uint8_t *)arg1;
+	} else if (memcmp(azColName, "last_ip", len) == 0) {
+		player->last_ip = (uint8_t *)arg1;
 	}
 }
 
-static void handle_map_columns(char *azColName, char *arg1, struct Map *map)
+static void handle_map_columns(char *azColName, char *arg1, struct RoomRecord *map)
 {
-	if (strcmp(azColName, "rname") == 0) {
-		memcpy(map->rname, arg1, NAMES_MAX);
-	} else if (strcmp(azColName, "rdesc") == 0) {
-		memcpy(map->rdesc, arg1, BUFFER_LENGTH);
+	const size_t len = strlen(azColName);
+
+	if (strcmp(azColName, "name") == 0) {
+		memcpy(map->rname, arg1, len);
+	} else if (strcmp(azColName, "desc") == 0) {
+		memcpy(map->rdesc, arg1, len);
 	} else if (strcmp(azColName, "north") == 0) {
 		map->north = atoi(arg1);
 	} else if (strcmp(azColName, "east") == 0) {
@@ -61,7 +86,7 @@ static void handle_map_columns(char *azColName, char *arg1, struct Map *map)
 	} else if (strcmp(azColName, "northwest") == 0) {
 		map->northwest = atoi(arg1);
 	} else if (strcmp(azColName, "owner") == 0) {
-		memcpy(map->owner, arg1, NAMES_MAX);
+		memcpy(map->owner, arg1, len);
 	}
 }
 

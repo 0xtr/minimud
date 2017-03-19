@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Inventory.h"
+#include "../common.h"
+#include "../items/Inventory.h"
 
-struct Player {
+struct PlayerLiveRecord {
     _Bool   holding_for_input;
     int32_t wait_state;
     int32_t socket_num;
@@ -18,12 +19,12 @@ struct Player {
     void *loc_in_store;
     int32_t store_size;
 
-    struct Player *prev;
-    struct Player *next;
+    struct PlayerLiveRecord *prev;
+    struct PlayerLiveRecord *next;
     struct Inventory *inventory;
 };
 
-struct Player *get_player_head(void);
+struct PlayerLiveRecord *get_player_head(void);
 int32_t add_new_player(const int32_t socket);
 int32_t remove_last_player_record(void);
 int32_t remove_player_by_socket(const int32_t socket);

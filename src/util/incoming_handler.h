@@ -3,7 +3,7 @@
 #include "../common.h"
 
 #include "epollfd_storage.h"
-#include "../Players.h"
+#include "../players/PlayerLiveRecord.h"
 #include "../mapping/room_adjustments.h"
 #include "../commands/command_interpretation_handler.h"
 #include "../util/outgoing_handler.h"

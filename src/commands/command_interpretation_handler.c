@@ -22,7 +22,11 @@ int32_t interpret_command(const size_t socket)
 		}
 	}
 
-	// should probably handle 'quit' if they want to exit this process
+	if (get_player_wait_state(socket) == NO_WAIT_STATE) {
+		return check_clist(socket, command);
+	}
+
+	// should probably handle 'quit' if they want to exit this process, or C-C
 	switch (get_player_wait_state(socket)) {
 	case THEIR_NAME:
 		handle_incoming_name(socket, command);
@@ -149,7 +153,7 @@ int32_t interpret_command(const size_t socket)
 		x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, socket);
 		y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, socket);
 		z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, socket);
-		struct Map *map = lookup_room(x, y, z, -1);
+		struct RoomRecord *map = lookup_room(x, y, z, -1);
 
 		if (map != NULL) {
 			rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 1, socket, x, y, z);
@@ -179,9 +183,9 @@ int32_t interpret_command(const size_t socket)
 
 static void handle_room_creation(const int32_t socket, const uint8_t *command)
 {
-	if (command[0] != 'y' && command[0] != 'Y') {
+	if (command[0] != 'y' && command[0] != 'Y')
 		print_to_player(socket, PRINT_EXITING_CMD_WAIT);
-	}
+
 	int32_t x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, socket);
 	int32_t y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, socket);
 	int32_t z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, socket);
@@ -191,7 +195,7 @@ static void handle_room_creation(const int32_t socket, const uint8_t *command)
 	rconfig.x = x;
 	rconfig.y = y;
 	rconfig.z = z;
-	rconfig.desc = (uint8_t*)"There's nothing here but a lack of oxygen and the sense of impending doom.";
+	rconfig.desc = (uint8_t*)"It is pitch black. You are likely to be eaten by a null character.";
 	rconfig.owner = get_player_name(socket);
 	rconfig.flags = (uint8_t*)"none";
 	int rv = insert_room(rconfig);
@@ -254,13 +258,18 @@ static _Bool handle_incoming_name(const int32_t socket, const uint8_t *command)
 
 	set_player_name(socket, command);
 
-	if (lookup_player(get_player_name(socket)) == true) {
+	struct PlayerDBRecord *player;
+	if ((player = lookup_player(get_player_name(socket))) != NULL) {
 		print_to_player(socket, REQUEST_PW_FOR_EXISTING);
 		set_player_wait_state(socket, THEIR_PASSWORD_EXISTING);
+		set_player_name(socket, command);
 	} else {
 		print_to_player(socket, REQUEST_PW_FOR_NEW);
 		set_player_wait_state(socket, THEIR_PASSWORD_NEWPRELIM);
+		set_player_name(socket, command);
 	}
+
+	free(player);
 
 	return true;
 }

@@ -48,6 +48,9 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 	case PLAYER_CREATION_FAILED:
 		set_player_buffer_replace(socket, "Character creation failed. You should never see this.\n");
 		break;
+	case PLAYER_CREATION_SUCCESS:
+		set_player_buffer_replace(socket, "Character created successfully. Entering the world...\n");
+		break;
 	case PLAYER_ALREADY_ONLINE: 
 		set_player_buffer_replace(socket, "That player is already connected. Please provide another name.\n");
 		break;
@@ -218,7 +221,8 @@ static _Bool build_room_image (const int32_t socket) {
 	const int32_t room_x = get_player_coord(X_COORD_REQUEST, socket);
 	const int32_t room_y = get_player_coord(Y_COORD_REQUEST, socket);
 	const int32_t room_z = get_player_coord(Z_COORD_REQUEST, socket);
-	struct Map *map = lookup_room(room_x, room_y, room_z, socket);
+
+	struct RoomRecord *map = lookup_room(room_x, room_y, room_z, socket);
 
 	// now show the players in room here...
 	for (size_t i = 0; i < get_num_of_players(); ++i) {

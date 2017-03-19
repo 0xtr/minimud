@@ -2,7 +2,7 @@
 
 #include "../common.h"
 
-#include "../Players.h"
+#include "../players/PlayerLiveRecord.h"
 #include "../mapping/lookup_room.h"
 #include "../util/outgoing_handler.h"
 

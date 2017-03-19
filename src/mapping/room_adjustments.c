@@ -1,43 +1,6 @@
 #include "room_adjustments.h"
 
 static int32_t adjusting_room_exit(const int32_t socket, const _Bool reverse, const int32_t x, const int32_t y, const int32_t z);
-static int32_t get_new_room_id(void);
-
-int32_t insert_room(struct NewRoom rconfig)
-{
-	uint8_t *sqlerr = NULL;
-	const int32_t new_room_id = get_new_room_id();
-
-	struct Map *map = lookup_room(rconfig.x, rconfig.y, rconfig.z, -1);
-
-	if (map != NULL) {
-		free(map);
-		return EXIT_SUCCESS;
-	}
-
-	uint8_t *querystr = (uint8_t *)sqlite3_mprintf(
-		"INSERT INTO ROOMS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
-		(char)new_room_id, (char *)rconfig.name, (char *)rconfig.desc, (char)rconfig.x, (char)rconfig.y, (char)rconfig.z, 
-		"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", 
-		(char *)rconfig.owner, (char *)rconfig.flags);
-	if (sqlite3_exec(get_roomdb(), (char *)querystr, callback, 0, (char **)sqlerr) != SQLITE_OK) {
-		fprintf(stdout, "SQLITE3 room_insert error!\n%s\n", sqlite3_errmsg(get_roomdb()));
-		sqlite3_free(sqlerr);
-		return EXIT_FAILURE;
-	}
-	sqlite3_free(querystr);
-
-	return EXIT_SUCCESS;
-}
-
-static int32_t get_new_room_id(void)
-{
-	struct Map *map = get_room();
-	const int32_t new_id = map->id + 1;
-
-	free(map);
-	return new_id;
-}
 
 int32_t remove_room(const int32_t socket)
 {
@@ -45,7 +8,7 @@ int32_t remove_room(const int32_t socket)
 	int32_t x = get_player_coord(X_COORD_REQUEST, socket);
 	int32_t y = get_player_coord(Y_COORD_REQUEST, socket);
 	int32_t z = get_player_coord(Z_COORD_REQUEST, socket);
-	struct Map *map = lookup_room(x, y, z, socket);
+	struct RoomRecord *map = lookup_room(x, y, z, socket);
 
 	if (map == NULL)
 		return -1;
@@ -56,7 +19,7 @@ int32_t remove_room(const int32_t socket)
 	}
 
 	uint8_t *querystr = (uint8_t *)sqlite3_mprintf("DELETE FROM ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;", (char)x, (char)y, (char)z);
-	if (sqlite3_exec(get_roomdb(), (char *)querystr, callback, 0, (char **)sqlerr) != SQLITE_OK) {
+	if (sqlite3_exec(get_roomdb(), (char *)querystr, room_callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 failure in remove_room; could not delete the room:\n%s\n", sqlite3_errmsg(get_roomdb()));
 		sqlite3_free(querystr);
 		sqlite3_free(sqlerr);
@@ -134,7 +97,7 @@ int32_t adjust_room_details(const int32_t adjusting, const _Bool reverse, const 
 
 	lookup_room_exits(x, y, z, -1);
 
-	if (sqlite3_exec(get_roomdb(), (char *)room, callback, 0, (char **)sqlerr) != SQLITE_OK) {
+	if (sqlite3_exec(get_roomdb(), (char *)room, room_callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 room update error:\n%s\n", sqlite3_errmsg(get_roomdb()));
 		sqlite3_free(room);
 		sqlite3_free(sqlerr);
@@ -241,7 +204,7 @@ static int32_t adjusting_room_exit(const int32_t socket, const _Bool reverse, co
 
 	const int32_t direction = get_direction_as_number(get_player_store(socket));
 
-	struct Map *map = lookup_room(x, y, z, socket);
+	struct RoomRecord *map = lookup_room(x, y, z, socket);
 
 	uint8_t *room = sqlite3_mprintf("UPDATE ROOMS SET %Q = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
 			get_dir_string(direction), reverse_of_current(direction, reverse), get_player_name(socket), (char)x, (char)y, (char)z);

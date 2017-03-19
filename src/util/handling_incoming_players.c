@@ -2,7 +2,7 @@
 
 int32_t check_for_highest_socket_num(void)
 {
-	struct Player *tmp = get_player_head();
+	struct PlayerLiveRecord *tmp = get_player_head();
 	int32_t fdmax = 0;
 	if (tmp == NULL)
 		return fdmax;
@@ -17,13 +17,17 @@ int32_t check_for_highest_socket_num(void)
 
 int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 {
-	if (get_existing_player_hash(socket) == -1) {
+	struct PlayerDBRecord *player = lookup_player(get_player_name(socket));
+	if (player == NULL) {
 		print_to_player(socket, UNABLE_TO_RETRIEVE_CHAR);
 		set_player_wait_state(socket, THEIR_NAME);
 		return EXIT_FAILURE;
 	}
 
-	if (bcrypt_checkpass((char *)command, (char *)get_existing_player_hash(socket)) == -1) {
+	printf("existing player, pw %s, hash %s\n", command, player->hash);
+	if (bcrypt_checkpass((char *)command, (char *)player->hash) == -1) {
+		free(player);
+
 		print_to_player(socket, INCORRECT_PASSWORD);
 		set_player_wait_state(socket, THEIR_NAME);
 		return EXIT_FAILURE;
@@ -36,6 +40,8 @@ int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 		fprintf(stdout, "[INFO] Moving player %d from a nonexistent room.\n", socket);
 	}
 
+	free(player);
+
 	print_to_player(socket, SHOWROOM);
 	set_player_wait_state(socket, NO_WAIT_STATE);
 	set_player_holding_for_input(socket, 0);
@@ -45,7 +51,7 @@ int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 
 int32_t handle_new_pass(const int32_t socket, const uint8_t *command)
 {
-	if (strcmp((char *)command, (char *)get_player_store(socket)) != 0 && 
+	if (strcmp((char *)command, (char *)get_player_store(socket)) != 0 || 
 	   (strlen((char *)command) != strlen((char *)get_player_store(socket)))) {
 		print_to_player(socket, MISMATCH_PW_SET);
 		set_player_wait_state(socket, THEIR_NAME);
@@ -54,7 +60,8 @@ int32_t handle_new_pass(const int32_t socket, const uint8_t *command)
 	}
 
 	print_to_player(socket, ATTEMPT_CREATE_USR);
-	if ((insert_player(get_player_name(socket), command, socket)) == -1) {
+
+	if (insert_player(get_player_name(socket), command, socket) == -1) {
 		print_to_player(socket, PLAYER_CREATION_FAILED);
 		shutdown_socket(socket);
 		return EXIT_FAILURE;
@@ -63,7 +70,8 @@ int32_t handle_new_pass(const int32_t socket, const uint8_t *command)
 	set_player_wait_state(socket, NO_WAIT_STATE);
 	set_player_holding_for_input(socket, 0);
 	print_to_player(socket, SHOWROOM);
-	fprintf(stdout, "Player (num %d), name %s has connected.\n", socket, get_player_name(socket));
+
+	fprintf(stdout, "Player name %s connected on socket %d.\n", get_player_name(socket), socket);
 
 	return EXIT_SUCCESS;
 }
@@ -72,8 +80,10 @@ int32_t set_player_confirm_new_pw(const int32_t socket, const uint8_t *command)
 {
 	init_player_store(socket);
 	set_player_store_replace(socket, command);
+
 	print_to_player(socket, REQUEST_PW_CONFIRM);
 	set_player_wait_state(socket, THEIR_PASSWORD_NEWFINAL);
+
 	return EXIT_SUCCESS;
 }
 
@@ -85,6 +95,14 @@ _Bool check_if_name_is_reserved(const int32_t socket, const uint8_t *name)
 	for (size_t i = 0; i < NUM_RESERVED_WORDS; ++i) {
 		if (strstr((char *)name, (char *)RESERVED_WORDS[i]) != NULL) {
 			print_to_player(socket, NAME_UNAVAILABLE);
+			print_to_player(socket, NAME_NOT_WITHIN_PARAMS);
+			return true;
+		}
+	}
+	for (size_t i = 0; i < get_num_of_available_cmds(); ++i) {
+		if (memcmp(get_command(i), name, strlen((char *)name)) == 0) {
+			print_to_player(socket, NAME_UNAVAILABLE);
+			print_to_player(socket, NAME_NOT_WITHIN_PARAMS);
 			return true;
 		}
 	}
@@ -98,14 +116,15 @@ _Bool check_if_name_is_valid(const int32_t socket, const uint8_t *name)
 		print_to_player(socket, NAME_NOT_WITHIN_PARAMS);
 		return false;
 	}
+
 	for (size_t i = 0; i < NAMES_MAX; ++i) {
 		if (get_player_buffer(socket)[i] == 0)
 			break;
 
-		if (!isalpha(get_player_buffer(socket)[i]) && is_not_a_space) {
+		if (!isalpha(get_player_buffer(socket)[i]) && is_not_a_space)
 			return false;
-		}
 	}
+
 	return true;
 }
 

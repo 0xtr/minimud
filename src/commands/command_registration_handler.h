@@ -9,7 +9,7 @@ struct Command {
 };
 
 #include "categorize_cmds.h"
-#include "../Players.h"
+#include "../players/PlayerLiveRecord.h"
 #include "../players/player_movement.h"
 #include "../printing/print_not_player.h"
 #include "../printing/print_to_player.h"

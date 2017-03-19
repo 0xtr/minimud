@@ -1,28 +1,13 @@
 #include "player_details.h"
 
-int32_t get_existing_player_hash(const int32_t socket)
-{
-	uint8_t *sqlerr = NULL;
-	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", get_player_name(socket));
-	if (sqlite3_exec(get_playerdb(), (char *)pcheck, callback, 0, (char **)sqlerr) != SQLITE_OK) {
-		fprintf(stdout, "SQLITE3 error! Failed to get player's hash:\n%s\n", sqlite3_errmsg(get_playerdb()));
-		sqlite3_free(sqlerr);
-		sqlite3_free(pcheck);
-		return EXIT_FAILURE;
-	}
-	sqlite3_free(pcheck);
-	if (get_sqlite_rows_count() == 0) {
-		fprintf(stdout, "Couldn't retrieve the hash for player %d.\n", socket);
-		return EXIT_FAILURE;
-	}
-	return EXIT_SUCCESS;
-}
-
 int32_t get_player_coord(const int32_t coord_type, const int32_t socket)
 {
 	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", get_player_name(socket));
 	uint8_t *sqlerr = NULL;
-	if (sqlite3_exec(get_playerdb(), (char *)pcheck, callback, 0, (char **)sqlerr) != SQLITE_OK) {
+
+	struct PlayerDBRecord *player = get_player_db_struct();
+
+	if (sqlite3_exec(get_playerdb(), (char *)pcheck, player_callback, player, (char **)sqlerr) != SQLITE_OK) {
 	#ifdef DEBUG
 		fprintf(stdout, "SQLITE3 error in get_player_coord:\n%s\n", sqlite3_errmsg(get_playerdb()));
 	#endif
@@ -30,15 +15,23 @@ int32_t get_player_coord(const int32_t coord_type, const int32_t socket)
 		sqlite3_free(sqlerr);
 		return EXIT_FAILURE;
 	}
+
 	sqlite3_free(pcheck);
+
+	int32_t val = 0;
 	if (coord_type == X_COORD_REQUEST) {
-		//return player_tmp.x;
+		val = player->x;
 	} else if (coord_type == Y_COORD_REQUEST) {
-		//return player_tmp.y;
+		val = player->y;
 	} else if (coord_type == Z_COORD_REQUEST) {
-		//return player_tmp.z;
+		val = player->z;
+	} else {
+		val = -1;
 	}
-	return EXIT_FAILURE;
+
+	free(player);
+
+	return val;
 }
 
 int32_t get_next_player_num(void)
@@ -47,7 +40,7 @@ int32_t get_next_player_num(void)
 	uint8_t *sqlerr = NULL;
 	reset_sqlite_rows_count();
 
-	if (sqlite3_exec(get_playerdb(), (char *)pcheck, callback, 0, (char **)sqlerr) != SQLITE_OK) {
+	if (sqlite3_exec(get_playerdb(), (char *)pcheck, player_callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		sqlite3_free(pcheck);
 		sqlite3_free(sqlerr);
 		#ifdef DEBUG
@@ -57,71 +50,5 @@ int32_t get_next_player_num(void)
 	}
 
 	sqlite3_free(pcheck);
-	return get_sqlite_rows_count() + 1;
-}
-
-#define HASH_LENGTH 	70
-#define SALT_LENGTH   	50
-#define SECURELY_CLEAR_VARS \
-	explicit_bzero(&salt, SALT_LENGTH);\
-	explicit_bzero(&name, NAMES_MAX);\
-	explicit_bzero(&pw, NAMES_MAX);\
-	explicit_bzero(&hash_result, HASH_LENGTH);
-int32_t insert_player(const uint8_t *name, const uint8_t *pw, const int32_t socket)
-{
-	uint8_t *sqlerr = NULL;
-	uint8_t salt[SALT_LENGTH] = {0};
-
-	for (size_t i = 0; i != 10; ++i) {
-		memset(salt, '\0', SALT_LENGTH);
-		strcpy((char *)salt, bcrypt_gensalt(10)); // pretty weak
-	}
-
-	// hash the salt + password, in that order
-	uint8_t *hash_result = calloc(HASH_LENGTH, sizeof(uint8_t));
-	// TODO: prepend salt
-	bcrypt_newhash((char *)pw, 10, (char *)hash_result, HASH_LENGTH);
-
-	uint8_t *querystr = (uint8_t *)sqlite3_mprintf("INSERT INTO PLAYERS VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
-		(char)get_next_player_num(), (char *)name, (char *)hash_result, (char *)salt, "-", "0", "0", "0");
-	/*
-	"CREATE TABLE PLAYERS (pnum INTEGER PRIMARY KEY," 
-	"name TEXT, hash TEXT," "salt TEXT," "last_ip TEXT,"
-	"x INT, y INT, z INT)", callback, 0, NULL) == SQLITE_OK); 
-	 */
-
-	if (sqlite3_exec(get_playerdb(), (char *)querystr, callback, 0, (char **)sqlerr) != SQLITE_OK) {
-		fprintf(stdout, "SQLITE player insert error:\n%s\n", sqlite3_errmsg(get_playerdb()));
-		print_to_player(socket, PLAYER_CREATION_FAILED);
-
-		SECURELY_CLEAR_VARS;
-		free(hash_result);
-
-		sqlite3_free(sqlerr);
-		sqlite3_free(querystr);
-		return EXIT_FAILURE;
-	}
-
-	sqlite3_free(querystr);
-	SECURELY_CLEAR_VARS;
-	free(hash_result);
-
-	print_to_player(socket, PLAYER_CREATION_SUCCESS);
-	return EXIT_SUCCESS;
-}
-
-int32_t lookup_player(const uint8_t *name)
-{
-	uint8_t *sqlerr = NULL;
-	// check for players with the same name 
-	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", name);
-
-	if (sqlite3_exec(get_playerdb(), (char *)pcheck, callback, 0, (char **)sqlerr) != SQLITE_OK) {
-		fprintf(stdout, "SQLITE3 error in lookup_player:\n%s\n", sqlite3_errmsg(get_playerdb()));
-		sqlite3_free(pcheck);
-		sqlite3_free(sqlerr);
-		return EXIT_FAILURE;
-	}
-	sqlite3_free(pcheck);
-	return (get_sqlite_rows_count() != 0) ? 1 : 0;
+	return get_sqlite_rows_count();
 }

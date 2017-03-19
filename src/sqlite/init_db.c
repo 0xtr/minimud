@@ -45,9 +45,9 @@ static void open_playerdb(void)
 
 	if (tables_needed)
 		assert(sqlite3_exec(get_playerdb(), 
-			"CREATE TABLE PLAYERS (pnum INTEGER PRIMARY KEY," 
-			"name TEXT, hash TEXT," "salt TEXT," "last_ip TEXT,"
-			"x INT, y INT, z INT)", callback, 0, NULL) == SQLITE_OK); 
+			"CREATE TABLE PLAYERS (pnum INTEGER PRIMARY KEY AUTOINCREMENT," 
+			"name TEXT, hash TEXT, salt TEXT, last_ip TEXT,"
+			"x INT, y INT, z INT)", player_callback, 0, NULL) == SQLITE_OK); 
 }
 
 static void open_roomdb(void)
@@ -63,11 +63,12 @@ static void open_roomdb(void)
 
 	if (tables_needed)
 		assert(sqlite3_exec(get_roomdb(), 
-			"CREATE TABLE ROOMS (id INTEGER PRIMARY KEY," 
-			"rname TEXT, rdesc TEXT," "xloc  INTEGER, yloc INT, zloc  INT,"
-			"north INTEGER, east INT, south INT,"
-			"west  INTEGER, up   INT, down  INT,"
-			"northeast INTEGER, southeast INT, southwest INT,"
-			"northwest INTEGER," "owner TEXT," "last_modified_by TEXT,"
-			"flags TEXT)", callback, 0, NULL) == SQLITE_OK); 
+			"CREATE TABLE ROOMS (id INTEGER PRIMARY KEY AUTOINCREMENT," 
+			"name TEXT, desc TEXT, "
+			"x INT, y INT, z  INT,"
+			"north INT, east INT, south INT,"
+			"west  INT, up   INT, down  INT,"
+			"northeast INT, southeast INT, southwest INT," "northwest INT,"
+			"owner TEXT, last_modified_by TEXT,"
+			"flags TEXT)", room_callback, 0, NULL) == SQLITE_OK); 
 }
