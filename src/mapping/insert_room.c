@@ -4,7 +4,7 @@ int32_t insert_room(struct NewRoom rconfig)
 {
 	uint8_t *sqlerr = NULL;
 
-	struct RoomRecord *map = lookup_room(rconfig.x, rconfig.y, rconfig.z, -1);
+	struct RoomRecord *map = lookup_room(rconfig.coords);
 
 	if (map != NULL) {
 		free(map);
@@ -15,7 +15,7 @@ int32_t insert_room(struct NewRoom rconfig)
 		"INSERT INTO ROOMS (name, desc, x, y, z, north, east, south, west, up, down, "
 		"northeast, southeast, southwest, northwest, owner, last_modified_by, flags)"
 		"VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
-		(char *)rconfig.name, (char *)rconfig.desc, (char)rconfig.x, (char)rconfig.y, (char)rconfig.z, 
+		(char *)rconfig.name, (char *)rconfig.desc, (char)rconfig.coords.x, (char)rconfig.coords.y, (char)rconfig.coords.z, 
 		"0", "0", "0", "0", "0", "0", "0", "0", "0", "0", 
 		(char *)rconfig.owner, (char *)rconfig.flags);
 

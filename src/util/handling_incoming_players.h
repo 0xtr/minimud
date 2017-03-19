@@ -2,12 +2,15 @@
 
 #include "../common.h"
 
+#include "../mapping/Coordinates.h"
+#include "../mapping/lookup_room.h"
+
 #include "../players/insert_player.h"
 #include "../players/PlayerLiveRecord.h"
-#include "../crypto/bcrypt.h"
 #include "../players/player_movement.h"
 #include "../players/player_details.h"
-#include "../mapping/lookup_room.h"
+
+#include "../crypto/bcrypt.h"
 
 int32_t check_for_highest_socket_num(void);
 int32_t set_player_confirm_new_pw(const int32_t socket_num, const uint8_t *command);

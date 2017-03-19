@@ -4,6 +4,7 @@ static _Bool set_buffer_for_movement(const int32_t socket, const int32_t argumen
 static _Bool print_all_commands(const int32_t socket);
 static _Bool build_room_image(const int32_t socket);
 static _Bool is_in_same_room(const int32_t x, const int32_t y, const int32_t z, const int32_t socket);
+static void append_coordinates_for_printing(const int32_t socket, const struct Coordinates coords);
 
 int32_t print_to_player(const int32_t socket, const int32_t argument)
 {
@@ -212,57 +213,94 @@ static _Bool set_buffer_for_movement (const int32_t socket, const int32_t argume
 
 static _Bool is_in_same_room(const int32_t x, const int32_t y, const int32_t z, const int32_t socket)
 {
-	return get_player_coord(X_COORD_REQUEST, socket) == x &&
+	return  get_player_coord(X_COORD_REQUEST, socket) == x &&
 		get_player_coord(Y_COORD_REQUEST, socket) == y &&
 		get_player_coord(Z_COORD_REQUEST, socket) == z;
 }
 
 static _Bool build_room_image (const int32_t socket) {
-	const int32_t room_x = get_player_coord(X_COORD_REQUEST, socket);
-	const int32_t room_y = get_player_coord(Y_COORD_REQUEST, socket);
-	const int32_t room_z = get_player_coord(Z_COORD_REQUEST, socket);
+	struct Coordinates coords;
 
-	struct RoomRecord *map = lookup_room(room_x, room_y, room_z, socket);
+	coords.x = get_player_coord(X_COORD_REQUEST, socket);
+	coords.y = get_player_coord(Y_COORD_REQUEST, socket);
+	coords.z = get_player_coord(Z_COORD_REQUEST, socket);
+
+	struct RoomRecord *map = lookup_room(coords);
+
+	if (map->rname == NULL) {
+		set_player_buffer_append(socket, "NULL SPACE");
+	} else {
+		set_player_buffer_append(socket, map->rname);
+	}
+	append_coordinates_for_printing(socket, coords);
+
+	set_player_buffer_append(socket, "\n");
+	set_player_buffer_append(socket, "Exits:");
+
+	if (map->north == true)
+		set_player_buffer_append(socket, " NORTH");
+	if (map->south == true)
+		set_player_buffer_append(socket, " SOUTH");
+	if (map->east == true)
+		set_player_buffer_append(socket, " EAST");
+	if (map->west == true)
+		set_player_buffer_append(socket, " WEST");
+	if (map->up == true)
+		set_player_buffer_append(socket, " U");
+	if (map->down == true)
+		set_player_buffer_append(socket, " D");
+	if (map->northeast == true)
+		set_player_buffer_append(socket, " NE");
+	if (map->southeast == true)
+		set_player_buffer_append(socket, " SE");
+	if (map->southwest == true)
+		set_player_buffer_append(socket, " SW");
+	if (map->northwest == true)
+		set_player_buffer_append(socket, " NW");
+	if (strlen((char *)get_player_buffer(socket)) == 6) {
+		set_player_buffer_append(socket, " NONE");
+	}
+	assert(outgoing_handler(socket) == EXIT_SUCCESS);
+
+	if (map == NULL) {
+		set_player_buffer_replace(socket, 
+				"It is pitch black. You are "
+				"likely to be eaten by a null character.");
+	} else {
+		set_player_buffer_replace(socket, map->rdesc);
+	}
+	assert(outgoing_handler(socket) == EXIT_SUCCESS);
+
 
 	// now show the players in room here...
+	// doesn't scale, TODO
 	for (size_t i = 0; i < get_num_of_players(); ++i) {
 		if (get_player_name(i) != get_player_name(socket)) {
-			if (is_in_same_room(room_x, room_y, room_z, i)) {
+			if (is_in_same_room(coords.x, coords.y, coords.z, i)) {
 				set_player_buffer_replace(i, get_player_name(i));
-				set_player_store_append(i, (uint8_t *)" is here too.\n");
+				set_player_buffer_append(i, (uint8_t *)" is here too.\n");
 				assert(outgoing_handler(socket) == EXIT_SUCCESS);
 			}
 		}
 	}
 
-	set_player_buffer_replace(socket, "Exits:");
-	if (map->north == 1)
-		set_player_buffer_append(socket, " NORTH");
-	if (map->south == 1)
-		set_player_buffer_append(socket, " SOUTH");
-	if (map->east == 1)
-		set_player_buffer_append(socket, " EAST");
-	if (map->west == 1)
-		set_player_buffer_append(socket, " WEST");
-	if (map->up == 1)
-		set_player_buffer_append(socket, " U");
-	if (map->down == 1)
-		set_player_buffer_append(socket, " D");
-	if (map->northeast == 1)
-		set_player_buffer_append(socket, " NE");
-	if (map->southeast == 1)
-		set_player_buffer_append(socket, " SE");
-	if (map->southwest == 1)
-		set_player_buffer_append(socket, " SW");
-	if (map->northwest == 1)
-		set_player_buffer_append(socket, " NW");
-	if (strlen((char *)get_player_buffer(socket)) == 6) {
-		set_player_buffer_append(socket, " NONE");
-	}
+	free(map);
 
-	set_player_buffer_append(socket, "\n");
+	return EXIT_SUCCESS;
+}
 
-	return outgoing_handler(socket);
+static void append_coordinates_for_printing(const int32_t socket, const struct Coordinates coords)
+{
+	set_player_buffer_replace(socket, " [");
+	// room x
+	set_player_buffer_append(socket, &coords.x);
+	set_player_buffer_append(socket, "][");
+	// room y
+	set_player_buffer_append(socket, &coords.y);
+	set_player_buffer_append(socket, "][");
+	// room z
+	set_player_buffer_append(socket, &coords.z);
+	set_player_buffer_append(socket, "]");
 }
 
 static _Bool print_all_commands(const int32_t socket)

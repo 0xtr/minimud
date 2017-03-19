@@ -3,7 +3,10 @@
 #include "../common.h"
 
 #include "../players/PlayerLiveRecord.h"
+
+#include "../mapping/Coordinates.h"
 #include "../mapping/lookup_room.h"
+
 #include "../util/outgoing_handler.h"
 
 int32_t print_to_player(const int32_t socket, const int32_t argument);

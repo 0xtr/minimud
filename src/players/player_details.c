@@ -1,37 +1,33 @@
 #include "player_details.h"
 
-int32_t get_player_coord(const int32_t coord_type, const int32_t socket)
+struct Coordinates get_player_coords(const int32_t socket)
 {
 	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", get_player_name(socket));
 	uint8_t *sqlerr = NULL;
 
 	struct PlayerDBRecord *player = get_player_db_struct();
+	struct Coordinates coords;
+	coords.x = coords.y = coords.z = -1;
 
 	if (sqlite3_exec(get_playerdb(), (char *)pcheck, player_callback, player, (char **)sqlerr) != SQLITE_OK) {
 	#ifdef DEBUG
 		fprintf(stdout, "SQLITE3 error in get_player_coord:\n%s\n", sqlite3_errmsg(get_playerdb()));
 	#endif
+		free(player);
 		sqlite3_free(pcheck);
 		sqlite3_free(sqlerr);
-		return EXIT_FAILURE;
+		return coords;
 	}
 
 	sqlite3_free(pcheck);
 
-	int32_t val = 0;
-	if (coord_type == X_COORD_REQUEST) {
-		val = player->x;
-	} else if (coord_type == Y_COORD_REQUEST) {
-		val = player->y;
-	} else if (coord_type == Z_COORD_REQUEST) {
-		val = player->z;
-	} else {
-		val = -1;
-	}
+	coords.x = player->x;
+	coords.y = player->y;
+	coords.z = player->z;
 
 	free(player);
 
-	return val;
+	return coords;
 }
 
 int32_t get_next_player_num(void)

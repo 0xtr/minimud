@@ -22,9 +22,9 @@ int32_t init_dbs(void)
 	struct NewRoom rconfig;
 	rconfig.name = (uint8_t*)"The Core of the World";
 	rconfig.desc = (uint8_t*)"It is pitch black. You are likely to be eaten by a null character.";
-	rconfig.x = 0;
-	rconfig.y = 0;
-	rconfig.z = 0;
+	rconfig.coords.x = 0;
+	rconfig.coords.y = 0;
+	rconfig.coords.z = 0;
 	rconfig.owner = (uint8_t *)"system";
 	rconfig.flags = (uint8_t *)"none";
 	assert(insert_room(rconfig) == 0);

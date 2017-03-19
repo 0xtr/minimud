@@ -13,13 +13,12 @@ static _Bool is_vector_southeast(const int32_t x, const int32_t y);
 static _Bool is_vector_southwest(const int32_t x, const int32_t y);
 static _Bool has_exit(const int32_t exit_value);
 
-struct RoomRecord *lookup_room(const int32_t x, const int32_t y, const int32_t z, const int32_t socket)
+struct RoomRecord *lookup_room(const struct Coordinates coords)
 {
 	uint8_t *sqlerr = NULL;
-	printf("x %d y %d z %d\n", x, y, z);
 	uint8_t *room = (uint8_t *)sqlite3_mprintf(
 			"SELECT * FROM ROOMS WHERE x LIKE %Q AND y LIKE %Q AND z LIKE %Q;", 
-			(char)x, (char)y, (char)z);
+			(char)coords.x, (char)coords.y, (char)coords.z);
 
 	struct RoomRecord *map = get_room();
 
@@ -33,52 +32,22 @@ struct RoomRecord *lookup_room(const int32_t x, const int32_t y, const int32_t z
 
 	sqlite3_free(room);
 
-	if (socket == -1)
-		return map;
-
-	//set_player_buffer_replace(socket, (uint8_t *)"> ");
-	//if (get_sqlite_rows_count() == 0) {
-	if (map->rname == NULL) {
-		set_player_buffer_append(socket, (uint8_t *)"NULL SPACE");
-	} else {
-		set_player_buffer_append(socket, map->rname);
-	}
-
-	assert(outgoing_handler(socket) == EXIT_SUCCESS);
-
-	set_player_buffer_replace(socket, (uint8_t *)"[");
-	// room x
-	set_player_buffer_append(socket, (uint8_t *)(char*)&x);
-	set_player_buffer_append(socket, (uint8_t *)"][");
-	// room y
-	set_player_buffer_append(socket, (uint8_t *)(char*)&y);
-	set_player_buffer_append(socket, (uint8_t *)"][");
-	// room z
-	set_player_buffer_append(socket, (uint8_t *)(char*)&z);
-	set_player_buffer_append(socket, (uint8_t *)"]");
-
-	assert(outgoing_handler(socket) == EXIT_SUCCESS);
-
-	if (map == NULL) {
-		set_player_buffer_replace(socket, (uint8_t *)"It is pitch black. You are likely to be eaten by a null character.");
-	} else {
-		set_player_buffer_replace(socket, map->rdesc);
-	}
-	assert(outgoing_handler(socket) == EXIT_SUCCESS);
-
 	return map;
 }
 
-int32_t lookup_room_exits(const int32_t socket, const int32_t xadj, const int32_t yadj, const int32_t zadj)
+int32_t lookup_room_exits(const int32_t socket, const struct Coordinates coords)
 {
-	struct RoomRecord *map = lookup_room(get_player_coord(X_COORD_REQUEST, socket), 
-			               get_player_coord(Y_COORD_REQUEST, socket), 
-			               get_player_coord(Z_COORD_REQUEST, socket), -1);
+	struct Coordinates original_coords;
+	original_coords.x = get_player_coord(X_COORD_REQUEST, socket);
+	original_coords.y = get_player_coord(Y_COORD_REQUEST, socket);
+	original_coords.z = get_player_coord(Z_COORD_REQUEST, socket);
+
+	struct RoomRecord *map = lookup_room(coords);
 
 	if (map == NULL)
 		return -2;
 
-	if (!has_exit_for_dir(xadj, yadj, zadj, map)) {
+	if (!has_exit_for_dir(original_coords, map)) {
 		free_room(map);
 		return -1;
 	}
@@ -143,33 +112,33 @@ static _Bool has_exit(const int32_t exit_value)
 	return exit_value != 0;
 }
 
-int32_t has_exit_for_dir (const int32_t x, const int32_t y, const int32_t z, const struct RoomRecord *map) {
-	if (is_vector_west(x, y) && !has_exit(map->west))
+int32_t has_exit_for_dir (const struct Coordinates coords, const struct RoomRecord *map) {
+	if (is_vector_west(coords.x, coords.y) && !has_exit(map->west))
 		return EXIT_FAILURE;
-	if (is_vector_east(x, y) && !has_exit(map->east))
+	if (is_vector_east(coords.x, coords.y) && !has_exit(map->east))
 		return EXIT_FAILURE;
-	if (is_vector_north(x, y) && !has_exit(map->north))
+	if (is_vector_north(coords.x, coords.y) && !has_exit(map->north))
 		return EXIT_FAILURE;
-	if (is_vector_south(x, y) && !has_exit(map->south))
+	if (is_vector_south(coords.x, coords.y) && !has_exit(map->south))
 		return EXIT_FAILURE;
-	if (is_vector_up(z) && !has_exit(map->up))
+	if (is_vector_up(coords.z) && !has_exit(map->up))
 		return EXIT_FAILURE;
-	if (is_vector_down(z) && !has_exit(map->down))
+	if (is_vector_down(coords.z) && !has_exit(map->down))
 		return EXIT_FAILURE;
-	if (is_vector_northeast(x, y) && !has_exit(map->northeast))
+	if (is_vector_northeast(coords.x, coords.y) && !has_exit(map->northeast))
 		return EXIT_FAILURE;
-	if (is_vector_southeast(x, y) && !has_exit(map->southeast))
+	if (is_vector_southeast(coords.x, coords.y) && !has_exit(map->southeast))
 		return EXIT_FAILURE;
-	if (is_vector_southwest(x, y) && !has_exit(map->southwest))
+	if (is_vector_southwest(coords.x, coords.y) && !has_exit(map->southwest))
 		return EXIT_FAILURE;
-	if (is_vector_northwest(x, y) && !has_exit(map->northwest))
+	if (is_vector_northwest(coords.x, coords.y) && !has_exit(map->northwest))
 		return EXIT_FAILURE;
 	return EXIT_SUCCESS;
 }
 
-int32_t lookup_room_name_from_coords(const int32_t socket, const int32_t x, const int32_t y, const int32_t z)
+int32_t lookup_room_name_from_coords(const int32_t socket, const struct Coordinates coords)
 {
-	struct RoomRecord *map = lookup_room(x, y, z, -1);
+	struct RoomRecord *map = lookup_room(coords);
 
 	if (map != NULL) {
 		// get_room_details(map);
@@ -182,9 +151,9 @@ int32_t lookup_room_name_from_coords(const int32_t socket, const int32_t x, cons
 	return EXIT_SUCCESS;
 }
 
-int32_t compare_room_owner(const int32_t socket, const int32_t x, const int32_t y, const int32_t z)
+int32_t compare_room_owner(const int32_t socket, const struct Coordinates coords)
 {
-	struct RoomRecord *map = lookup_room (x, y, z, -1);
+	struct RoomRecord *map = lookup_room(coords);
 
 	if (map == NULL)
 		return -1;

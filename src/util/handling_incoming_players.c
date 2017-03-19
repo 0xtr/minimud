@@ -33,10 +33,14 @@ int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 		return EXIT_FAILURE;
 	}
 
-	if (lookup_room(get_player_coord(X_COORD_REQUEST, socket),
-			get_player_coord(Y_COORD_REQUEST, socket),
-			get_player_coord(Z_COORD_REQUEST, socket), -1) == 0) {
-		assert(adjust_player_location(socket, -1, -1, -1) == EXIT_SUCCESS);
+	struct Coordinates coords;
+	coords.x = get_player_coord(X_COORD_REQUEST, socket);
+	coords.y = get_player_coord(Y_COORD_REQUEST, socket);
+	coords.z = get_player_coord(Z_COORD_REQUEST, socket);
+
+	if (lookup_room(coords) == 0) {
+		coords.x = coords.y = coords.z = -1;
+		assert(adjust_player_location(socket, coords) == EXIT_SUCCESS);
 		fprintf(stdout, "[INFO] Moving player %d from a nonexistent room.\n", socket);
 	}
 
