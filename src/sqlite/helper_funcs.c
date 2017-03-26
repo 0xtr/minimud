@@ -38,7 +38,8 @@ int player_callback (void *data, int argc, char **argv, char **azColName)
 
 static void handle_player_columns(char *azColName, char *arg1, struct PlayerDBRecord *player)
 {
-	const size_t len = strlen(azColName);
+	const size_t arg_len = strlen(arg1);
+	const size_t col_len = strlen(azColName);
 
 	if (azColName[0] == 'x') {
 		player->x = atoi(arg1);
@@ -46,47 +47,48 @@ static void handle_player_columns(char *azColName, char *arg1, struct PlayerDBRe
 		player->y = atoi(arg1);
 	} else if (azColName[0] == 'z') {
 		player->z = atoi(arg1);
-	} else if (strcmp(azColName, "hash") == 0) {
-		player->hash = (uint8_t *)arg1;
-	} else if (memcmp(azColName, "name", len) == 0) {
-		player->name = (uint8_t *)arg1;
-	} else if (memcmp(azColName, "salt", len) == 0) {
-		player->salt = (uint8_t *)arg1;
-	} else if (memcmp(azColName, "last_ip", len) == 0) {
-		player->last_ip = (uint8_t *)arg1;
+	} else if (memcmp(azColName, "hash", col_len) == 0) {
+		memcpy(player->hash, arg1, arg_len);
+	} else if (memcmp(azColName, "name", col_len) == 0) {
+		memcpy(player->name, arg1, arg_len);
+	} else if (memcmp(azColName, "salt", col_len) == 0) {
+		memcpy(player->salt, arg1, arg_len);
+	} else if (memcmp(azColName, "last_ip", col_len) == 0) {
+		memcpy(player->last_ip, arg1, arg_len);
 	}
 }
 
 static void handle_map_columns(char *azColName, char *arg1, struct RoomRecord *map)
 {
-	const size_t len = strlen(azColName);
+	const size_t arg_len = strlen(arg1);
+	const size_t col_len = strlen(azColName);
 
-	if (strcmp(azColName, "name") == 0) {
-		memcpy(map->rname, arg1, len);
-	} else if (strcmp(azColName, "desc") == 0) {
-		memcpy(map->rdesc, arg1, len);
-	} else if (strcmp(azColName, "north") == 0) {
+	if (memcmp(azColName, "name", col_len) == 0) {
+		memcpy(map->rname, arg1, arg_len);
+	} else if (memcmp(azColName, "desc", col_len) == 0) {
+		memcpy(map->rdesc, arg1, arg_len);
+	} else if (memcmp(azColName, "north", col_len) == 0) {
 		map->north = atoi(arg1);
-	} else if (strcmp(azColName, "east") == 0) {
+	} else if (memcmp(azColName, "east", col_len) == 0) {
 		map->east = atoi(arg1);
-	} else if (strcmp(azColName, "south") == 0) {
+	} else if (memcmp(azColName, "south", col_len) == 0) {
 		map->south = atoi(arg1);
-	} else if (strcmp(azColName, "west") == 0) {
+	} else if (memcmp(azColName, "west", col_len) == 0) {
 		map->west = atoi(arg1);
-	} else if (strcmp(azColName, "up") == 0) {
+	} else if (memcmp(azColName, "up", col_len) == 0) {
 		map->up = atoi(arg1);
-	} else if (strcmp(azColName, "down") == 0) {
+	} else if (memcmp(azColName, "down", col_len) == 0) {
 		map->down = atoi(arg1);
-	} else if (strcmp(azColName, "northeast") == 0) {
+	} else if (memcmp(azColName, "northeast", col_len) == 0) {
 		map->northeast = atoi(arg1);
-	} else if (strcmp(azColName, "southeast") == 0) {
+	} else if (memcmp(azColName, "southeast", col_len) == 0) {
 		map->southeast = atoi(arg1);
-	} else if (strcmp(azColName, "southwest") == 0) {
+	} else if (memcmp(azColName, "southwest", col_len) == 0) {
 		map->southwest = atoi(arg1);
-	} else if (strcmp(azColName, "northwest") == 0) {
+	} else if (memcmp(azColName, "northwest", col_len) == 0) {
 		map->northwest = atoi(arg1);
-	} else if (strcmp(azColName, "owner") == 0) {
-		memcpy(map->owner, arg1, len);
+	} else if (memcmp(azColName, "owner", col_len) == 0) {
+		memcpy(map->owner, arg1, arg_len);
 	}
 }
 

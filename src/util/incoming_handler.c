@@ -14,6 +14,7 @@ int32_t incoming_handler(const int32_t socket)
 	retval = recv(socket, buffer, incoming_data_len, 0);
 	if (incoming_data_len > BUFFER_LENGTH)
 		memset(&buffer[BUFFER_LENGTH], 0, incoming_data_len - BUFFER_LENGTH);
+	clear_player_buffer(socket);
 	set_player_buffer_replace(socket, buffer);
 
 	if (retval == 0) {

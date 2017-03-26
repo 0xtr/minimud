@@ -100,7 +100,7 @@ size_t get_total_length_of_all_cmds(void)
 	return TOTAL_LENGTH_OF_ALL_CMDS;
 }
 
-int32_t check_clist(const int32_t socket, const uint8_t *command)
+int32_t execute_player_command(const int32_t socket, const uint8_t *command)
 {
 	struct Command *tmp = head;
 	const size_t cmd_len = strlen((char *)command);
@@ -111,7 +111,7 @@ int32_t check_clist(const int32_t socket, const uint8_t *command)
 			continue;
 		}
 
-		if (is_direction(command))
+		if (is_direction(command) == EXIT_SUCCESS)
 			assert(move_player(socket, get_direction_as_number(command)));
 
 		// isroomcmd
@@ -187,4 +187,19 @@ uint8_t *get_command(const int32_t cmd)
 		tmp = tmp->next;
 
 	return tmp->cname;
+}
+
+int32_t check_cmd_against_list(const uint8_t *command)
+{
+	struct Command *tmp = head;
+	const size_t len = strlen((char *)command);
+
+	while (tmp != NULL) {
+		if (memcmp(command, tmp->cname, len) != 0) {
+			tmp = tmp->next;
+		} else {
+			return EXIT_SUCCESS;
+		}
+	}
+	return EXIT_FAILURE;
 }

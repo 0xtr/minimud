@@ -27,6 +27,7 @@ int32_t init_dbs(void)
 	rconfig.coords.z = 0;
 	rconfig.owner = (uint8_t *)"system";
 	rconfig.flags = (uint8_t *)"none";
+
 	assert(insert_room(rconfig) == 0);
 
 	return EXIT_SUCCESS;

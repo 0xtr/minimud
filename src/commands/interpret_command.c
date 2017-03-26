@@ -1,32 +1,34 @@
-#include "command_interpretation_handler.h"
+#include "interpret_command.h"
 
 static uint8_t *process_buffer(const size_t socket);
 static _Bool handle_incoming_name(const int32_t socket, const uint8_t *command);
 static void handle_room_creation(const int32_t socket, const uint8_t *command);
 static void handle_new_room_name(const int32_t socket, const uint8_t *command);
 static void handle_new_room_desc(const int32_t socket, const uint8_t *command);
+static void handle_room_exit_toggling(const int32_t socket, const uint8_t *command);
 
 #define player_is_not_quitting memcmp(command, "quit", 4) != 0 
 #define player_confirms command[0] == 'y' || command[0] == 'Y'
+#define not_expecting_info_from_player get_player_holding_for_input(socket) == false
+#define command_is_longer_than_max strlen((char*)command) > get_max_command_len() 
+#define not_a_valid_cmd check_cmd_against_list(command)
 
 int32_t interpret_command(const size_t socket)
 {
 	uint8_t *command = {0};
 	int32_t rv = 0;
-	struct Coordinates coords;
 
 	command = process_buffer(socket);
 
-	if (get_player_holding_for_input(socket) == false && player_is_not_quitting) {
-		if (strlen((char*)command) > get_max_command_len() || check_clist(socket, command) == EXIT_FAILURE) { 
+	if (not_expecting_info_from_player && player_is_not_quitting) {
+		if (command_is_longer_than_max || not_a_valid_cmd) {
 			print_to_player(socket, INVALCMD);
 			return EXIT_FAILURE;
 		}
 	}
 
-	if (get_player_wait_state(socket) == NO_WAIT_STATE) {
-		return check_clist(socket, command);
-	}
+	if (get_player_wait_state(socket) == NO_WAIT_STATE)
+		return execute_player_command(socket, command);
 
 	// should probably handle 'quit' if they want to exit this process, or C-C
 	switch (get_player_wait_state(socket)) {
@@ -106,33 +108,7 @@ int32_t interpret_command(const size_t socket)
 		set_player_holding_for_input(socket, 0);
 		break;
 	case WAIT_ENTER_EXIT_NAME:
-		if ((ensure_player_moving_valid_dir(socket, command)) == EXIT_FAILURE)
-			break;
-
-		init_player_store(socket);
-		set_player_store_replace(socket, command);
-		coords.x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, socket);
-		coords.y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, socket);
-		coords.z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, socket);
-		struct RoomRecord *map = lookup_room(-1, coords);
-
-		if (map != NULL) {
-			rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 1, socket, coords);
-			coords.x = get_player_coord(X_COORD_REQUEST, socket);
-			coords.y = get_player_coord(Y_COORD_REQUEST, socket);
-			coords.z = get_player_coord(Z_COORD_REQUEST, socket);
-			rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 0, socket, coords);
-			print_to_player(socket, PRINT_TOGGLED_ROOM_EXIT);
-			free_room(map);
-		} else if (rv == 0) {
-			print_to_player(socket, PRINT_COULDNT_TOGGLE_EXIT);
-		} else if (rv == -1) {
-			print_to_player(socket, PRINT_COULDNT_EXIT_NO_ROOM);
-		}
-
-		clear_player_store(socket);
-		set_player_wait_state(socket, NO_WAIT_STATE);
-		set_player_holding_for_input(socket, 0);
+		handle_room_exit_toggling(socket, command);
 		break;
 
 	default:
@@ -142,18 +118,45 @@ int32_t interpret_command(const size_t socket)
 	return EXIT_SUCCESS;
 }
 
+static void handle_room_exit_toggling(const int32_t socket, const uint8_t *command)
+{
+	int32_t rv;
+	if ((ensure_player_moving_valid_dir(socket, command)) == EXIT_FAILURE)
+		return;
+
+	init_player_store(socket);
+	set_player_store_replace(socket, command);
+
+	struct Coordinates coords = calc_coords_from_playerloc_and_dir(socket);
+	struct RoomRecord *map = lookup_room(coords);
+
+	if (map != NULL) {
+		rv = adjust_room_exit(socket, get_player_coords(socket), coords);
+		if (rv == EXIT_SUCCESS) {
+			print_to_player(socket, PRINT_TOGGLED_ROOM_EXIT);
+		} else if (rv == EXIT_FAILURE) {
+			print_to_player(socket, PRINT_COULDNT_TOGGLE_EXIT);
+		} else if (rv == 2) {
+			//print_to_player(socket, PRINT_INSUFFICIENT_PERMISSIONS);
+		}
+
+		free_room(map);
+	} else {
+		print_to_player(socket, PRINT_COULDNT_EXIT_NO_ROOM);
+	}
+
+	clear_player_store(socket);
+	set_player_wait_state(socket, NO_WAIT_STATE);
+	set_player_holding_for_input(socket, 0);
+}
+
 static void handle_new_room_desc(const int32_t socket, const uint8_t *command)
 {
-	struct Coordinates coords;
+	struct Coordinates coords = get_player_coords(socket);
 	int32_t rv;
 
-	coords.x = get_player_coord(X_COORD_REQUEST, socket);
-	coords.y = get_player_coord(Y_COORD_REQUEST, socket);
-	coords.z = get_player_coord(Z_COORD_REQUEST, socket);
-
 	if (player_confirms) {
-		rv = adjust_room_details(ADJUSTING_ROOM_DESC, -1, socket, coords);
-
+		rv = adjust_room_details(ADJUSTING_ROOM_DESC, socket, coords);
 		if (rv == 1) {
 			print_to_player(socket, PRINT_ADJUSTMENT_SUCCESSFUL);
 		} else if (rv == -2) {
@@ -172,16 +175,11 @@ static void handle_new_room_desc(const int32_t socket, const uint8_t *command)
 
 static void handle_new_room_name(const int32_t socket, const uint8_t *command)
 {
-	struct Coordinates coords;
 	int32_t rv;
 	void *loc_in_echo = NULL;
 
 	if (player_confirms) {
-		coords.x = get_player_coord(X_COORD_REQUEST, socket);
-		coords.y = get_player_coord(Y_COORD_REQUEST, socket);
-		coords.z = get_player_coord(Z_COORD_REQUEST, socket);
-
-		rv = adjust_room_details(ADJUSTING_ROOM_NAME, -1, socket, coords);
+		rv = adjust_room_details(ADJUSTING_ROOM_NAME, socket, get_player_coords(socket));
 
 		if (rv == 1) {
 			print_to_player(socket, PRINT_ADJUSTMENT_SUCCESSFUL);
@@ -204,15 +202,13 @@ static void handle_new_room_name(const int32_t socket, const uint8_t *command)
 	loc_in_echo = mempcpy(loc_in_echo, " changes the room name.", 23);
 	print_not_player(socket, room_echo, ROOM_ONLY);
 }
+
 static void handle_room_creation(const int32_t socket, const uint8_t *command)
 {
-	struct Coordinates coords;
 	if (command[0] != 'y' && command[0] != 'Y')
 		print_to_player(socket, PRINT_EXITING_CMD_WAIT);
 
-	coords.x = calc_coord_from_playerloc_and_dir(X_COORD_REQUEST, socket);
-	coords.y = calc_coord_from_playerloc_and_dir(Y_COORD_REQUEST, socket);
-	coords.z = calc_coord_from_playerloc_and_dir(Z_COORD_REQUEST, socket);
+	struct Coordinates coords = calc_coords_from_playerloc_and_dir(socket);
 
 	struct NewRoom rconfig;
 	rconfig.name = (uint8_t*)"NULL SPACE";
@@ -222,17 +218,12 @@ static void handle_room_creation(const int32_t socket, const uint8_t *command)
 	rconfig.desc = (uint8_t*)"It is pitch black. You are likely to be eaten by a null character.";
 	rconfig.owner = get_player_name(socket);
 	rconfig.flags = (uint8_t*)"none";
-	int rv = insert_room(rconfig);
+	int32_t rv = insert_room(rconfig);
 
 	if (rv == 1) {
 		print_to_player(socket, PRINT_ROOM_CREATION_SUCCESS);
-		rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 0, socket, coords);
-
-		coords.x = get_player_coord(X_COORD_REQUEST, socket);
-		coords.y = get_player_coord(Y_COORD_REQUEST, socket);
-		coords.z = get_player_coord(Z_COORD_REQUEST, socket);
-
-		rv = adjust_room_details(ADJUSTING_ROOM_EXIT, 1, socket, coords);
+		rv = adjust_room_exit(socket, coords, get_player_coords(socket));
+		rv = adjust_room_exit(socket, get_player_coords(socket), coords);
 		print_to_player(socket, SHOWROOM);
 	} else if (rv == -3) {
 		print_to_player(socket, PRINT_INSUFFICIENT_PERMISSIONS);

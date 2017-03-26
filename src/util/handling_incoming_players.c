@@ -1,5 +1,7 @@
 #include "handling_incoming_players.h"
 
+static int32_t check_player_pass(const struct PlayerDBRecord *player, const uint8_t *pw);
+
 int32_t check_for_highest_socket_num(void)
 {
 	struct PlayerLiveRecord *tmp = get_player_head();
@@ -15,6 +17,30 @@ int32_t check_for_highest_socket_num(void)
 	return fdmax;
 }
 
+static int32_t check_player_pass(const struct PlayerDBRecord *player, const uint8_t *pw)
+{
+	// TODO: do this and pass to insert_player
+	const size_t PASSWORD_LEN = (strlen((char *)pw) > BUFFER_LENGTH) ? BUFFER_LENGTH : strlen((char *)pw);
+
+	uint8_t *salt_and_pw = calloc(BUFFER_LENGTH + SALT_LENGTH, sizeof(uint8_t));
+	void *append_pw = mempcpy(salt_and_pw, player->salt, strlen((char *)player->salt));
+	append_pw = mempcpy(append_pw, pw, PASSWORD_LEN);
+	append_pw = mempcpy(append_pw, "\0", 1);
+	
+	uint8_t *hash_result = calloc(HASH_LENGTH, sizeof(uint8_t));
+	const int32_t rv = bcrypt_checkpass((char *)salt_and_pw, (char *)player->hash);
+
+	memset(hash_result, '\0', HASH_LENGTH);
+	free(hash_result);
+	memset(salt_and_pw, '\0', BUFFER_LENGTH + SALT_LENGTH);
+	free(salt_and_pw);
+
+	if (rv == -1)
+		return EXIT_FAILURE;
+
+	return EXIT_SUCCESS;
+}
+
 int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 {
 	struct PlayerDBRecord *player = lookup_player(get_player_name(socket));
@@ -24,21 +50,15 @@ int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 		return EXIT_FAILURE;
 	}
 
-	printf("existing player, pw %s, hash %s\n", command, player->hash);
-	if (bcrypt_checkpass((char *)command, (char *)player->hash) == -1) {
+	if (check_player_pass(player, command) == EXIT_FAILURE) {
 		free(player);
-
 		print_to_player(socket, INCORRECT_PASSWORD);
 		set_player_wait_state(socket, THEIR_NAME);
 		return EXIT_FAILURE;
 	}
 
-	struct Coordinates coords;
-	coords.x = get_player_coord(X_COORD_REQUEST, socket);
-	coords.y = get_player_coord(Y_COORD_REQUEST, socket);
-	coords.z = get_player_coord(Z_COORD_REQUEST, socket);
-
-	if (lookup_room(coords) == 0) {
+	struct Coordinates coords = get_player_coords(socket);
+	if (lookup_room(coords) == NULL) {
 		coords.x = coords.y = coords.z = -1;
 		assert(adjust_player_location(socket, coords) == EXIT_SUCCESS);
 		fprintf(stdout, "[INFO] Moving player %d from a nonexistent room.\n", socket);

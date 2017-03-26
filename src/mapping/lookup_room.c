@@ -16,13 +16,20 @@ static _Bool has_exit(const int32_t exit_value);
 struct RoomRecord *lookup_room(const struct Coordinates coords)
 {
 	uint8_t *sqlerr = NULL;
+
+	uint8_t param_x[sizeof(coords.x)] = {0};
+	uint8_t param_y[sizeof(coords.y)] = {0};
+	uint8_t param_z[sizeof(coords.z)] = {0};
+	snprintf((char *)param_x, sizeof(coords.x), "%d", coords.x);
+	snprintf((char *)param_y, sizeof(coords.y), "%d", coords.y);
+	snprintf((char *)param_z, sizeof(coords.z), "%d", coords.z);
+
 	uint8_t *room = (uint8_t *)sqlite3_mprintf(
 			"SELECT * FROM ROOMS WHERE x LIKE %Q AND y LIKE %Q AND z LIKE %Q;", 
-			(char)coords.x, (char)coords.y, (char)coords.z);
-
+			param_x, param_y, param_z);
 	struct RoomRecord *map = get_room();
 
-	if (sqlite3_exec(get_roomdb(), (char*)room, room_callback, map, (char**)sqlerr) != SQLITE_OK) {
+	if (sqlite3_exec(get_roomdb(), (char *)room, room_callback, map, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
 		sqlite3_free(room);
 		sqlite3_free(sqlerr);
@@ -37,11 +44,7 @@ struct RoomRecord *lookup_room(const struct Coordinates coords)
 
 int32_t lookup_room_exits(const int32_t socket, const struct Coordinates coords)
 {
-	struct Coordinates original_coords;
-	original_coords.x = get_player_coord(X_COORD_REQUEST, socket);
-	original_coords.y = get_player_coord(Y_COORD_REQUEST, socket);
-	original_coords.z = get_player_coord(Z_COORD_REQUEST, socket);
-
+	struct Coordinates original_coords = get_player_coords(socket);
 	struct RoomRecord *map = lookup_room(coords);
 
 	if (map == NULL)

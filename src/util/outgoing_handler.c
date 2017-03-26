@@ -9,7 +9,8 @@ static size_t num_of_newlines(const int32_t socket);
 
 int32_t outgoing_handler(const int32_t socket)
 {
-	size_t expected = strlen((char *)get_player_buffer(socket));
+	const size_t buflen = strlen((char *)get_player_buffer(socket));
+	size_t expected = (buflen > (BUFFER_LENGTH - 1)) ? BUFFER_LENGTH : buflen;
 	size_t buffer_pos = 0;
 
 	if ((CHARS_FOR_PROMPT_AND_NULL + strlen((char *)get_player_buffer(socket))) <= PRINT_LINE_WIDTH) {
@@ -35,6 +36,7 @@ int32_t outgoing_handler(const int32_t socket)
 			break;
 	}
 
+	loc_in_buf = mempcpy(loc_in_buf, "\n", 1);
 	set_player_buffer_replace(socket, processed_buf);
 	free(processed_buf);
 
@@ -134,7 +136,9 @@ static _Bool all_data_was_sent(const int32_t total, const int32_t expected)
 
 static int32_t add_prompt_chars(const int32_t socket)
 {
-	if (get_player_buffer(socket)[0] == '>' && get_player_buffer(socket)[1] == ' ')
+	uint8_t *buf = get_player_buffer(socket);
+	const size_t len = strlen((char *)buf);
+	if (buf[0] == '>' && buf[1] == ' ' && buf[len - 1] == '\n')
 		return EXIT_SUCCESS; // +0 to expected
 
 	uint8_t *tmp_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
@@ -142,6 +146,7 @@ static int32_t add_prompt_chars(const int32_t socket)
 
 	loc_in_buf = mempcpy(tmp_buf, "> ", 2);
 	loc_in_buf = mempcpy(loc_in_buf, get_player_buffer(socket), strlen((char *)get_player_buffer(socket)));
+	loc_in_buf = mempcpy(loc_in_buf, "\n", 1);
 
 	set_player_buffer_replace(socket, tmp_buf);
 

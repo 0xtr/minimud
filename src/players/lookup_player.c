@@ -18,8 +18,7 @@ struct PlayerDBRecord *lookup_player(const uint8_t *name)
 
 	sqlite3_free(pcheck);
 
-	if (player->name == NULL) {
-		printf("no result\n");
+	if (strlen((char *)player->name) == 0) {
 		free(player);
 		return NULL;
 	}

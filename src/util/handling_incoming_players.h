@@ -7,6 +7,7 @@
 
 #include "../players/insert_player.h"
 #include "../players/PlayerLiveRecord.h"
+#include "../players/PlayerDBRecord.h"
 #include "../players/player_movement.h"
 #include "../players/player_details.h"
 

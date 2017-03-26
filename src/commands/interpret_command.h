@@ -6,10 +6,11 @@
 
 #include "../mapping/NewRoom.h"
 #include "../mapping/RoomRecord.h"
-#include "../mapping/calc_coord_from_playerloc_and_dir.h"
+#include "../mapping/calc_coords_from_playerloc_and_dir.h"
 #include "../mapping/room_adjustments.h"
 #include "../mapping/lookup_room.h"
 #include "../mapping/insert_room.h"
+#include "../mapping/remove_room.h"
 
 #include "../printing/print_not_player.h"
 #include "../printing/print_to_player.h"

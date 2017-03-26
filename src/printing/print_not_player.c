@@ -1,5 +1,7 @@
 #include "print_not_player.h"
 
+#define is_in_same_room \
+	this_player.x == coords.x && this_player.y == coords.y && this_player.z == coords.z
 int32_t print_not_player(const int32_t socket, const uint8_t *buffer, const int32_t location)
 {
 	struct Coordinates coords = get_player_coords(socket);
@@ -8,9 +10,7 @@ int32_t print_not_player(const int32_t socket, const uint8_t *buffer, const int3
 		struct Coordinates this_player = get_player_coords(i);
 
 		if (location == ROOM_ONLY) {
-			if (this_player.x == coords.x && 
-				this_player.y == coords.y && 
-				this_player.z == coords.z) {
+			if (is_in_same_room) {
 				set_player_buffer_replace(i, buffer);
 				assert(outgoing_handler(i) == EXIT_SUCCESS);
 			}

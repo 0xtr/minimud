@@ -5,7 +5,7 @@
 #include "epollfd_storage.h"
 #include "../players/PlayerLiveRecord.h"
 #include "../mapping/room_adjustments.h"
-#include "../commands/command_interpretation_handler.h"
+#include "../commands/interpret_command.h"
 #include "../util/outgoing_handler.h"
 #include "../common.h"
 

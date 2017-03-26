@@ -9,6 +9,7 @@ static void append_coordinates_for_printing(const int32_t socket, const struct C
 int32_t print_to_player(const int32_t socket, const int32_t argument)
 {
 	#define IS_DIRECTION_ARG (argument >= NORTH_DIR && argument <= RETURN_ORIGIN_DIR)
+	_Bool prints_in_func = false;
 
 	switch (argument) {
 	case PROMPT: 
@@ -162,11 +163,11 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 		set_player_buffer_replace(socket, "There's no room in that direction.\n");
 		break;
 	default:
-		if (IS_DIRECTION_ARG) {
+		if (IS_DIRECTION_ARG)
 			set_buffer_for_movement(socket, argument);
-		}
 	}
-	assert(outgoing_handler(socket) == EXIT_SUCCESS);
+	if (prints_in_func == false)
+		assert(outgoing_handler(socket) == EXIT_SUCCESS);
 	return EXIT_SUCCESS;
 }
 
@@ -213,29 +214,19 @@ static _Bool set_buffer_for_movement (const int32_t socket, const int32_t argume
 
 static _Bool is_in_same_room(const int32_t x, const int32_t y, const int32_t z, const int32_t socket)
 {
-	return  get_player_coord(X_COORD_REQUEST, socket) == x &&
-		get_player_coord(Y_COORD_REQUEST, socket) == y &&
-		get_player_coord(Z_COORD_REQUEST, socket) == z;
+	struct Coordinates coords = get_player_coords(socket);
+	return coords.x == x && coords.y == y && coords.z == z;
 }
 
 static _Bool build_room_image (const int32_t socket) {
-	struct Coordinates coords;
-
-	coords.x = get_player_coord(X_COORD_REQUEST, socket);
-	coords.y = get_player_coord(Y_COORD_REQUEST, socket);
-	coords.z = get_player_coord(Z_COORD_REQUEST, socket);
-
+	struct Coordinates coords = get_player_coords(socket);
 	struct RoomRecord *map = lookup_room(coords);
 
-	if (map->rname == NULL) {
-		set_player_buffer_append(socket, "NULL SPACE");
-	} else {
-		set_player_buffer_append(socket, map->rname);
-	}
+	set_player_buffer_replace(socket, (map->rname == NULL) ? (void *)"NULL SPACE" : (void *)map->rname);
 	append_coordinates_for_printing(socket, coords);
+	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 
-	set_player_buffer_append(socket, "\n");
-	set_player_buffer_append(socket, "Exits:");
+	set_player_buffer_replace(socket, "Exits:");
 
 	if (map->north == true)
 		set_player_buffer_append(socket, " NORTH");
@@ -257,20 +248,18 @@ static _Bool build_room_image (const int32_t socket) {
 		set_player_buffer_append(socket, " SW");
 	if (map->northwest == true)
 		set_player_buffer_append(socket, " NW");
-	if (strlen((char *)get_player_buffer(socket)) == 6) {
+	if (strlen((char *)get_player_buffer(socket)) == 6)
 		set_player_buffer_append(socket, " NONE");
-	}
+
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 
-	if (map == NULL) {
-		set_player_buffer_replace(socket, 
-				"It is pitch black. You are "
-				"likely to be eaten by a null character.");
-	} else {
-		set_player_buffer_replace(socket, map->rdesc);
-	}
+	set_player_buffer_replace(socket, 
+			(map ->rdesc == NULL) ?
+			(void *)"It is pitch black. You are "
+			"likely to be eaten by a null character."
+			: (void *)map->rdesc);
+	set_player_buffer_append(socket, "\n");
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
-
 
 	// now show the players in room here...
 	// doesn't scale, TODO
@@ -286,20 +275,24 @@ static _Bool build_room_image (const int32_t socket) {
 
 	free(map);
 
-	return EXIT_SUCCESS;
+	return true;
 }
 
 static void append_coordinates_for_printing(const int32_t socket, const struct Coordinates coords)
 {
-	set_player_buffer_replace(socket, " [");
-	// room x
-	set_player_buffer_append(socket, &coords.x);
+	uint8_t param_x[sizeof(coords.x)] = {0};
+	uint8_t param_y[sizeof(coords.y)] = {0};
+	uint8_t param_z[sizeof(coords.z)] = {0};
+	snprintf((char *)param_x, sizeof(coords.x), "%d", coords.x);
+	snprintf((char *)param_y, sizeof(coords.y), "%d", coords.y);
+	snprintf((char *)param_z, sizeof(coords.z), "%d", coords.z);
+
+	set_player_buffer_append(socket, " [");
+	set_player_buffer_append(socket, param_x);
 	set_player_buffer_append(socket, "][");
-	// room y
-	set_player_buffer_append(socket, &coords.y);
+	set_player_buffer_append(socket, param_y);
 	set_player_buffer_append(socket, "][");
-	// room z
-	set_player_buffer_append(socket, &coords.z);
+	set_player_buffer_append(socket, param_z);
 	set_player_buffer_append(socket, "]");
 }
 
@@ -337,12 +330,14 @@ static _Bool print_all_commands(const int32_t socket)
 
 		if (commands_on_line == 5) {
 			commands_on_line = 0;
-			set_player_buffer_append(socket, "\n");
 			assert(outgoing_handler(socket) == EXIT_SUCCESS);
 		}
 	}
 
-	return EXIT_SUCCESS;
+	set_player_buffer_replace(socket, "\n");
+	assert(outgoing_handler(socket) == EXIT_SUCCESS);
+
+	return true;
 }
 
 int32_t greet_player(const int32_t socket)
@@ -350,9 +345,9 @@ int32_t greet_player(const int32_t socket)
 	set_player_buffer_replace(socket, "WELCOME.\n\n");
 	set_player_buffer_append(socket, "Please provide a NAME; this can be two words and up to ");
 	set_player_buffer_append(socket, NAMES_MAX_STR);
-	set_player_buffer_append(socket, " characters long in total.\n\nIf you've already created a character, enter your previous name to resume.\n");
-	assert(outgoing_handler(socket) == EXIT_SUCCESS);
+	set_player_buffer_append(socket, " characters long in total.\n\nIf you've already created a character, enter your previous name to resume.");
 
+	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 	return EXIT_SUCCESS;
 }
 
