@@ -1,6 +1,6 @@
 CC = gcc
-LD = -lm -lbsd -lsqlite3
-CFLAGS = -Wall -Wextra -g -O2 -std=c11
+LD = -lm -lsqlite3
+CFLAGS = -Wall -Wextra -g -O2 -std=gnu11
 
 BUILD_DIR = ./build
 SRC_DIR = ./src

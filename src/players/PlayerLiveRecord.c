@@ -149,12 +149,13 @@ int32_t set_player_store_replace(const int32_t socket, const void *newval)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	clear_player_store(socket);
+	memset(curr->store, '\0', curr->store_size);
 	int32_t len = strlen((char *)newval);
 	if (len > BUFFER_LENGTH)
 		len = BUFFER_LENGTH;
 
 	memcpy(curr->store, newval, len);
+	curr->store_size = len;
 
 	return EXIT_SUCCESS;
 }

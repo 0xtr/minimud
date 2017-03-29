@@ -9,7 +9,7 @@
 #include "../sqlite/set_get_dbs.h"
 #include "../SqliteVars.h"
 #include "../crypto/bcrypt.h"
-#include "../crypto/explicit_bzero.h"
+#include "../bsd/explicit_bzero.h"
 
 struct Coordinates get_player_coords(const int32_t socket);
 int32_t get_next_player_num(void);

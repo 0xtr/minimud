@@ -2,8 +2,8 @@
 
 #include "../common.h"
 
-#include "explicit_bzero.h"
-#include "timingsafe_bcmp.h"
+#include "../bsd/explicit_bzero.h"
+#include "../bsd/timingsafe_bcmp.h"
 #include "blf.h"
 
 int bcrypt_newhash(const char *pass, int log_rounds, char *hash, size_t hashlen);

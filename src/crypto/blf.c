@@ -1,4 +1,3 @@
-#include "../common.h"
 /*	$OpenBSD: blf.c,v 1.7 2007/11/26 09:28:34 martynas Exp $	*/
 
 /*
@@ -40,9 +39,6 @@
  * Blowfish is an unpatented fast block cipher designed by
  * Bruce Schneier.
  */
-
-#include <sys/param.h>
-//#include <sys/systm.h>
 
 #include "blf.h"
 
