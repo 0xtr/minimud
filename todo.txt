@@ -1,3 +1,4 @@
 -handle quit request during char creation, including ctrl-c
 -sort out return codes across all functions
--pass pnum not socket as default
+-pass socket as arg
+-fix speech being broken
