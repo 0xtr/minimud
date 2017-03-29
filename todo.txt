@@ -2,3 +2,5 @@
 -sort out return codes across all functions
 -pass socket as arg
 -fix speech being broken
+-fix mkroom etc
+-require pws to be > x len
