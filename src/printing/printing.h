@@ -11,4 +11,4 @@
 
 int32_t print_to_player(const int32_t socket, const int32_t argument);
 int32_t greet_player(const int32_t socket);
-int32_t print_player_speech_to_player(const int32_t socket, const uint8_t *say);
+int32_t print_player_speech(const int32_t socket);

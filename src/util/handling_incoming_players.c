@@ -124,11 +124,13 @@ _Bool check_if_name_is_reserved(const int32_t socket, const uint8_t *name)
 		}
 	}
 	for (size_t i = 0; i < get_num_of_available_cmds(); ++i) {
+		/*
 		if (memcmp(get_command(i), name, strlen((char *)name)) == 0) {
 			print_to_player(socket, NAME_UNAVAILABLE);
 			print_to_player(socket, NAME_NOT_WITHIN_PARAMS);
 			return true;
 		}
+		*/
 	}
 	return false;
 }

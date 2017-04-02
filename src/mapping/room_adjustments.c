@@ -86,60 +86,6 @@ int32_t get_opposite_dir(const uint8_t *dir)
 	return EXIT_FAILURE;
 }
 
-int32_t get_direction_as_number(const uint8_t *dir)
-{
-	if (strcmp((char *)dir, "north") || strcmp((char *)dir,"North"))
-		return NORTH_DIR;
-	if (strcmp((char *)dir, "south") || strcmp((char *)dir,"South"))
-		return SOUTH_DIR;
-	if (strcmp((char *)dir, "east") || strcmp((char *)dir,"East"))
-		return EAST_DIR;
-	if (strcmp((char *)dir, "west") || strcmp((char *)dir,"West"))
-		return WEST_DIR;
-	if (strcmp((char *)dir, "up") || strcmp((char *)dir,"Up"))
-		return UP_DIR;
-	if (strcmp((char *)dir, "down") || strcmp((char *)dir,"Down"))
-		return DOWN_DIR;
-	if (strcmp((char *)dir, "northeast") || strcmp((char *)dir,"Northeast"))
-		return NORTHEAST_DIR;
-	if (strcmp((char *)dir, "southeast") || strcmp((char *)dir,"Southeast"))
-		return SOUTHEAST_DIR;
-	if (strcmp((char *)dir, "southwest") || strcmp((char *)dir,"Southwest"))
-		return SOUTHWEST_DIR;
-	if (strcmp((char *)dir, "northwest") || strcmp((char *)dir,"Northwest"))
-		return NORTHWEST_DIR;
-	if (strcmp((char *)dir, "return") || strcmp((char *)dir, "Return"))
-		return RETURN_ORIGIN_DIR;
-	return EXIT_FAILURE;
-}
-
-uint8_t *get_dir_string(const int32_t dir)
-{
-	if (dir == RETURN_ORIGIN_DIR)
-		return (uint8_t *)"back to the core.";
-	if (dir == NORTH_DIR)
-		return (uint8_t *)"north";
-	if (dir == SOUTH_DIR)
-		return (uint8_t *)"south";
-	if (dir == EAST_DIR)
-		return (uint8_t *)"east";
-	if (dir == WEST_DIR)
-		return (uint8_t *)"west";
-	if (dir == UP_DIR)
-		return (uint8_t *)"up";
-	if (dir == DOWN_DIR)
-		return (uint8_t *)"down";
-	if (dir == NORTHEAST_DIR)
-		return (uint8_t *)"northeast";
-	if (dir == SOUTHEAST_DIR)
-		return (uint8_t *)"southeast";
-	if (dir == SOUTHWEST_DIR)
-		return (uint8_t *)"southwest";
-	if (dir == NORTHWEST_DIR)
-		return (uint8_t *)"northwest";
-	return (uint8_t *)"EMPTY";
-}
-
 int32_t adjust_room_exit(const int32_t socket, const struct Coordinates player_coords, const struct Coordinates new_coords)
 {
 	printf("%d %d %d\n", socket, player_coords.x, new_coords.x);

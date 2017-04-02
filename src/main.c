@@ -1,10 +1,11 @@
 #include "common.h"
-#include "util/epollfd_storage.h"
+#include "commands/classify_cmd.h"
+#include "commands/do_cmd_action.h"
 #include "sqlite/init_db.h"
-#include "commands/command_registration_handler.h"
 #include "util/incoming_handler.h"
-#include "printing/print_to_player.h"
+#include "util/epollfd_storage.h"
 #include "util/handling_incoming_players.h"
+#include "printing/printing.h"
 
 static int32_t set_socket_nonblocking(const int32_t socket);
 
@@ -17,7 +18,7 @@ int32_t main(void)
 	// open the sqlite3 db connections for rooms & players 
 	assert(init_dbs() == EXIT_SUCCESS);
 	// build the list of commands from text file into memory
-	assert(parse_clist() == EXIT_SUCCESS);
+	//assert(parse_clist() == EXIT_SUCCESS);
 
 	// create the master socket 
 	const int32_t listen_socket = socket(AF_INET, SOCK_STREAM, 0);

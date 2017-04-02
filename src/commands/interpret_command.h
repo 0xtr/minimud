@@ -2,7 +2,7 @@
 
 #include "../common.h"
 
-#include "command_registration_handler.h"
+#include "do_cmd_action.h"
 
 #include "../mapping/NewRoom.h"
 #include "../mapping/RoomRecord.h"
@@ -12,8 +12,7 @@
 #include "../mapping/insert_room.h"
 #include "../mapping/remove_room.h"
 
-#include "../printing/print_not_player.h"
-#include "../printing/print_to_player.h"
+#include "../printing/printing.h"
 
 #include "../players/player_details.h"
 #include "../players/player_movement.h"

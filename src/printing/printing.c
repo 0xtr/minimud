@@ -1,5 +1,6 @@
-#include "print_to_player.h"
+#include "printing.h"
 
+static int32_t print_to_other_players(const int32_t socket, const uint8_t *buffer);
 static _Bool set_buffer_for_movement(const int32_t socket, const int32_t argument);
 static _Bool print_all_commands(const int32_t socket);
 static _Bool build_room_image(const int32_t socket);
@@ -33,7 +34,7 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 		set_player_buffer_append(socket, "].\n");
 		set_player_buffer_append(socket, "Please provide a password less than ");
 		set_player_buffer_append(socket, BUFFER_LENGTH_STR);
-		set_player_buffer_append(socket, " characters long.\n");
+		set_player_buffer_append(socket, " characters long.");
 		break;
 	case REQUEST_PW_CONFIRM:
 		set_player_buffer_replace(socket, "Please confirm your password by typing it out once more.\n");
@@ -304,12 +305,9 @@ static _Bool print_all_commands(const int32_t socket)
 
 	set_player_buffer_replace(socket, "Available commands:\n> ");
 
-	for (size_t i = 0; i < get_num_of_available_cmds(); ++i) {
+	for (size_t i = 0; i != get_num_of_available_cmds(); ++i) {
 		cmd = get_command(i);
 		player_buffer_len = strlen((char *)get_player_buffer(socket));
-
-		if (strlen((char *)cmd) <= 2)
-			continue;
 
 		if (strlen((char *)get_player_buffer(socket)) + strlen((char *)cmd) > BUFFER_LENGTH) {
 			assert(outgoing_handler(socket) == EXIT_SUCCESS);
@@ -324,7 +322,7 @@ static _Bool print_all_commands(const int32_t socket)
 
 		if (++commands_on_line < 5) {
 			set_player_buffer_append(socket, "\t");
-			if (strlen((char *)cmd) < 8)
+			if (strlen((char *)cmd) < 7)
 				set_player_buffer_append(socket, "\t");
 		}
 
@@ -334,7 +332,9 @@ static _Bool print_all_commands(const int32_t socket)
 		}
 	}
 
-	set_player_buffer_replace(socket, "\n");
+	if (strlen((char *)get_player_buffer(socket)) != 0)
+		set_player_buffer_append(socket, "\n");
+
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 
 	return true;
@@ -351,7 +351,7 @@ int32_t greet_player(const int32_t socket)
 	return EXIT_SUCCESS;
 }
 
-int32_t print_player_speech_to_player(const int32_t socket, const uint8_t *say)
+int32_t print_player_speech(const int32_t socket)
 {
 	#define TOKEN_SAY_CMD_LEN 4 // length req'd for the actual say command + the space after that
 	#define TOKEN_YOU_SAY_LEN 9 // length req'd for player to see You say: 
@@ -360,9 +360,9 @@ int32_t print_player_speech_to_player(const int32_t socket, const uint8_t *say)
 
 	loc_in_buf = mempcpy(buffer, get_player_name(socket), strlen((char *)get_player_name(socket)));
 	loc_in_buf = mempcpy(loc_in_buf, " says: ", BUFFER_LENGTH - strlen((char *)buffer));
-	loc_in_buf = mempcpy(loc_in_buf, &say[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
+	loc_in_buf = mempcpy(loc_in_buf, &get_player_buffer(socket)[TOKEN_SAY_CMD_LEN], BUFFER_LENGTH - strlen((char *)buffer));
 
-	print_not_player(socket, buffer, ROOM_ONLY);
+	print_to_other_players(socket, buffer);
 #ifdef DEBUG
 	printf("print_player_speech: %s\n", buffer);
 #endif
@@ -370,9 +370,28 @@ int32_t print_player_speech_to_player(const int32_t socket, const uint8_t *say)
 	free(buffer);
 
 	set_player_buffer_replace(socket, "You say: ");
-	set_player_buffer_append(socket, &say[TOKEN_SAY_CMD_LEN]);
+	set_player_buffer_append(socket, &get_player_buffer(socket)[TOKEN_SAY_CMD_LEN]);
 
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
+
+	return EXIT_SUCCESS;
+}
+
+#define is_in_same_room \
+	this_player.x == coords.x && this_player.y == coords.y && this_player.z == coords.z
+
+static int32_t print_to_other_players(const int32_t socket, const uint8_t *buffer)
+{
+	struct Coordinates coords = get_player_coords(socket);
+
+	for (size_t i = 0; i < get_num_of_players(); ++i) {
+		struct Coordinates this_player = get_player_coords(i);
+
+		if (is_in_same_room) {
+			set_player_buffer_replace(i, buffer);
+			assert(outgoing_handler(i) == EXIT_SUCCESS);
+		}
+	}
 
 	return EXIT_SUCCESS;
 }

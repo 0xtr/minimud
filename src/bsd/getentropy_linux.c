@@ -1,3 +1,5 @@
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /*	$OpenBSD: getentropy_linux.c,v 1.40 2015/08/25 17:26:43 deraadt Exp $	*/
 
 /*
