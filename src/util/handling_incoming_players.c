@@ -70,6 +70,8 @@ int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 	set_player_wait_state(socket, NO_WAIT_STATE);
 	set_player_holding_for_input(socket, 0);
 
+	fprintf(stdout, "Player name %s connected on socket %d.\n", get_player_name(socket), socket);
+
 	return EXIT_SUCCESS;
 }
 

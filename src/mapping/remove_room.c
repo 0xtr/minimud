@@ -41,7 +41,6 @@ int32_t remove_room(const int32_t socket)
 
 static void check_exits_and_adjust(const int32_t socket, const struct RoomRecord *map, struct Coordinates new_coords)
 {
-	struct Coordinates player_coords = new_coords;
 	if (map->north == true)
 		new_coords.y += 1;
 	if (map->south == true)
@@ -65,6 +64,6 @@ static void check_exits_and_adjust(const int32_t socket, const struct RoomRecord
 	if (map->northwest == true)
 		new_coords.x -= 1, new_coords.y += 1;
 
-	adjust_room_exit(socket, player_coords, new_coords);
+	adjust_room_exit(socket, new_coords);
 }
 

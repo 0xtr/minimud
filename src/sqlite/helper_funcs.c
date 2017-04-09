@@ -12,6 +12,8 @@ int room_callback (void *data, int argc, char **argv, char **azColName)
 	if (data == NULL)
 		return EXIT_SUCCESS;
 
+	map_ref->found = true;
+
 	for (size_t i = 0; i < (size_t)argc; ++i)
 		handle_map_columns(azColName[i], argv[i], map_ref);
 

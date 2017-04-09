@@ -3,12 +3,17 @@
 #define arr_size(x) sizeof(x) / sizeof(x[0])
 #define loop_over_cmds(x, y) \
 	for (size_t i = 0; i < (sizeof(x) / sizeof(x[0])); ++i) {\
+		if (!(strlen(x[i]) == strlen((char *)cmd)))\
+			continue;\
 		if (memcmp(x[i], cmd, strlen(x[i])) == 0) {\
 			info->type = y;\
 			info->subtype = i;\
 			break;\
 		}\
 	}
+#define return_if_matched \
+	if (info->type != COMMAND_NOT)\
+		return info;
 
 const char * const movement_commands[] = {
 	"north", "n",
@@ -83,9 +88,13 @@ struct Command *get_command_info(const uint8_t *cmd)
 	info->subtype = COMMAND_NOT;
 
 	info = is_system_cmd(cmd, info);
+	return_if_matched;
 	info = is_movement_cmd(cmd, info);
+	return_if_matched;
 	info = is_room_cmd(cmd, info);
+	return_if_matched;
 	info = is_info_cmd(cmd, info);
+	return_if_matched;
 	info = is_travel_cmd(cmd, info);
 
 	return info;

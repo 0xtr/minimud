@@ -1,6 +1,13 @@
 #include "room_adjustments.h"
 
 #define player_is_not_owner strcmp((char *)map->owner, (char *)get_player_name(socket)) 
+#define convert_coords_into_string_params \
+	uint8_t param_x[2 * sizeof(coords.x)] = {0};\
+	uint8_t param_y[2 * sizeof(coords.y)] = {0};\
+	uint8_t param_z[2 * sizeof(coords.z)] = {0};\
+	snprintf((char *)param_x, sizeof(coords.x), "%d", coords.x);\
+	snprintf((char *)param_y, sizeof(coords.y), "%d", coords.y);\
+	snprintf((char *)param_z, sizeof(coords.z), "%d", coords.z);
 
 int32_t remove_players_from_room(const struct Coordinates coords)
 {
@@ -19,31 +26,18 @@ int32_t remove_players_from_room(const struct Coordinates coords)
 	return EXIT_SUCCESS;
 }
 
-// TODO: split down
-int32_t adjust_room_details(const int32_t adjusting, const int32_t socket, const struct Coordinates coords)
+int32_t adjust_room_name(const int32_t socket)
 {
-	uint8_t *sqlerr = NULL;
-	uint8_t *room   = NULL;
+	struct Coordinates coords = get_player_coords(socket);
 
 	if (compare_room_owner(socket, coords) == -1)
-		return -3;
+		return 2;
 
-	if (adjusting == ADJUSTING_ROOM_DESC) {
-		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rdesc = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
-			get_player_store(socket), get_player_name(socket), (char)coords.x, (char)coords.y, (char)coords.z);
-	} else if (adjusting == ADJUSTING_ROOM_NAME) {
-		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rname = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
-			get_player_store(socket), get_player_name(socket), (char)coords.x, (char)coords.y, (char)coords.z);
-	} else if (adjusting == ADJUSTING_ROOM_EXIT) {
-		// room = adjusting_room_exit(socket);
-	} else if (adjusting == ADJUSTING_ROOM_FLAG) {
-		// got to get current, then add to rflags
-		// room = adjusting_room_flag(socket);
-		room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET rflags = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
-			get_player_name(socket), (char)coords.x, (char)coords.y, (char)coords.z);
-	}
+	convert_coords_into_string_params;
 
-	lookup_room_exits(-1, coords);
+	uint8_t *sqlerr = NULL;
+	uint8_t *room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET name = %Q, last_modified_by = %Q WHERE x = %Q AND y = %Q AND z = %Q;", 
+			get_player_store(socket), get_player_name(socket), param_x, param_y, param_z);
 
 	if (sqlite3_exec(get_roomdb(), (char *)room, room_callback, 0, (char **)sqlerr) != SQLITE_OK) {
 		fprintf(stdout, "SQLITE3 room update error:\n%s\n", sqlite3_errmsg(get_roomdb()));
@@ -56,53 +50,83 @@ int32_t adjust_room_details(const int32_t adjusting, const int32_t socket, const
 	return EXIT_SUCCESS;
 }
 
-int32_t get_opposite_dir(const uint8_t *dir)
+int32_t adjust_room_desc(const int32_t socket)
 {
-	const uint8_t VALID_DIRECTIONS[10][10] = {
-		"north", "south", "west", "east", "northeast", "southwest", "northwest",
-		"southeast", "up", "down"
-	};
+	struct Coordinates coords = get_player_coords(socket);
 
-	size_t i;
-	_Bool found = 0;
-	for (i = 0; i < 10; ++i) {
-		if (strcmp((char *)VALID_DIRECTIONS[i], (char *)dir) == 0) {
-			found = true;
-			break;
-		}
-	}
-	if (found == false)
+	if (compare_room_owner(socket, coords) == -1)
+		return 2;
+
+	convert_coords_into_string_params;
+
+	uint8_t *sqlerr = NULL;
+	uint8_t *room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET desc = %Q, last_modified_by = %Q WHERE x = %Q AND y = %Q AND z = %Q;", 
+			get_player_store(socket), get_player_name(socket), param_x, param_y, param_z);
+
+	if (sqlite3_exec(get_roomdb(), (char *)room, room_callback, 0, (char **)sqlerr) != SQLITE_OK) {
+		fprintf(stdout, "SQLITE3 room update error:\n%s\n", sqlite3_errmsg(get_roomdb()));
+		sqlite3_free(room);
+		sqlite3_free(sqlerr);
 		return EXIT_FAILURE;
-
-	if (strcmp((char *)dir, "south") == 0	 ||
-		strcmp((char *)dir, "east") == 0	  ||
-		strcmp((char *)dir, "southwest") == 0 ||
-		strcmp((char *)dir, "southeast") == 0 ||
-		strcmp((char *)dir, "down") == 0) {
-		return i - 1;
-	} else {
-		return i + 1;
 	}
-	return EXIT_FAILURE;
+
+	sqlite3_free(room);
+	return EXIT_SUCCESS;
 }
 
-int32_t adjust_room_exit(const int32_t socket, const struct Coordinates player_coords, const struct Coordinates new_coords)
+// TODO: split down
+int32_t adjust_room_flag(const int32_t socket)
 {
-	printf("%d %d %d\n", socket, player_coords.x, new_coords.x);
-	// TODO: use newroom 
+	struct Coordinates coords = get_player_coords(socket);
+
+	if (compare_room_owner(socket, coords) == -1)
+		return 2;
+
+	convert_coords_into_string_params;
+
+	uint8_t *sqlerr = NULL;
+	uint8_t *room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET flags = %Q, last_modified_by = %Q WHERE x = %Q AND y = %Q AND z = %Q;", 
+			get_player_name(socket), param_x, param_y, param_z);
+
+	if (sqlite3_exec(get_roomdb(), (char *)room, room_callback, 0, (char **)sqlerr) != SQLITE_OK) {
+		fprintf(stdout, "SQLITE3 room update error:\n%s\n", sqlite3_errmsg(get_roomdb()));
+		sqlite3_free(room);
+		sqlite3_free(sqlerr);
+		return EXIT_FAILURE;
+	}
+
+	sqlite3_free(room);
+	return EXIT_SUCCESS;
+}
+
+int32_t adjust_room_exit(const int32_t socket, struct Coordinates destroom)
+{
+	struct Coordinates coords = get_player_coords(socket);
+
+	if (compare_room_owner(socket, coords) == -1)
+		return 2;
+
 	/*
-	if (strlen((char *)get_player_store(socket)) == 0 || get_player_store(socket) == NULL)
-		return -1;
+	convert_coords_into_string_params;
 
-	const int32_t direction = get_direction_as_number(get_player_store(socket));
+	// get the dest coords
 
-	struct RoomRecord *map = lookup_room(x, y, z, socket);
-
-	uint8_t *room = sqlite3_mprintf("UPDATE ROOMS SET %Q = %Q, last_modified_by = %Q WHERE xloc = %Q AND yloc = %Q AND zloc = %Q;", 
-			get_dir_string(direction), reverse_of_current(direction, reverse), get_player_name(socket), (char)x, (char)y, (char)z);
+	uint8_t *sqlerr = NULL;
+	uint8_t *room = (uint8_t *)sqlite3_mprintf("UPDATE ROOMS SET desc = %Q, last_modified_by = %Q WHERE x = %Q AND y = %Q AND z = %Q;", 
+			get_player_store(socket), get_player_name(socket), param_x, param_y, param_z);
 			*/
+	printf("%d %d %d\n", destroom.x, destroom.y, destroom.z);
+	// need a mirrored version too
 
-	//free_room(map);
-	// stuff
+	/*
+	if (sqlite3_exec(get_roomdb(), (char *)room, room_callback, 0, (char **)sqlerr) != SQLITE_OK) {
+		fprintf(stdout, "SQLITE3 room update error:\n%s\n", sqlite3_errmsg(get_roomdb()));
+		sqlite3_free(room);
+		sqlite3_free(sqlerr);
+		return EXIT_FAILURE;
+	}
+
+	sqlite3_free(room);
+	*/
 	return EXIT_SUCCESS;
 }

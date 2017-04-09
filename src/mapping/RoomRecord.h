@@ -3,7 +3,7 @@
 #include "../common.h"
 
 struct RoomRecord {
-	int32_t id;
+	_Bool found;
 	uint8_t rname[NAMES_MAX];
 	uint8_t rdesc[BUFFER_LENGTH];
 	uint8_t owner[NAMES_MAX];

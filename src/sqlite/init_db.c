@@ -18,6 +18,13 @@ int32_t init_dbs(void)
 	open_playerdb();
 	open_roomdb();
 
+	struct Coordinates coords = {0};
+	struct RoomRecord *room = lookup_room(coords);
+	_Bool found = room->found;
+	free(room);
+	if (found == true)
+		goto success;
+
 	// check that we have at least the origin room
 	struct NewRoom rconfig;
 	rconfig.name = (uint8_t*)"The Core of the World";
@@ -29,6 +36,8 @@ int32_t init_dbs(void)
 	rconfig.flags = (uint8_t *)"none";
 
 	assert(insert_room(rconfig) == 0);
+
+	success:
 
 	return EXIT_SUCCESS;
 }

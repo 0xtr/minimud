@@ -23,13 +23,13 @@ int32_t outgoing_handler(const int32_t socket)
 		+ num_of_newlines(socket);
 
 	uint8_t *processed_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
-	void *loc_in_buf = mempcpy(processed_buf, "> ", 2);
+	void *loc_in_buf = mempcpy(processed_buf, "", 0);
 
 	for (size_t iters = 0; iters < LINES_REQUIRED_FOR_MSG; ++iters) {
 		const size_t stop_at_char = find_reasonable_line_end(socket, buffer_pos);
 
 		loc_in_buf = mempcpy(loc_in_buf, &get_player_buffer(socket)[buffer_pos], stop_at_char);
-		loc_in_buf = mempcpy(loc_in_buf, "\n> ", 3);
+		loc_in_buf = mempcpy(loc_in_buf, "\n", 1);
 
 		buffer_pos += stop_at_char + 1;
 		if (buffer_pos > expected)
@@ -144,7 +144,7 @@ static int32_t add_prompt_chars(const int32_t socket)
 	uint8_t *tmp_buf = calloc(BUFFER_LENGTH, sizeof(uint8_t));
 	void *loc_in_buf;
 
-	loc_in_buf = mempcpy(tmp_buf, "> ", 2);
+	loc_in_buf = mempcpy(tmp_buf, "", 0);
 	loc_in_buf = mempcpy(loc_in_buf, get_player_buffer(socket), strlen((char *)get_player_buffer(socket)));
 	loc_in_buf = mempcpy(loc_in_buf, "\n", 1);
 

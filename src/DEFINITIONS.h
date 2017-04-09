@@ -63,6 +63,7 @@
 #define PRINT_PROVIDE_NEW_ROOM_DESC    -8705
 #define PRINT_ROOM_EXIT_CHANGED        -8706
 #define PRINT_ROOM_FLAG_CHANGED        -8707
+#define PRINT_ROOM_ALREADY_EXISTS      -8708
 #define ADJUSTING_ROOM_NAME            -8712
 #define ADJUSTING_ROOM_DESC            -8713
 #define ADJUSTING_ROOM_EXIT            -8714

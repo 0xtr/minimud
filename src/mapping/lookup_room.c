@@ -15,8 +15,6 @@ static _Bool has_exit(const int32_t exit_value);
 
 struct RoomRecord *lookup_room(const struct Coordinates coords)
 {
-	uint8_t *sqlerr = NULL;
-
 	uint8_t param_x[sizeof(coords.x)] = {0};
 	uint8_t param_y[sizeof(coords.y)] = {0};
 	uint8_t param_z[sizeof(coords.z)] = {0};
@@ -24,6 +22,7 @@ struct RoomRecord *lookup_room(const struct Coordinates coords)
 	snprintf((char *)param_y, sizeof(coords.y), "%d", coords.y);
 	snprintf((char *)param_z, sizeof(coords.z), "%d", coords.z);
 
+	uint8_t *sqlerr = NULL;
 	uint8_t *room = (uint8_t *)sqlite3_mprintf(
 			"SELECT * FROM ROOMS WHERE x LIKE %Q AND y LIKE %Q AND z LIKE %Q;", 
 			param_x, param_y, param_z);

@@ -10,12 +10,9 @@ static void append_coordinates_for_printing(const int32_t socket, const struct C
 int32_t print_to_player(const int32_t socket, const int32_t argument)
 {
 	#define IS_DIRECTION_ARG (argument >= NORTH_DIR && argument <= RETURN_ORIGIN_DIR)
-	_Bool prints_in_func = false;
+	//_Bool prints_in_func = false;
 
 	switch (argument) {
-	case PROMPT: 
-		set_player_buffer_replace(socket, "");
-		break;
 	case INVALCMD:
 		set_player_buffer_replace(socket, "Invalid command. Type \'commands\'.\n");
 		break;
@@ -142,8 +139,11 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 	case PRINT_ROOM_CREATION_SUCCESS:
 		set_player_buffer_replace(socket, "Room creation complete.\n");
 		break;
-	case PRINT_ROOM_CREATION_FAILURE:
+	case PRINT_ROOM_ALREADY_EXISTS:
 		set_player_buffer_replace(socket, "A room already exists in that direction. Exiting editor.\n");
+		break;
+	case PRINT_ROOM_CREATION_FAILURE:
+		set_player_buffer_replace(socket, "Creation failed. Contact an administrator.\n");
 		break;
 	case PRINT_REMOVED_FROM_ROOM:
 		set_player_buffer_replace(socket, "You've been moved from your current room by the system; the owning player may have deleted it.\n");
@@ -167,7 +167,7 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 		if (IS_DIRECTION_ARG)
 			set_buffer_for_movement(socket, argument);
 	}
-	if (prints_in_func == false)
+	//if (prints_in_func == false)
 		assert(outgoing_handler(socket) == EXIT_SUCCESS);
 	return EXIT_SUCCESS;
 }
@@ -223,20 +223,21 @@ static _Bool build_room_image (const int32_t socket) {
 	struct Coordinates coords = get_player_coords(socket);
 	struct RoomRecord *map = lookup_room(coords);
 
-	set_player_buffer_replace(socket, (map->rname == NULL) ? (void *)"NULL SPACE" : (void *)map->rname);
+	set_player_buffer_replace(socket, 
+			(map->found == false) ? (void *)"NULL SPACE" : (void *)map->rname);
 	append_coordinates_for_printing(socket, coords);
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 
 	set_player_buffer_replace(socket, "Exits:");
 
 	if (map->north == true)
-		set_player_buffer_append(socket, " NORTH");
+		set_player_buffer_append(socket, " N");
 	if (map->south == true)
-		set_player_buffer_append(socket, " SOUTH");
+		set_player_buffer_append(socket, " S");
 	if (map->east == true)
-		set_player_buffer_append(socket, " EAST");
+		set_player_buffer_append(socket, " E");
 	if (map->west == true)
-		set_player_buffer_append(socket, " WEST");
+		set_player_buffer_append(socket, " W");
 	if (map->up == true)
 		set_player_buffer_append(socket, " U");
 	if (map->down == true)
@@ -255,7 +256,7 @@ static _Bool build_room_image (const int32_t socket) {
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 
 	set_player_buffer_replace(socket, 
-			(map ->rdesc == NULL) ?
+			(map ->found == false) ?
 			(void *)"It is pitch black. You are "
 			"likely to be eaten by a null character."
 			: (void *)map->rdesc);
@@ -303,7 +304,7 @@ static _Bool print_all_commands(const int32_t socket)
 	size_t player_buffer_len;
 	void *cmd;
 
-	set_player_buffer_replace(socket, "Available commands:\n> ");
+	set_player_buffer_replace(socket, "Available commands:\n");
 
 	for (size_t i = 0; i != get_num_of_available_cmds(); ++i) {
 		cmd = get_command(i);

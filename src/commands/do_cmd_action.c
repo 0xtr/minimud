@@ -39,7 +39,7 @@ static void do_system_cmd(const int32_t socket, struct Command *info)
 
 static void do_info_cmd(const int32_t socket, struct Command *info)
 {
-	if (info->subtype == INFO_ROOM)
+	if (info->subtype == INFO_ROOM || info->subtype == INFO_ROOM2)
 		print_to_player(socket, SHOWROOM);
 	if (info->subtype == INFO_COMMANDS)
 		print_to_player(socket, SHOWCMDS);
@@ -134,8 +134,8 @@ static void do_movement_cmd(const int32_t socket, struct Command *info)
 static void do_travel_cmd(const int32_t socket, struct Command *info)
 {
 	if (info->subtype == TRAVEL_GOTO)
-		printf("ADD ME\n");
+		printf("ADD ME %d\n", socket);
 		
 	if (info->subtype == TRAVEL_SWAP)
-		printf("ADD ME\n");
+		printf("ADD ME %d\n", socket);
 }
