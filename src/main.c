@@ -51,7 +51,9 @@ int32_t main(void)
 	}
 
 	int32_t new_fd, nfds;
-	struct epoll_event ev, events[MAX_SIMULTANEOUS_EPOLL_EVENTS];
+	struct epoll_event ev = {0};
+	struct epoll_event events[MAX_SIMULTANEOUS_EPOLL_EVENTS] = {0};
+
 	ev.events = EPOLLIN;
 	ev.data.fd = listen_socket;
 

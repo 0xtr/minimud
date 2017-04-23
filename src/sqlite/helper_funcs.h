@@ -3,7 +3,7 @@
 #include "../common.h"
 
 #include "../players/PlayerDBRecord.h"
-#include "../mapping/RoomRecord.h"
+#include "../mapping/room_atom.h"
 #include "../SqliteVars.h"
 
 int32_t get_sqlite_rows_count(void);

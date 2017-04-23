@@ -48,3 +48,4 @@ int32_t set_player_buffer_replace(const int32_t socket, const void *newbuf);
 int32_t set_player_buffer_append(const int32_t socket, const void *append);
 int32_t set_player_store_replace(const int32_t socket, const void *newval);
 int32_t set_player_store_append(const int32_t socket, const void *append);
+void reset_player_state(const int32_t socket);

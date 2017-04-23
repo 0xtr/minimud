@@ -1,25 +1,12 @@
 #include "player_details.h"
 
-struct Coordinates get_player_coords(const int32_t socket)
+struct coordinates get_player_coords(const int32_t socket)
 {
-	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", get_player_name(socket));
-	uint8_t *sqlerr = NULL;
-
 	struct PlayerDBRecord *player = get_player_db_struct();
-	struct Coordinates coords;
+	struct coordinates coords;
 	coords.x = coords.y = coords.z = -1;
 
-	if (sqlite3_exec(get_playerdb(), (char *)pcheck, player_callback, player, (char **)sqlerr) != SQLITE_OK) {
-	#ifdef DEBUG
-		fprintf(stdout, "SQLITE3 error in get_player_coord:\n%s\n", sqlite3_errmsg(get_playerdb()));
-	#endif
-		free(player);
-		sqlite3_free(pcheck);
-		sqlite3_free(sqlerr);
-		return coords;
-	}
-
-	sqlite3_free(pcheck);
+	run_sql(sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name LIKE %Q;", get_player_name(socket)), player, DB_PLAYER);
 
 	coords.x = player->x;
 	coords.y = player->y;
@@ -32,19 +19,8 @@ struct Coordinates get_player_coords(const int32_t socket)
 
 int32_t get_next_player_num(void)
 {
-	uint8_t *pcheck = (uint8_t *)sqlite3_mprintf("SELECT * FROM PLAYERS;");
-	uint8_t *sqlerr = NULL;
+	run_sql(sqlite3_mprintf("SELECT id FROM PLAYERS;"), 0, DB_PLAYER);
 	reset_sqlite_rows_count();
 
-	if (sqlite3_exec(get_playerdb(), (char *)pcheck, player_callback, 0, (char **)sqlerr) != SQLITE_OK) {
-		sqlite3_free(pcheck);
-		sqlite3_free(sqlerr);
-		#ifdef DEBUG
-			fprintf(stdout, "SQLITE3 error in get_next_player_num:\n%s\n", sqlite3_errmsg(get_playerdb()));
-		#endif
-		return EXIT_FAILURE;
-	}
-
-	sqlite3_free(pcheck);
 	return get_sqlite_rows_count();
 }

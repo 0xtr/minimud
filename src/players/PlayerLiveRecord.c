@@ -205,7 +205,10 @@ int32_t init_player_store(const int32_t socket)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	curr->store = calloc(BUFFER_LENGTH, sizeof(uint8_t));
+	if (curr->store != NULL)
+		free(curr->store);
+
+	curr->store = calloc(BUFFER_LENGTH+1, sizeof(uint8_t));
 	curr->store_size = strlen((char *)curr->buffer);
 	memcpy(curr->store, curr->buffer, strlen((char *)curr->buffer));
 
@@ -218,6 +221,9 @@ int32_t clear_player_store(const int32_t socket)
 
 	if (player_not_found)
 		return EXIT_FAILURE;
+
+	if (curr->store_size == 0)
+		return EXIT_SUCCESS;
 
 	memset(curr->store, '\0', curr->store_size);
 	free(curr->store);
@@ -275,6 +281,7 @@ int32_t set_player_buffer_replace(const int32_t socket, const void *newbuf)
 		return EXIT_FAILURE;
 
 	clear_player_buffer(socket);
+
 	int32_t len = strlen((char *)newbuf);
 	if (len > BUFFER_LENGTH)
 		len = BUFFER_LENGTH;
@@ -305,4 +312,11 @@ size_t get_num_of_players(void)
 	struct PlayerLiveRecord *tmp = head;
 	for (list_size = 0; (tmp = tmp->next) != NULL; ++list_size) { } 
 	return list_size;
+}
+
+void reset_player_state(const int32_t socket)
+{
+	set_player_wait_state(socket, NO_WAIT_STATE);
+	set_player_holding_for_input(socket, 0);
+	clear_player_store(socket);
 }

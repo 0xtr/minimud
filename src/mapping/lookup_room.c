@@ -1,171 +1,96 @@
 #include "lookup_room.h"
 
-static _Bool is_vector_west(const int32_t x, const int32_t y);
-static _Bool is_vector_east(const int32_t x, const int32_t y);
-static _Bool is_vector_north(const int32_t x, const int32_t y);
-static _Bool is_vector_south(const int32_t x, const int32_t y);
-static _Bool is_vector_northwest(const int32_t x, const int32_t y);
-static _Bool is_vector_down(const int32_t z);
-static _Bool is_vector_up(const int32_t z);
-static _Bool is_vector_northwest(const int32_t x, const int32_t y);
-static _Bool is_vector_northeast(const int32_t x, const int32_t y);
-static _Bool is_vector_southeast(const int32_t x, const int32_t y);
-static _Bool is_vector_southwest(const int32_t x, const int32_t y);
-static _Bool has_exit(const int32_t exit_value);
-
-struct RoomRecord *lookup_room(const struct Coordinates coords)
+struct room_atom *lookup_room(const struct coordinates coords)
 {
-	uint8_t param_x[sizeof(coords.x)] = {0};
-	uint8_t param_y[sizeof(coords.y)] = {0};
-	uint8_t param_z[sizeof(coords.z)] = {0};
-	snprintf((char *)param_x, sizeof(coords.x), "%d", coords.x);
-	snprintf((char *)param_y, sizeof(coords.y), "%d", coords.y);
-	snprintf((char *)param_z, sizeof(coords.z), "%d", coords.z);
+	convert_coords_into_string_params(coords.x, coords.y, coords.z);
 
-	uint8_t *sqlerr = NULL;
-	uint8_t *room = (uint8_t *)sqlite3_mprintf(
+	struct room_atom *map = get_room();
+
+	int32_t rv = run_sql(sqlite3_mprintf(
 			"SELECT * FROM ROOMS WHERE x LIKE %Q AND y LIKE %Q AND z LIKE %Q;", 
-			param_x, param_y, param_z);
-	struct RoomRecord *map = get_room();
+			param_x, param_y, param_z), map, DB_ROOM);
 
-	if (sqlite3_exec(get_roomdb(), (char *)room, room_callback, map, (char **)sqlerr) != SQLITE_OK) {
-		fprintf(stdout, "SQLITE3 room lookup error:\n%s\n", sqlite3_errmsg(get_roomdb()));
-		sqlite3_free(room);
-		sqlite3_free(sqlerr);
-		free(map);
+	if (rv == EXIT_FAILURE)
 		return NULL;
-	}
-
-	sqlite3_free(room);
 
 	return map;
 }
 
-int32_t lookup_room_exits(const int32_t socket, const struct Coordinates coords)
+struct room_atom *lookup_room_by_id(const int32_t id)
 {
-	struct Coordinates original_coords = get_player_coords(socket);
-	struct RoomRecord *map = lookup_room(coords);
+	uint8_t idstr[sizeof(id)] = {0};
+	snprintf((char *)idstr, sizeof(id), "%d", id);
 
-	if (map == NULL)
-		return -2;
+	struct room_atom *map = get_room();
 
-	if (!has_exit_for_dir(original_coords, map)) {
-		free_room(map);
-		return -1;
+	int32_t rv = run_sql(sqlite3_mprintf(
+			"SELECT * FROM ROOMS WHERE id LIKE %Q;", idstr), map, DB_ROOM);
+
+	if (rv == EXIT_FAILURE)
+		return NULL;
+
+	return map;
+}
+
+int32_t lookup_room_exits(const struct coordinates origin, const struct coordinates dest)
+{
+	int32_t rv = 0;
+	struct room_atom *origin_room = lookup_room(origin);
+	struct room_atom *dest_room = lookup_room(dest);
+
+	if (dest_room == NULL) {
+		rv = -2;
+		goto end;
 	}
 
-	free_room(map);
+	if (has_exit_for_dir(origin_room, dest_room) == EXIT_FAILURE)
+		rv = -1;
 
-	return EXIT_SUCCESS;
+	end: 
+
+	free(origin_room);
+	free(dest_room);
+
+	return rv;
 }
 
-static _Bool is_vector_west(const int32_t x, const int32_t y)
+int32_t has_exit_for_dir(struct room_atom *origin, struct room_atom *dest)
 {
-	return x == -1 && y == 0;
+	for (size_t i = 0; i < 10; ++i) {
+		if (dest->exits[i] == -1)
+			continue;
+
+		if (memcmp(&origin->id, &dest->exits[i], sizeof(int32_t)) == 0)
+			return EXIT_SUCCESS;
+	}
+
+	return EXIT_FAILURE;
 }
 
-static _Bool is_vector_east(const int32_t x, const int32_t y)
+int32_t lookup_room_name_from_coords(const int32_t socket, const struct coordinates coords)
 {
-	return x == 1 && y == 0;
-}
-
-static _Bool is_vector_north(const int32_t x, const int32_t y)
-{
-	return x == 0 && y == 1;
-}
-
-static _Bool is_vector_south(const int32_t x, const int32_t y)
-{
-	return x == 0 && y == -1;
-}
-
-static _Bool is_vector_up(const int32_t z)
-{
-	return z == 1;
-}
-
-static _Bool is_vector_down(const int32_t z)
-{
-	return z == -1;
-}
-
-static _Bool is_vector_northwest(const int32_t x, const int32_t y)
-{
-	return x == -1 && y == 1;
-}
-
-static _Bool is_vector_southwest(const int32_t x, const int32_t y)
-{
-	return x == -1 && y == -1;
-}
-
-static _Bool is_vector_northeast(const int32_t x, const int32_t y)
-{
-	return x == 1 && y == 1;
-}
-
-static _Bool is_vector_southeast(const int32_t x, const int32_t y)
-{
-	return x == 1 && y == -1;
-}
-
-static _Bool has_exit(const int32_t exit_value)
-{
-	return exit_value != 0;
-}
-
-int32_t has_exit_for_dir (const struct Coordinates coords, const struct RoomRecord *map) {
-	if (is_vector_west(coords.x, coords.y) && !has_exit(map->west))
-		return EXIT_FAILURE;
-	if (is_vector_east(coords.x, coords.y) && !has_exit(map->east))
-		return EXIT_FAILURE;
-	if (is_vector_north(coords.x, coords.y) && !has_exit(map->north))
-		return EXIT_FAILURE;
-	if (is_vector_south(coords.x, coords.y) && !has_exit(map->south))
-		return EXIT_FAILURE;
-	if (is_vector_up(coords.z) && !has_exit(map->up))
-		return EXIT_FAILURE;
-	if (is_vector_down(coords.z) && !has_exit(map->down))
-		return EXIT_FAILURE;
-	if (is_vector_northeast(coords.x, coords.y) && !has_exit(map->northeast))
-		return EXIT_FAILURE;
-	if (is_vector_southeast(coords.x, coords.y) && !has_exit(map->southeast))
-		return EXIT_FAILURE;
-	if (is_vector_southwest(coords.x, coords.y) && !has_exit(map->southwest))
-		return EXIT_FAILURE;
-	if (is_vector_northwest(coords.x, coords.y) && !has_exit(map->northwest))
-		return EXIT_FAILURE;
-	return EXIT_SUCCESS;
-}
-
-int32_t lookup_room_name_from_coords(const int32_t socket, const struct Coordinates coords)
-{
-	struct RoomRecord *map = lookup_room(coords);
+	struct room_atom *map = lookup_room(coords);
 
 	if (map != NULL) {
 		// get_room_details(map);
 		set_player_buffer_replace(socket, map->rname);
-		free_room(map);
+		free(map);
 	} else {
-		set_player_buffer_replace(socket, (uint8_t *)"an unknown location");
+		set_player_buffer_replace(socket, "NULL SPACE");
 	}
 
 	return EXIT_SUCCESS;
 }
 
-int32_t compare_room_owner(const int32_t socket, const struct Coordinates coords)
+int32_t compare_room_owner(const int32_t socket, const struct coordinates coords)
 {
-	struct RoomRecord *map = lookup_room(coords);
+	int32_t rv = EXIT_SUCCESS;
+	struct room_atom *map = lookup_room(coords);
 
-	if (map == NULL)
-		return -1;
+	if (strcmp((char*)get_player_name(socket), (char*)map->owner) != 0)
+		rv = EXIT_FAILURE;
 
-	if (strcmp((char*)get_player_name(socket), (char*)map->owner) != 0) {
-		free_room(map);
-		return EXIT_FAILURE;
-	}
+	free(map);
 
-	free_room(map);
-
-	return EXIT_SUCCESS;
+	return rv;
 }

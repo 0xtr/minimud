@@ -2,7 +2,7 @@
 
 #include "../common.h"
 
-#include "../mapping/Coordinates.h"
+#include "../mapping/coordinates.h"
 #include "../players/PlayerDBRecord.h"
 #include "../sqlite/init_db.h"
 

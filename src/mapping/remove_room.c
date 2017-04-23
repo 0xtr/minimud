@@ -1,69 +1,51 @@
 #include "remove_room.h"
 
-static void check_exits_and_adjust(const int32_t socket, const struct RoomRecord *map, struct Coordinates new_coords);
+static void check_exits_and_adjust(struct room_atom *room);
 
 #define player_is_not_owner strcmp((char *)map->owner, (char *)get_player_name(socket)) 
 
 int32_t remove_room(const int32_t socket)
 {
-	uint8_t *sqlerr = NULL;
-	struct Coordinates coords = get_player_coords(socket);
-	struct RoomRecord *map = lookup_room(coords);
+	struct coordinates coords = get_player_coords(socket);
+	struct room_atom *map = lookup_room(coords);
 
 	if (map == NULL)
 		return -1;
 
 	if (player_is_not_owner) {
-		free_room(map);
+		free(map);
 		return -2;
 	}
 
-	uint8_t *querystr = (uint8_t *)sqlite3_mprintf(
-			"DELETE FROM ROOMS WHERE xloc LIKE %Q AND yloc LIKE %Q AND zloc LIKE %Q;",
-			(char)coords.x, (char)coords.y, (char)coords.z);
+	convert_coords_into_string_params(coords.x, coords.y, coords.z);
 
-	if (sqlite3_exec(get_roomdb(), (char *)querystr, room_callback, 0, (char **)sqlerr) != SQLITE_OK) {
-		fprintf(stdout, "SQLITE3 failure in remove_room; could not delete the room:\n%s\n", sqlite3_errmsg(get_roomdb()));
-		sqlite3_free(querystr);
-		sqlite3_free(sqlerr);
-		free_room(map);
-		return -3;
+	int32_t rv = run_sql(sqlite3_mprintf(
+			"DELETE FROM ROOMS WHERE x LIKE %Q AND y LIKE %Q AND z LIKE %Q;",
+			param_x, param_y, param_z), 0, DB_ROOM);
+	if (rv == EXIT_FAILURE) {
+		free(map);
+		return EXIT_FAILURE;
 	}
 
-	sqlite3_free(querystr);
-
-	check_exits_and_adjust(socket, map, coords);
+	check_exits_and_adjust(map);
 	assert(remove_players_from_room(coords) == EXIT_SUCCESS);
 
-	free_room(map);
+	free(map);
 	return EXIT_SUCCESS;
 }
 
-static void check_exits_and_adjust(const int32_t socket, const struct RoomRecord *map, struct Coordinates new_coords)
+static void check_exits_and_adjust(struct room_atom *room)
 {
-	if (map->north == true)
-		new_coords.y += 1;
-	if (map->south == true)
-		new_coords.y -= 1;
-	if (map->east == true)
-		new_coords.x += 1;
-	if (map->west == true)
-		new_coords.x -= 1;
+	for (size_t i = 0; i < 10; ++i) {
+		if (room->exits[i] != -1) {
+			struct room_atom *target = lookup_room_by_id(room->exits[i]);
+			printf("finding linked room: id %d\n", target->id);
 
-	if (map->up == true)
-		new_coords.z += 1;
-	if (map->down == true)
-		new_coords.z -= 1;
+			if (target == NULL)
+				continue;
 
-	if (map->northeast == true)
-		new_coords.x += 1, new_coords.y += 1;
-	if (map->southeast == true)
-		new_coords.x += 1, new_coords.y -= 1;
-	if (map->southwest == true)
-		new_coords.x -= 1, new_coords.y -= 1;
-	if (map->northwest == true)
-		new_coords.x -= 1, new_coords.y += 1;
-
-	adjust_room_exit(socket, new_coords);
+			adjust_room_exit(i, room, target);
+		}
+	}
 }
 

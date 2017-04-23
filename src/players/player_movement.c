@@ -1,39 +1,31 @@
 #include "player_movement.h"
 
-int32_t adjust_player_location(const int32_t socket, struct Coordinates coords)
+int32_t adjust_player_location(const int32_t socket, struct coordinates coords)
 {
-	if (coords.x == -1 && coords.y == -1 && coords.z == -1) {
+	if (coords.x == -1 && coords.y == -1 && coords.z == -1)
 		coords.x = coords.y = coords.z = 0;
-	}
-	uint8_t *sqlerr = NULL;
-	uint8_t *querystr = (uint8_t*)sqlite3_mprintf("UPDATE PLAYERS SET x = %Q, y = %Q, z = %Q WHERE name = %Q;", 
-		            (char)coords.x, (char)coords.y, (char)coords.z, (char*)get_player_name(socket));
 
-	if (sqlite3_exec(get_playerdb(), (char*)querystr, player_callback, 0, (char**)sqlerr) != SQLITE_OK) {
-		fprintf(stdout, "SQLITE player location adjustment error:\n%s\n", sqlite3_errmsg(get_playerdb()));
-		print_to_player(socket, INVALDIR);
-		sqlite3_free(querystr);
-		sqlite3_free(sqlerr);
-		return EXIT_FAILURE;
-	}
+	convert_coords_into_string_params(coords.x, coords.y, coords.z);
 
-	sqlite3_free(querystr);
-
-	return EXIT_SUCCESS;
+	return run_sql(sqlite3_mprintf(
+		"UPDATE PLAYERS SET x = %Q, y = %Q, z = %Q WHERE name = %Q;", 
+		 param_x, param_y, param_z, (char *)get_player_name(socket)), 0, DB_PLAYER);
 }
 
 int32_t ensure_player_moving_valid_dir(const int32_t socket, const uint8_t *command)
 {
-	struct Command *info = (struct Command *)malloc(sizeof(struct Command));
-	info = is_movement_cmd(command, info);
-	enum COMMAND_TYPES type = info->type;
+	struct command *info = get_command_info(command);
+	const int32_t type = info->type;
+
 	free(info);
+
 	if (type == MOVEMENT)
 		 return EXIT_SUCCESS;
 
-	print_to_player(socket, INVALDIR);\
-	print_to_player(socket, PRINT_EXITING_CMD_WAIT);\
-	set_player_wait_state(socket, NO_WAIT_STATE);
-	set_player_holding_for_input(socket, 0);
+	print_to_player(socket, INVALDIR);
+	print_to_player(socket, PRINT_EXITING_CMD_WAIT);
+
+	reset_player_state(socket);
+
 	return EXIT_FAILURE;
 }

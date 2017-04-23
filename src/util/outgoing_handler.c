@@ -13,7 +13,7 @@ int32_t outgoing_handler(const int32_t socket)
 	size_t expected = (buflen > (BUFFER_LENGTH - 1)) ? BUFFER_LENGTH : buflen;
 	size_t buffer_pos = 0;
 
-	if ((CHARS_FOR_PROMPT_AND_NULL + strlen((char *)get_player_buffer(socket))) <= PRINT_LINE_WIDTH) {
+	if ((1 + strlen((char *)get_player_buffer(socket))) <= PRINT_LINE_WIDTH) {
 		expected += add_prompt_chars(socket);
 		return send_and_handle_errors(socket, expected);
 	}
@@ -56,7 +56,7 @@ static size_t num_of_newlines(const int32_t socket)
 static size_t find_reasonable_line_end(const int32_t socket, const int32_t buffer_pos)
 {
 	int32_t last_space = 0;
-	uint8_t *last_match, *substr = calloc(PRINT_LINE_WIDTH, sizeof(uint8_t));
+	uint8_t *last_match, *substr = calloc(PRINT_LINE_WIDTH+1, sizeof(uint8_t));
 
 	memcpy(substr, &get_player_buffer(socket)[buffer_pos], PRINT_LINE_WIDTH);
 	const size_t substr_len = strlen((char *)substr);
@@ -100,11 +100,11 @@ static int32_t send_and_handle_errors(const int32_t socket, const int32_t expect
 	#define MAX_ATTEMPTS 10
 	int32_t returned, total = 0;
 
-	for (int i = 0; i < MAX_ATTEMPTS; ++i) {
+	for (size_t i = 0; i < MAX_ATTEMPTS; ++i) {
 		returned = send(socket, &get_player_buffer(socket)[total], expected, 0);
 		if (returned != -1) {
 			total += returned;
-			if (all_data_was_sent(total, expected) == EXIT_SUCCESS) {
+			if (all_data_was_sent(total, expected) == true) {
 				break;
 			} else {
 				continue;

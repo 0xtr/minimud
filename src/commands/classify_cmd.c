@@ -51,39 +51,39 @@ const char * const travel_commands[] = {
 	"swap"
 };
 
-struct Command *is_movement_cmd(const uint8_t *cmd, struct Command *info)
+struct command *is_movement_cmd(const uint8_t *cmd, struct command *info)
 {
 	loop_over_cmds(movement_commands, MOVEMENT);
 	return info;
 }
 
-struct Command *is_system_cmd(const uint8_t *cmd, struct Command *info)
+struct command *is_system_cmd(const uint8_t *cmd, struct command *info)
 {
 	loop_over_cmds(system_commands, SYSTEM_ACTION);
 	return info;
 }
 
-struct Command *is_room_cmd(const uint8_t *cmd, struct Command *info)
+struct command *is_room_cmd(const uint8_t *cmd, struct command *info)
 {
 	loop_over_cmds(room_commands, ROOM_CHANGE);
 	return info;
 }
 
-struct Command *is_travel_cmd(const uint8_t *cmd, struct Command *info)
+struct command *is_travel_cmd(const uint8_t *cmd, struct command *info)
 {
 	loop_over_cmds(travel_commands, TRAVEL_ACTION);
 	return info;
 }
 
-struct Command *is_info_cmd(const uint8_t *cmd, struct Command *info)
+struct command *is_info_cmd(const uint8_t *cmd, struct command *info)
 {
 	loop_over_cmds(info_commands, INFO_REQUEST);
 	return info;
 }
 
-struct Command *get_command_info(const uint8_t *cmd)
+struct command *get_command_info(const uint8_t *cmd)
 {
-	struct Command *info = (struct Command *)malloc(sizeof(struct Command));
+	struct command *info = (struct command *)malloc(sizeof(struct command));
 	info->type = COMMAND_NOT;
 	info->subtype = COMMAND_NOT;
 
@@ -102,27 +102,52 @@ struct Command *get_command_info(const uint8_t *cmd)
 
 uint8_t *get_movement_str(const int32_t dir)
 {
-	if (dir == MOVEMENT_NORTH)
+	if (dir == DIR_NORTH)
 		return (uint8_t *)"north";
-	if (dir == MOVEMENT_SOUTH)
+	if (dir == DIR_SOUTH)
 		return (uint8_t *)"south";
-	if (dir == MOVEMENT_EAST)
+	if (dir == DIR_EAST)
 		return (uint8_t *)"east";
-	if (dir == MOVEMENT_WEST)
+	if (dir == DIR_WEST)
 		return (uint8_t *)"west";
-	if (dir == MOVEMENT_UP)
+	if (dir == DIR_UP)
 		return (uint8_t *)"up";
-	if (dir == MOVEMENT_DOWN)
+	if (dir == DIR_DOWN)
 		return (uint8_t *)"down";
-	if (dir == MOVEMENT_NORTHEAST)
+	if (dir == DIR_NORTHEAST)
 		return (uint8_t *)"northeast";
-	if (dir == MOVEMENT_SOUTHEAST)
+	if (dir == DIR_SOUTHEAST)
 		return (uint8_t *)"southeast";
-	if (dir == MOVEMENT_SOUTHWEST)
+	if (dir == DIR_SOUTHWEST)
 		return (uint8_t *)"southwest";
-	if (dir == MOVEMENT_NORTHWEST)
+	if (dir == DIR_NORTHWEST)
 		return (uint8_t *)"northwest";
 	return (uint8_t *)"EMPTY";
+}
+
+uint8_t *get_opposite_str(const int32_t dir)
+{
+	if (dir == DIR_NORTH)
+		return (uint8_t *)"south";
+	if (dir == DIR_SOUTH)
+		return (uint8_t *)"north";
+	if (dir == DIR_EAST)
+		return (uint8_t *)"west";
+	if (dir == DIR_WEST)
+		return (uint8_t *)"east";
+	if (dir == DIR_UP)
+		return (uint8_t *)"down";
+	if (dir == DIR_DOWN)
+		return (uint8_t *)"up";
+	if (dir == DIR_NORTHEAST)
+		return (uint8_t *)"southwest";
+	if (dir == DIR_SOUTHEAST)
+		return (uint8_t *)"northwest";
+	if (dir == DIR_SOUTHWEST)
+		return (uint8_t *)"northeast";
+	if (dir == DIR_NORTHWEST)
+		return (uint8_t *)"southeast";
+	return NULL;
 }
 
 size_t get_num_of_available_cmds(void)
@@ -158,4 +183,12 @@ uint8_t *get_command(const size_t num)
 	}
 
 	return NULL;
+}
+
+struct command *get_empty_command(void)
+{
+	struct command *info = (struct command *)malloc(sizeof(struct command));
+	info->type = COMMAND_NOT;
+	info->subtype = COMMAND_NOT;
+	return info;
 }

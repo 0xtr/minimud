@@ -2,10 +2,10 @@
 
 #include "../common.h"
 
-#include "../mapping/Coordinates.h"
-#include "../mapping/RoomRecord.h"
+#include "../mapping/coordinates.h"
+#include "../mapping/room_atom.h"
+#include "../mapping/room_blueprint.h"
 #include "../mapping/lookup_room.h"
-#include "../mapping/NewRoom.h"
 
 #include "../players/player_movement.h"
 

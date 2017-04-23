@@ -2,6 +2,14 @@
 
 #define DEBUG
 
+#define convert_coords_into_string_params(x, y, z) \
+	uint8_t param_x[2 * sizeof(x)] = {0};\
+	uint8_t param_y[2 * sizeof(y)] = {0};\
+	uint8_t param_z[2 * sizeof(z)] = {0};\
+	snprintf((char *)param_x, sizeof(x), "%d", x);\
+	snprintf((char *)param_y, sizeof(y), "%d", y);\
+	snprintf((char *)param_z, sizeof(z), "%d", z);
+
 #define MAX_SIMULTANEOUS_EPOLL_EVENTS 10
 #define BUFFER_LENGTH    	512
 #define BUFFER_LENGTH_STR 	"512"
@@ -113,3 +121,13 @@
 #define SOUTHWEST_DIR   		-9008
 #define NORTHWEST_DIR   		-9009
 #define RETURN_ORIGIN_DIR   		-9010
+#define NORTH_EXIT 			0
+#define EAST_EXIT 			1
+#define SOUTH_EXIT 			2
+#define WEST_EXIT 			3
+#define UP_EXIT 			4
+#define DOWN_EXIT 			5
+#define NORTHEAST_EXIT 			6
+#define SOUTHEAST_EXIT 			7
+#define SOUTHWEST_EXIT 			8
+#define NORTHWEST_EXIT 			9

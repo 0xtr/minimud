@@ -57,11 +57,15 @@ int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 		return EXIT_FAILURE;
 	}
 
-	struct Coordinates coords = get_player_coords(socket);
-	if (lookup_room(coords) == NULL) {
+	struct coordinates coords = get_player_coords(socket);
+	struct room_atom *map = lookup_room(coords);
+
+	if (map == NULL) {
 		coords.x = coords.y = coords.z = -1;
 		assert(adjust_player_location(socket, coords) == EXIT_SUCCESS);
 		fprintf(stdout, "[INFO] Moving player %d from a nonexistent room.\n", socket);
+	} else {
+		free(map);
 	}
 
 	free(player);

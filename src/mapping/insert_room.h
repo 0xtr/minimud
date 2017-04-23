@@ -3,5 +3,6 @@
 #include "../common.h"
 #include "../sqlite/init_db.h"
 #include "../mapping/room_adjustments.h"
+#include "../mapping/room_atom.h"
 
-int32_t insert_room(struct NewRoom rconfig);
+struct room_atom *insert_room(struct room_blueprint rconfig);

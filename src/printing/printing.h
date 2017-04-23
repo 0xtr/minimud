@@ -4,7 +4,9 @@
 
 #include "../players/PlayerLiveRecord.h"
 
-#include "../mapping/Coordinates.h"
+#include "../commands/classify_cmd.h"
+
+#include "../mapping/coordinates.h"
 #include "../mapping/lookup_room.h"
 
 #include "../util/outgoing_handler.h"

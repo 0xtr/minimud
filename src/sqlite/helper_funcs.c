@@ -1,11 +1,12 @@
 #include "helper_funcs.h"
 
 static void handle_player_columns(char *azColName, char *arg1, struct PlayerDBRecord *player);
-static void handle_map_columns(char *azColName, char *arg1, struct RoomRecord *map);
+static void handle_map_columns(char *azColName, char *arg1, struct room_atom *map);
 
 int room_callback (void *data, int argc, char **argv, char **azColName)
 {
-	struct RoomRecord *map_ref = data;
+	struct room_atom *map_ref = data;
+	memset(map_ref->exits, -1, sizeof(map_ref));
 
 	increment_sqlite_rows_count();
 
@@ -57,10 +58,12 @@ static void handle_player_columns(char *azColName, char *arg1, struct PlayerDBRe
 		memcpy(player->salt, arg1, arg_len);
 	} else if (memcmp(azColName, "last_ip", col_len) == 0) {
 		memcpy(player->last_ip, arg1, arg_len);
+	} else if (memcmp(azColName, "id", col_len) == 0) {
+		player->id = atoi(arg1);
 	}
 }
 
-static void handle_map_columns(char *azColName, char *arg1, struct RoomRecord *map)
+static void handle_map_columns(char *azColName, char *arg1, struct room_atom *map)
 {
 	const size_t arg_len = strlen(arg1);
 	const size_t col_len = strlen(azColName);
@@ -70,27 +73,35 @@ static void handle_map_columns(char *azColName, char *arg1, struct RoomRecord *m
 	} else if (memcmp(azColName, "desc", col_len) == 0) {
 		memcpy(map->rdesc, arg1, arg_len);
 	} else if (memcmp(azColName, "north", col_len) == 0) {
-		map->north = atoi(arg1);
+		map->exits[NORTH_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "east", col_len) == 0) {
-		map->east = atoi(arg1);
+		map->exits[EAST_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "south", col_len) == 0) {
-		map->south = atoi(arg1);
+		map->exits[SOUTH_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "west", col_len) == 0) {
-		map->west = atoi(arg1);
+		map->exits[WEST_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "up", col_len) == 0) {
-		map->up = atoi(arg1);
+		map->exits[UP_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "down", col_len) == 0) {
-		map->down = atoi(arg1);
+		map->exits[DOWN_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "northeast", col_len) == 0) {
-		map->northeast = atoi(arg1);
+		map->exits[NORTHEAST_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "southeast", col_len) == 0) {
-		map->southeast = atoi(arg1);
+		map->exits[SOUTHEAST_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "southwest", col_len) == 0) {
-		map->southwest = atoi(arg1);
+		map->exits[SOUTHWEST_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "northwest", col_len) == 0) {
-		map->northwest = atoi(arg1);
+		map->exits[NORTHWEST_EXIT] = atoi(arg1);
 	} else if (memcmp(azColName, "owner", col_len) == 0) {
 		memcpy(map->owner, arg1, arg_len);
+	} else if (memcmp(azColName, "id", col_len) == 0) {
+		map->id = atoi(arg1);
+	} else if (memcmp(azColName, "x", col_len) == 0) {
+		map->coords.x = atoi(arg1);
+	} else if (memcmp(azColName, "y", col_len) == 0) {
+		map->coords.y = atoi(arg1);
+	} else if (memcmp(azColName, "z", col_len) == 0) {
+		map->coords.z = atoi(arg1);
 	}
 }
 

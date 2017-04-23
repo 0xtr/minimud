@@ -1,12 +1,12 @@
 #include "do_cmd_action.h"
 
-static void do_room_cmd(const int32_t socket, struct Command *info);
-static void do_system_cmd(const int32_t socket, struct Command *info);
-static void do_info_cmd(const int32_t socket, struct Command *info);
-static void do_movement_cmd(const int32_t socket, struct Command *info);
-static void do_travel_cmd(const int32_t socket, struct Command *info);
+static void do_room_cmd(const int32_t socket, struct command *info);
+static void do_system_cmd(const int32_t socket, struct command *info);
+static void do_info_cmd(const int32_t socket, struct command *info);
+static void do_movement_cmd(const int32_t socket, struct command *info);
+static void do_travel_cmd(const int32_t socket, struct command *info);
 
-int32_t do_cmd_action(const int32_t socket, struct Command *info)
+int32_t do_cmd_action(const int32_t socket, struct command *info)
 {
 	if (info->type == MOVEMENT)
 		do_movement_cmd(socket, info);
@@ -28,7 +28,7 @@ int32_t do_cmd_action(const int32_t socket, struct Command *info)
 	return EXIT_SUCCESS; 
 }
 
-static void do_system_cmd(const int32_t socket, struct Command *info)
+static void do_system_cmd(const int32_t socket, struct command *info)
 {
 	if (info->subtype == SYS_SAY) {
 		print_player_speech(socket);
@@ -37,7 +37,7 @@ static void do_system_cmd(const int32_t socket, struct Command *info)
 	}
 }
 
-static void do_info_cmd(const int32_t socket, struct Command *info)
+static void do_info_cmd(const int32_t socket, struct command *info)
 {
 	if (info->subtype == INFO_ROOM || info->subtype == INFO_ROOM2)
 		print_to_player(socket, SHOWROOM);
@@ -49,7 +49,7 @@ static void do_info_cmd(const int32_t socket, struct Command *info)
 		printf("ADD ME\n");
 }
 
-static void do_room_cmd(const int32_t socket, struct Command *info)
+static void do_room_cmd(const int32_t socket, struct command *info)
 {
 	if (info->subtype == ROOM_SET_NAME) {
 		print_to_player(socket, PRINT_PROVIDE_NEW_ROOM_NAME);
@@ -78,60 +78,71 @@ static void do_room_cmd(const int32_t socket, struct Command *info)
 	}
 }
 
-static void do_movement_cmd(const int32_t socket, struct Command *info)
+static void do_movement_cmd(const int32_t socket, struct command *info)
 {
+	int32_t dir = 0;
 	int32_t rv = 0;
-	struct Coordinates original_coords = get_player_coords(socket);
+	struct coordinates origin = get_player_coords(socket);
+	struct coordinates destination;
 
-	struct Coordinates destination_coords;
-	destination_coords.x = destination_coords.y = destination_coords.z = 0;
+	destination.x = destination.y = destination.z = 0;
 
-	if (info->subtype == MOVEMENT_NORTH) {
-		destination_coords.y = original_coords.y + 1;
-	} else if (info->subtype == MOVEMENT_EAST) {
-		destination_coords.x = original_coords.x + 1;
-	} else if (info->subtype == MOVEMENT_SOUTH) {
-		destination_coords.y = original_coords.y - 1;
-	} else if (info->subtype == MOVEMENT_WEST) {
-		destination_coords.x = original_coords.x - 1;
-	} else if (info->subtype == MOVEMENT_DOWN) {
-		destination_coords.z = original_coords.z - 1;
-	} else if (info->subtype == MOVEMENT_UP) {
-		destination_coords.z = original_coords.z + 1;
-	} else if (info->subtype == MOVEMENT_NORTHWEST) {
-		destination_coords.x = original_coords.x - 1;
-		destination_coords.y = original_coords.y + 1;
-	} else if (info->subtype == MOVEMENT_NORTHEAST) {
-		destination_coords.x = original_coords.x + 1;
-		destination_coords.y = original_coords.y + 1;
-	} else if (info->subtype == MOVEMENT_SOUTHWEST) {
-		destination_coords.x = original_coords.x - 1;
-		destination_coords.y = original_coords.y - 1;
-	} else if (info->subtype == MOVEMENT_SOUTHEAST) {
-		destination_coords.x = original_coords.x + 1;
-		destination_coords.y = original_coords.y - 1;
+	if (info->subtype == DIR_NORTH) {
+		dir = DIR_NORTH;
+		destination.y = origin.y + 1;
+	} else if (info->subtype == DIR_EAST) {
+		dir = DIR_EAST;
+		destination.x = origin.x + 1;
+	} else if (info->subtype == DIR_SOUTH) {
+		dir = DIR_SOUTH;
+		destination.y = origin.y - 1;
+	} else if (info->subtype == DIR_WEST) {
+		dir = DIR_WEST;
+		destination.x = origin.x - 1;
+	} else if (info->subtype == DIR_DOWN) {
+		dir = DIR_DOWN;
+		destination.z = origin.z - 1;
+	} else if (info->subtype == DIR_UP) {
+		dir = DIR_UP;
+		destination.z = origin.z + 1;
+	} else if (info->subtype == DIR_NORTHWEST) {
+		dir = DIR_NORTHWEST;
+		destination.x = origin.x - 1;
+		destination.y = origin.y + 1;
+	} else if (info->subtype == DIR_NORTHEAST) {
+		dir = DIR_NORTHEAST;
+		destination.x = origin.x + 1;
+		destination.y = origin.y + 1;
+	} else if (info->subtype == DIR_SOUTHWEST) {
+		dir = DIR_SOUTHWEST;
+		destination.x = origin.x - 1;
+		destination.y = origin.y - 1;
+	} else if (info->subtype == DIR_SOUTHEAST) {
+		dir = DIR_SOUTHEAST;
+		destination.x = origin.x + 1;
+		destination.y = origin.y - 1;
 	}
 
-	rv = lookup_room_exits(socket, destination_coords);
+	rv = lookup_room_exits(origin, destination);
 
 	if (rv == -1) {
 		rv = print_to_player(socket, INVALDIR);
 		return;
 	} else if (rv == -2) { // send them back to origin room, somewhere they shouldn't be
 		rv = print_to_player(socket, INVALDIR);
-		destination_coords.x = 0;
-		destination_coords.y = 0;
-		destination_coords.z = 0;
+		destination.x = 0;
+		destination.y = 0;
+		destination.z = 0;
 	}
 
-	rv = print_to_player(socket, info->subtype);
+	rv = print_to_player(socket, dir);
 	if (rv == 0) {
+		adjust_player_location(socket, destination);
 		print_to_player(socket, SHOWROOM);
-		adjust_player_location(socket, destination_coords);
 	}
 }
 
-static void do_travel_cmd(const int32_t socket, struct Command *info)
+static void do_travel_cmd(const int32_t socket, struct command *info)
 {
 	if (info->subtype == TRAVEL_GOTO)
 		printf("ADD ME %d\n", socket);
