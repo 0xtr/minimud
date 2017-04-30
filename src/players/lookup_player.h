@@ -3,7 +3,9 @@
 #include "../common.h"
 
 #include "../mapping/coordinates.h"
-#include "../players/PlayerDBRecord.h"
+
+#include "../players/player_db_record.h"
+
 #include "../sqlite/init_db.h"
 
-struct PlayerDBRecord *lookup_player(const uint8_t *name);
+struct player_db_record *lookup_player(const uint8_t *name);

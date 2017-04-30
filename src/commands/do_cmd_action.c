@@ -87,37 +87,37 @@ static void do_movement_cmd(const int32_t socket, struct command *info)
 
 	destination.x = destination.y = destination.z = 0;
 
-	if (info->subtype == DIR_NORTH) {
+	if (is_dir(info->subtype, DIR_NORTH)) {
 		dir = DIR_NORTH;
 		destination.y = origin.y + 1;
-	} else if (info->subtype == DIR_EAST) {
+	} else if (is_dir(info->subtype, DIR_EAST)) {
 		dir = DIR_EAST;
 		destination.x = origin.x + 1;
-	} else if (info->subtype == DIR_SOUTH) {
+	} else if (is_dir(info->subtype, DIR_SOUTH)) {
 		dir = DIR_SOUTH;
 		destination.y = origin.y - 1;
-	} else if (info->subtype == DIR_WEST) {
+	} else if (is_dir(info->subtype, DIR_WEST)) {
 		dir = DIR_WEST;
 		destination.x = origin.x - 1;
-	} else if (info->subtype == DIR_DOWN) {
+	} else if (is_dir(info->subtype, DIR_DOWN)) {
 		dir = DIR_DOWN;
 		destination.z = origin.z - 1;
-	} else if (info->subtype == DIR_UP) {
+	} else if (is_dir(info->subtype, DIR_UP)) {
 		dir = DIR_UP;
 		destination.z = origin.z + 1;
-	} else if (info->subtype == DIR_NORTHWEST) {
+	} else if (is_dir(info->subtype, DIR_NORTHWEST)) {
 		dir = DIR_NORTHWEST;
 		destination.x = origin.x - 1;
 		destination.y = origin.y + 1;
-	} else if (info->subtype == DIR_NORTHEAST) {
+	} else if (is_dir(info->subtype, DIR_NORTHEAST)) {
 		dir = DIR_NORTHEAST;
 		destination.x = origin.x + 1;
 		destination.y = origin.y + 1;
-	} else if (info->subtype == DIR_SOUTHWEST) {
+	} else if (is_dir(info->subtype, DIR_SOUTHWEST)) {
 		dir = DIR_SOUTHWEST;
 		destination.x = origin.x - 1;
 		destination.y = origin.y - 1;
-	} else if (info->subtype == DIR_SOUTHEAST) {
+	} else if (is_dir(info->subtype, DIR_SOUTHEAST)) {
 		dir = DIR_SOUTHEAST;
 		destination.x = origin.x + 1;
 		destination.y = origin.y - 1;

@@ -13,8 +13,8 @@
 
 #include "../players/player_movement.h"
 
-int32_t remove_players_from_room(const struct coordinates coords);
 int32_t adjust_room_flag(const int32_t socket);
-int32_t adjust_room_exit(const int32_t dir, struct room_atom *existing, struct room_atom *newroom);
 int32_t adjust_room_desc(const int32_t socket);
 int32_t adjust_room_name(const int32_t socket);
+int32_t link_rooms(const int32_t dir, struct room_atom *existing, struct room_atom *newroom);
+int32_t unlink_rooms(const int32_t dir, struct room_atom *existing, struct room_atom *newroom);

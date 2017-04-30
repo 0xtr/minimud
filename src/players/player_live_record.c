@@ -1,10 +1,10 @@
-#include "PlayerLiveRecord.h"
+#include "player_live_record.h"
 
-static struct PlayerLiveRecord *head = NULL;
-static struct PlayerLiveRecord *tail = NULL;
+static struct player_live_record *head = NULL;
+static struct player_live_record *tail = NULL;
 
 #define find_player_node \
-	struct PlayerLiveRecord *curr = head;\
+	struct player_live_record *curr = head;\
 	if (curr != NULL) {\
 		while (curr != NULL) {\
 			if (curr->socket_num == socket)\
@@ -12,13 +12,53 @@ static struct PlayerLiveRecord *tail = NULL;
 			curr = curr->next;\
 		}\
 	}
+// make generic
+#define find_player_node_by_id \
+	struct player_live_record *curr = head;\
+	if (curr != NULL) {\
+		while (curr != NULL) {\
+			if (curr->db_id == id)\
+				break;\
+			curr = curr->next;\
+		}\
+	}
 
 #define player_not_found\
-	curr->socket_num != socket || curr == NULL
+	curr == NULL || curr->socket_num != socket 
 
-struct PlayerLiveRecord *get_player_head(void)
+#define player_not_found_by_id\
+	curr == NULL || curr->db_id != id 
+
+struct player_live_record *get_player_head(void)
 {
 	return head;
+}
+
+struct player_live_record *get_player(const size_t index)
+{
+	struct player_live_record *curr = head;
+
+	if (curr == NULL)
+		return NULL;
+
+	for (size_t i = 0; i < index; ++i) {
+		if (curr == NULL)
+			return NULL;
+
+		curr = curr->next;
+	}
+
+	return curr;
+}
+
+struct player_live_record *get_player_by_socket(const int32_t socket)
+{
+	find_player_node;
+
+	if (player_not_found)
+		return NULL;
+
+	return curr;
 }
 
 int32_t remove_last_player_record(void)
@@ -26,7 +66,7 @@ int32_t remove_last_player_record(void)
 	if (tail == NULL)
 		return EXIT_FAILURE;
 
-	struct PlayerLiveRecord *curr = tail;
+	struct player_live_record *curr = tail;
 
 	curr = tail->prev;
 	free(tail);
@@ -44,14 +84,15 @@ int32_t remove_player_by_socket(const int32_t socket)
 	if (player_not_found)
 		return EXIT_FAILURE;
 
-	struct PlayerLiveRecord *prev = curr->prev;
-	struct PlayerLiveRecord *next = curr->next;
+	struct player_live_record *prev = curr->prev;
+	struct player_live_record *next = curr->next;
 
 	if (tail == curr)
-		tail = NULL;
+		tail = curr->prev;
 	if (head == curr)
-		head = NULL;
+		head = curr->next;
 
+	printf("remove by socket %d\n", socket);
 	free(curr);
 
 	if (prev != NULL)
@@ -64,11 +105,11 @@ int32_t remove_player_by_socket(const int32_t socket)
 
 int32_t add_new_player(const int32_t socket)
 {
-	struct PlayerLiveRecord *curr = (struct PlayerLiveRecord *)malloc(sizeof(struct PlayerLiveRecord));
+	struct player_live_record *curr = (struct player_live_record *)malloc(sizeof(struct player_live_record));
 	if (curr == NULL)
 		return EXIT_FAILURE;
 
-	memset(curr, 0, sizeof(struct PlayerLiveRecord));
+	memset(curr, 0, sizeof(struct player_live_record));
 
     	curr->socket_num = socket;
     	curr->inventory = get_new_player_inventory(socket);
@@ -309,8 +350,13 @@ int32_t set_player_buffer_append(const int32_t socket, const void *append)
 size_t get_num_of_players(void)
 {
 	size_t list_size = 0;
-	struct PlayerLiveRecord *tmp = head;
+	struct player_live_record *tmp = head;
+
+	if (tmp == NULL)
+		return list_size;
+
 	for (list_size = 0; (tmp = tmp->next) != NULL; ++list_size) { } 
+
 	return list_size;
 }
 
@@ -319,4 +365,36 @@ void reset_player_state(const int32_t socket)
 	set_player_wait_state(socket, NO_WAIT_STATE);
 	set_player_holding_for_input(socket, 0);
 	clear_player_store(socket);
+}
+
+int32_t store_player_id(const int32_t socket, const int32_t id)
+{
+	find_player_node;
+
+	if (player_not_found)
+		return EXIT_FAILURE;
+
+	curr->db_id = id;
+	
+	return EXIT_SUCCESS;
+}
+
+int32_t get_player_id(const int32_t socket)
+{
+	find_player_node;
+
+	if (player_not_found)
+		return -1;
+
+	return curr->db_id;
+}
+
+int32_t get_socket_by_id(const int32_t id)
+{
+	find_player_node_by_id;
+
+	if (player_not_found_by_id)
+		return -1;
+
+	return curr->socket_num;
 }

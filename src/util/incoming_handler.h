@@ -3,8 +3,8 @@
 #include "../common.h"
 
 #include "epollfd_storage.h"
-#include "../players/PlayerLiveRecord.h"
-#include "../mapping/room_adjustments.h"
+#include "../players/player_live_record.h"
+#include "../mapping/alterations.h"
 #include "../commands/interpret_command.h"
 #include "../util/outgoing_handler.h"
 #include "../common.h"

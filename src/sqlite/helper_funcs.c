@@ -1,30 +1,45 @@
 #include "helper_funcs.h"
 
-static void handle_player_columns(char *azColName, char *arg1, struct PlayerDBRecord *player);
+static void handle_player_columns(char *azColName, char *arg1, struct player_db_record *player);
 static void handle_map_columns(char *azColName, char *arg1, struct room_atom *map);
 
 int room_callback (void *data, int argc, char **argv, char **azColName)
 {
 	struct room_atom *map_ref = data;
-	memset(map_ref->exits, -1, sizeof(map_ref));
 
 	increment_sqlite_rows_count();
 
 	if (data == NULL)
 		return EXIT_SUCCESS;
 
+	memset(map_ref->exits, -1, sizeof(map_ref));
 	map_ref->found = true;
 
 	for (size_t i = 0; i < (size_t)argc; ++i)
 		handle_map_columns(azColName[i], argv[i], map_ref);
 
-	// return 0 or callback will request an abort
+	return EXIT_SUCCESS;
+}
+
+int count_callback (void *data, int argc, char **argv, char **azColName)
+{
+	struct query_matches *qmatches = data;
+
+	for (size_t i = 0; i < (size_t)argc; ++i) {
+		if (memcmp(azColName[i], "id", strlen(azColName[i])) != 0)
+			continue;
+
+		++qmatches->matches;
+		add_query_match(qmatches, argv[i]);
+		break;
+	}
+
 	return EXIT_SUCCESS;
 }
 
 int player_callback (void *data, int argc, char **argv, char **azColName)
 {
-	struct PlayerDBRecord *player_ref = data;
+	struct player_db_record *player_ref = data;
 
 	increment_sqlite_rows_count();
 
@@ -34,12 +49,11 @@ int player_callback (void *data, int argc, char **argv, char **azColName)
 	for (size_t i = 0; i < (size_t)argc; ++i)
 		handle_player_columns(azColName[i], argv[i], player_ref);
 
-	// return 0 or callback will request an abort
 	return EXIT_SUCCESS;
 }
 
 
-static void handle_player_columns(char *azColName, char *arg1, struct PlayerDBRecord *player)
+static void handle_player_columns(char *azColName, char *arg1, struct player_db_record *player)
 {
 	const size_t arg_len = strlen(arg1);
 	const size_t col_len = strlen(azColName);

@@ -6,6 +6,7 @@ static void open_roomdb(void);
 int32_t init_dbs(void)
 {
 	DIR* dir = opendir("dbs");
+
 	if (dir) {
 		closedir(dir);
 	} else if (errno == ENOENT) {

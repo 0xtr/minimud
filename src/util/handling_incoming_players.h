@@ -6,8 +6,8 @@
 #include "../mapping/lookup_room.h"
 
 #include "../players/insert_player.h"
-#include "../players/PlayerLiveRecord.h"
-#include "../players/PlayerDBRecord.h"
+#include "../players/player_live_record.h"
+#include "../players/player_db_record.h"
 #include "../players/player_movement.h"
 #include "../players/player_details.h"
 
@@ -19,7 +19,7 @@ int32_t set_player_confirm_new_pw(const int32_t socket_num, const uint8_t *comma
 int32_t handle_existing_pass(const int32_t socket_num, const uint8_t *command);
 int32_t handle_new_pass(const int32_t socket_num, const uint8_t *command);
 
-_Bool check_if_player_is_already_online(const size_t socket);
+_Bool check_if_player_is_already_online(const size_t socket, const uint8_t *name);
 _Bool check_if_name_is_valid(const int32_t socket, const uint8_t *name);
 _Bool check_if_name_is_reserved(const int32_t socket, const uint8_t *name);
 

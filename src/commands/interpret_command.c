@@ -4,9 +4,9 @@ static uint8_t *process_buffer(const size_t socket);
 static _Bool handle_incoming_name(const int32_t socket, const uint8_t *command);
 static void handle_room_creation(const int32_t socket, const uint8_t *command);
 static void handle_room_removal(const int32_t socket, const uint8_t *command);
-static void handle_new_room_name(const int32_t socket, const uint8_t *command);
-static void handle_new_room_desc(const int32_t socket, const uint8_t *command);
-static void handle_room_exit_toggling(const int32_t socket, const uint8_t *command);
+static void alter_room_name(const int32_t socket, const uint8_t *command);
+static void alter_room_desc(const int32_t socket, const uint8_t *command);
+static void alter_room_links(const int32_t socket, const uint8_t *command);
 static void prepare_for_new_room_desc(const int32_t socket, const uint8_t *command);
 static void prepare_for_new_room_name(const int32_t socket, const uint8_t *command);
 static void prepare_for_room_mk(const int32_t socket, const uint8_t *command);
@@ -62,12 +62,12 @@ int32_t interpret_command(const size_t socket)
 	case WAIT_ENTER_NEW_ROOM_NAME:
 		prepare_for_new_room_name(socket, command); break;
 	case WAIT_CONFIRM_NEW_ROOM_NAME:
-		handle_new_room_name(socket, command); break;
+		alter_room_name(socket, command); break;
 
 	case WAIT_ENTER_NEW_ROOM_DESC:
 		prepare_for_new_room_desc(socket, command); break;
 	case WAIT_CONFIRM_NEW_ROOM_DESC:
-		handle_new_room_desc(socket, command); break;
+		alter_room_desc(socket, command); break;
 
 	case WAIT_ROOM_REMOVAL_CHECK:
 		prepare_for_room_rm(socket); break;
@@ -88,7 +88,7 @@ int32_t interpret_command(const size_t socket)
 		break;
 	// TODO
 	case WAIT_ENTER_EXIT_NAME:
-		handle_room_exit_toggling(socket, command); break;
+		alter_room_links(socket, command); break;
 	default:
 		fprintf(stdout, "Unhandled wait state %d on player %s.\n", get_player_wait_state(socket), get_player_name(socket));
 	}
@@ -98,7 +98,7 @@ int32_t interpret_command(const size_t socket)
 	return EXIT_SUCCESS;
 }
 
-static void handle_room_exit_toggling(const int32_t socket, const uint8_t *command)
+static void alter_room_links(const int32_t socket, const uint8_t *command)
 {
 	exit_if_dir_not_valid;
 
@@ -121,7 +121,7 @@ static void handle_room_exit_toggling(const int32_t socket, const uint8_t *comma
 	struct command *info = get_command_info(command);
 	const int32_t dir = info->subtype;
 
-	rv = adjust_room_exit(dir, src_room, dest_room);
+	rv = link_rooms(dir, src_room, dest_room);
 
 	if (rv == EXIT_SUCCESS) {
 		print_to_player(socket, PRINT_TOGGLED_ROOM_EXIT);
@@ -138,7 +138,7 @@ static void handle_room_exit_toggling(const int32_t socket, const uint8_t *comma
 	reset_player_state(socket);
 }
 
-static void handle_new_room_desc(const int32_t socket, const uint8_t *command)
+static void alter_room_desc(const int32_t socket, const uint8_t *command)
 {
 	exit_if_change_not_confirmed;
 
@@ -155,7 +155,7 @@ static void handle_new_room_desc(const int32_t socket, const uint8_t *command)
 	print_to_player(socket, SHOWROOM);
 }
 
-static void handle_new_room_name(const int32_t socket, const uint8_t *command)
+static void alter_room_name(const int32_t socket, const uint8_t *command)
 {
 	exit_if_change_not_confirmed;
 
@@ -212,7 +212,7 @@ static void handle_room_creation(const int32_t socket, const uint8_t *command)
 	const int32_t dir = info->subtype;
 	free(info);
 
-	adjust_room_exit(dir, existing, new);
+	link_rooms(dir, existing, new);
 
 	print_to_player(socket, SHOWROOM);
 
@@ -229,11 +229,12 @@ static void handle_room_removal(const int32_t socket, const uint8_t *command)
 
 	// TODO: check exits etc handled & players in room moved
 	int32_t rv = remove_room(socket);
+	printf("rv %d\n", rv);
 	if (rv == 0) {
 		print_to_player(socket, PRINT_ROOM_REMOVAL_SUCCESS);
-	} else if (rv == 1) {
+	} else if (rv == -1) {
 		print_to_player(socket, PRINT_ROOM_REMOVAL_FAILURE);
-	} else if (rv == 2) {
+	} else if (rv == -2) {
 		print_to_player(socket, PRINT_INSUFFICIENT_PERMISSIONS);
 	}
 
@@ -276,12 +277,12 @@ static _Bool handle_incoming_name(const int32_t socket, const uint8_t *command)
 	if (check_if_name_is_reserved(socket, command) == true)
 		return false;
 
-	if (check_if_player_is_already_online(socket) == true)
+	if (check_if_player_is_already_online(socket, command) == true)
 		return false;
 
 	set_player_name(socket, command);
 
-	struct PlayerDBRecord *player = lookup_player(get_player_name(socket));
+	struct player_db_record *player = lookup_player(get_player_name(socket));
 
 	if (player != NULL) {
 		print_to_player(socket, REQUEST_PW_FOR_EXISTING);

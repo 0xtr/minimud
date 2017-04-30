@@ -3,28 +3,31 @@
 #include "../common.h"
 #include "../items/Inventory.h"
 
-struct PlayerLiveRecord {
-    _Bool   holding_for_input;
-    int32_t wait_state;
-    int32_t socket_num;
+struct player_live_record {
+	int32_t db_id;
+	_Bool   holding_for_input;
+	int32_t wait_state;
+	int32_t socket_num;
 
-    uint8_t name[NAMES_MAX];
-    uint8_t buffer[BUFFER_LENGTH];
-    void *loc_in_buf;
+	uint8_t name[NAMES_MAX];
+	uint8_t buffer[BUFFER_LENGTH];
+	void *loc_in_buf;
 
-    struct  sockaddr *restrict address;
-    socklen_t address_len;
+	struct  sockaddr *restrict address;
+	socklen_t address_len;
 
-    uint8_t *store;
-    void *loc_in_store;
-    int32_t store_size;
+	uint8_t *store;
+	void *loc_in_store;
+	int32_t store_size;
 
-    struct PlayerLiveRecord *prev;
-    struct PlayerLiveRecord *next;
-    struct Inventory *inventory;
+	struct player_live_record *prev;
+	struct player_live_record *next;
+	struct Inventory *inventory;
 };
 
-struct PlayerLiveRecord *get_player_head(void);
+struct player_live_record *get_player_head(void);
+struct player_live_record *get_player(const size_t index);
+struct player_live_record *get_player_by_socket(const int32_t socket);
 int32_t add_new_player(const int32_t socket);
 int32_t remove_last_player_record(void);
 int32_t remove_player_by_socket(const int32_t socket);
@@ -49,3 +52,6 @@ int32_t set_player_buffer_append(const int32_t socket, const void *append);
 int32_t set_player_store_replace(const int32_t socket, const void *newval);
 int32_t set_player_store_append(const int32_t socket, const void *append);
 void reset_player_state(const int32_t socket);
+int32_t store_player_id(const int32_t socket, const int32_t id);
+int32_t get_player_id(const int32_t socket);
+int32_t get_socket_by_id(const int32_t id);

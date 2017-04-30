@@ -13,6 +13,7 @@ size_t get_num_of_available_cmds(void);
 uint8_t *get_command(const size_t num);
 uint8_t *get_movement_str(const int32_t dir);
 uint8_t *get_opposite_str(const int32_t dir);
+_Bool is_dir(const int32_t dir, const int32_t check);
 
 enum MOVEMENT {
 	DIR_NORTH,

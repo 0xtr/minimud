@@ -17,8 +17,6 @@ int32_t main(void)
 	
 	// open the sqlite3 db connections for rooms & players 
 	assert(init_dbs() == EXIT_SUCCESS);
-	// build the list of commands from text file into memory
-	//assert(parse_clist() == EXIT_SUCCESS);
 
 	// create the master socket 
 	const int32_t listen_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -71,30 +69,33 @@ int32_t main(void)
 		}
 
 		for (int32_t i = 0; i < nfds; ++i) {
-			if (events[i].data.fd == listen_socket) {
-				new_fd = accept(listen_socket, NULL, NULL);
-				if (new_fd == -1) {
-					perror("Failed to accept incoming connection");
-					return EXIT_FAILURE;
-				}
-
-				set_socket_nonblocking(new_fd);
-				ev.events = EPOLLIN | EPOLLET;
-				ev.data.fd = new_fd;
-				if (epoll_ctl(get_epollfd(), EPOLL_CTL_ADD, new_fd, &ev) == -1) {
-					perror("Epoll ctl ops failed");
-					return EXIT_FAILURE;
-				}
-
-				if ((add_new_player(new_fd)) == EXIT_FAILURE) {
-					perror("Error setting up the new player's connection");
-					return EXIT_FAILURE;
-				}
-
-				greet_player(new_fd);
-			} else {
+			if (events[i].data.fd != listen_socket) {
 				incoming_handler(events[i].data.fd);
+				continue;
 			}
+
+			new_fd = accept(listen_socket, NULL, NULL);
+			if (new_fd == -1) {
+				perror("Failed to accept incoming connection");
+				return EXIT_FAILURE;
+			}
+
+			set_socket_nonblocking(new_fd);
+
+			ev.events = EPOLLIN | EPOLLET;
+			ev.data.fd = new_fd;
+
+			if (epoll_ctl(get_epollfd(), EPOLL_CTL_ADD, new_fd, &ev) == -1) {
+				perror("Epoll ctl ops failed");
+				return EXIT_FAILURE;
+			}
+
+			if ((add_new_player(new_fd)) == EXIT_FAILURE) {
+				perror("Error setting up the new player's connection");
+				return EXIT_FAILURE;
+			}
+
+			greet_player(new_fd);
 		}
 	}
 
@@ -108,5 +109,6 @@ static int32_t set_socket_nonblocking(const int32_t socket)
 		perror("Fcntl failed: set socket nonblocking");
 		return EXIT_FAILURE;
 	}
+
 	return EXIT_SUCCESS;
 }

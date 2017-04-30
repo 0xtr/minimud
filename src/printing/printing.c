@@ -4,7 +4,7 @@ static int32_t print_to_other_players(const int32_t socket, const uint8_t *buffe
 static _Bool set_buffer_for_movement(const int32_t socket, const int32_t argument);
 static _Bool print_all_commands(const int32_t socket);
 static _Bool build_room_image(const int32_t socket);
-static _Bool is_in_same_room(const int32_t x, const int32_t y, const int32_t z, const int32_t socket);
+static _Bool is_in_same_room(const int32_t socket, struct coordinates room_coords);
 static void append_coordinates_for_printing(const int32_t socket, const struct coordinates coords);
 
 int32_t print_to_player(const int32_t socket, const int32_t argument)
@@ -143,7 +143,7 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 		set_player_buffer_replace(socket, "Creation failed. Contact an administrator.\n");
 		break;
 	case PRINT_REMOVED_FROM_ROOM:
-		set_player_buffer_replace(socket, "You've been moved from your current room by the system; the owning player may have deleted it.\n");
+		set_player_buffer_replace(socket, "You've been moved from your previous room; the owner may have deleted it.\nMoved to:\n\n");
 		break;
 	case PRINT_PROVIDE_ROOM_EXIT_NAME:
 		set_player_buffer_replace(socket, "Which direction are you trying to toggle exit visibility for?\n");
@@ -172,34 +172,34 @@ int32_t print_to_player(const int32_t socket, const int32_t argument)
 static _Bool set_buffer_for_movement (const int32_t socket, const int32_t argument) {
 	switch (argument) {
 	case 0:
-		set_player_buffer_replace(socket, "Moving NORTH.\n");
+		set_player_buffer_replace(socket, "You move NORTH.\n");
 		return EXIT_SUCCESS;
 	case 2:
-		set_player_buffer_replace(socket, "Moving EAST.\n");
+		set_player_buffer_replace(socket, "You move EAST.\n");
 		return EXIT_SUCCESS;
 	case 4:
-		set_player_buffer_replace(socket, "Moving SOUTH.\n");
+		set_player_buffer_replace(socket, "You move SOUTH.\n");
 		return EXIT_SUCCESS;
 	case 6:
-		set_player_buffer_replace(socket, "Moving WEST.\n");
+		set_player_buffer_replace(socket, "You move WEST.\n");
 		return EXIT_SUCCESS;
 	case 8:
-		set_player_buffer_replace(socket, "Moving UP.\n");
+		set_player_buffer_replace(socket, "You move UP.\n");
 		return EXIT_SUCCESS;
 	case 10:
-		set_player_buffer_replace(socket, "Moving DOWN.\n");
+		set_player_buffer_replace(socket, "You move DOWN.\n");
 		return EXIT_SUCCESS;
 	case 12:
-		set_player_buffer_replace(socket, "Moving NORTHEAST.\n");
+		set_player_buffer_replace(socket, "You move NORTHEAST.\n");
 		return EXIT_SUCCESS;
 	case 14:
-		set_player_buffer_replace(socket, "Moving SOUTHEAST.\n");
+		set_player_buffer_replace(socket, "You move SOUTHEAST.\n");
 		return EXIT_SUCCESS;
 	case 16:
-		set_player_buffer_replace(socket, "Moving SOUTHWEST.\n");
+		set_player_buffer_replace(socket, "You move SOUTHWEST.\n");
 		return EXIT_SUCCESS;
 	case 18:
-		set_player_buffer_replace(socket, "Moving NORTHWEST.\n");
+		set_player_buffer_replace(socket, "You move NORTHWEST.\n");
 		return EXIT_SUCCESS;
 	default:
 		return EXIT_FAILURE;
@@ -207,11 +207,12 @@ static _Bool set_buffer_for_movement (const int32_t socket, const int32_t argume
 	return EXIT_FAILURE;
 }
 
-static _Bool is_in_same_room(const int32_t x, const int32_t y, const int32_t z, const int32_t socket)
+static _Bool is_in_same_room(const int32_t socket, struct coordinates room_coords)
 {
 	struct coordinates coords = get_player_coords(socket);
 
-	return coords.x == x && coords.y == y && coords.z == z;
+	return coords.x == room_coords.x && coords.y == room_coords.y && 
+		coords.z == room_coords.z;
 }
 
 static _Bool build_room_image (const int32_t socket) {
@@ -259,15 +260,18 @@ static _Bool build_room_image (const int32_t socket) {
 	set_player_buffer_append(socket, "\n");
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 
-	// now show the players in room here...
-	// doesn't scale, TODO
+	const uint8_t *target = get_player_name(socket);
+
 	for (size_t i = 0; i < get_num_of_players(); ++i) {
-		if (get_player_name(i) != get_player_name(socket)) {
-			if (is_in_same_room(coords.x, coords.y, coords.z, i)) {
-				set_player_buffer_replace(i, get_player_name(i));
-				set_player_buffer_append(i, (uint8_t *)" is here too.\n");
-				assert(outgoing_handler(socket) == EXIT_SUCCESS);
-			}
+		struct player_live_record *each = get_player(i);
+
+		if (each->name == target)
+			continue;
+
+		if (is_in_same_room(each->socket_num, coords) == true) {
+			set_player_buffer_replace(socket, each->name);
+			set_player_buffer_append(socket, " is here too.\n");
+			assert(outgoing_handler(socket) == EXIT_SUCCESS);
 		}
 	}
 
@@ -342,7 +346,8 @@ int32_t greet_player(const int32_t socket)
 	set_player_buffer_replace(socket, "WELCOME.\n\n");
 	set_player_buffer_append(socket, "Please provide a NAME; this can be two words and up to ");
 	set_player_buffer_append(socket, NAMES_MAX_STR);
-	set_player_buffer_append(socket, " characters long in total.\n\nIf you've already created a character, enter your previous name to resume.\n\n");
+	set_player_buffer_append(socket, " characters long in total.\n\nIf you've "
+			"already created a character, enter your previous name to resume.\n\n");
 
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
 	return EXIT_SUCCESS;
@@ -350,18 +355,20 @@ int32_t greet_player(const int32_t socket)
 
 int32_t print_player_speech(const int32_t socket)
 {
+	struct player_live_record *player = get_player_by_socket(socket);
+
 	#define SKIP_SAY_TOKEN 4 // length req'd for the actual say command + the space after that
 	uint8_t *buffer = calloc(BUFFER_LENGTH+1, sizeof(uint8_t));
 	void *loc_in_buf = NULL;
 
-	loc_in_buf = mempcpy(buffer, get_player_name(socket), strlen((char *)get_player_name(socket)));
+	loc_in_buf = mempcpy(buffer, player->name, strlen((char *)player->name));
 	loc_in_buf = mempcpy(loc_in_buf, " says: ", 7);
 
-	int32_t to_add = strlen((char *)&get_player_buffer(socket)[SKIP_SAY_TOKEN]);
+	int32_t to_add = strlen((char *)&player->buffer[SKIP_SAY_TOKEN]);
 	if (to_add + strlen((char *)buffer) > BUFFER_LENGTH)
 		to_add = BUFFER_LENGTH - strlen((char *)buffer);
 
-	loc_in_buf = mempcpy(loc_in_buf, &get_player_buffer(socket)[SKIP_SAY_TOKEN], to_add);
+	loc_in_buf = mempcpy(loc_in_buf, &player->buffer[SKIP_SAY_TOKEN], to_add);
 
 	print_to_other_players(socket, buffer);
 
@@ -375,13 +382,13 @@ int32_t print_player_speech(const int32_t socket)
 	memset(substr, '\0', to_add);
 
 	memcpy(substr, "You say: ", 9);
-	memcpy(&substr[9], &get_player_buffer(socket)[SKIP_SAY_TOKEN], to_add);
+	memcpy(&substr[9], &player->buffer[SKIP_SAY_TOKEN], to_add);
 	memcpy(&substr[9+to_add], "\n", 1);
 
 	set_player_buffer_replace(socket, substr);
 
 #ifdef DEBUG
-	printf("print_player_speech to them: %s (%lu)\n", get_player_buffer(socket), strlen((char *)get_player_buffer(socket)));
+	printf("print_player_speech to them: %s (%lu)\n", player->buffer, strlen((char *)player->buffer));
 #endif
 
 	assert(outgoing_handler(socket) == EXIT_SUCCESS);
@@ -389,19 +396,20 @@ int32_t print_player_speech(const int32_t socket)
 	return EXIT_SUCCESS;
 }
 
-#define is_in_same_room \
-	this_player.x == coords.x && this_player.y == coords.y && this_player.z == coords.z
-
 static int32_t print_to_other_players(const int32_t socket, const uint8_t *buffer)
 {
 	struct coordinates coords = get_player_coords(socket);
 
 	for (size_t i = 0; i < get_num_of_players(); ++i) {
-		struct coordinates this_player = get_player_coords(i);
+		struct player_live_record *player = get_player(i);
 
-		if (is_in_same_room) {
-			set_player_buffer_replace(i, buffer);
-			assert(outgoing_handler(i) == EXIT_SUCCESS);
+		if (player->socket_num == socket)
+			continue;
+
+		if (is_in_same_room(player->socket_num, coords) == true) {
+			set_player_buffer_replace(player->socket_num, buffer);
+			set_player_buffer_append(player->socket_num, "\n");
+			assert(outgoing_handler(player->socket_num) == EXIT_SUCCESS);
 		}
 	}
 

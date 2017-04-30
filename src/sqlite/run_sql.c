@@ -7,14 +7,17 @@ int32_t run_sql(char *query, void *data, const int32_t type)
 	void *func;
 	uint8_t *sqlerr = NULL;
 
-	if (type == DB_ROOM) {
+	if (type == DB_ROOM || type == DB_ROOM_COUNT)
 		db = get_roomdb();
-		func = room_callback;
-	}
-	if (type == DB_PLAYER) {
+	if (type == DB_PLAYER || type == DB_PLAYER_COUNT)
 		db = get_playerdb();
+	
+	if (type == DB_ROOM)
+		func = room_callback;
+	if (type == DB_PLAYER)
 		func = player_callback;
-	}
+	if (type == DB_PLAYER_COUNT || type == DB_ROOM_COUNT)
+		func = count_callback;
 
 	assert(db != NULL);
 

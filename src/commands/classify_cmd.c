@@ -102,7 +102,7 @@ struct command *get_command_info(const uint8_t *cmd)
 
 uint8_t *get_movement_str(const int32_t dir)
 {
-	if (dir == DIR_NORTH)
+	if (is_dir(dir, DIR_NORTH))
 		return (uint8_t *)"north";
 	if (dir == DIR_SOUTH)
 		return (uint8_t *)"south";
@@ -123,6 +123,13 @@ uint8_t *get_movement_str(const int32_t dir)
 	if (dir == DIR_NORTHWEST)
 		return (uint8_t *)"northwest";
 	return (uint8_t *)"EMPTY";
+}
+
+_Bool is_dir(const int32_t dir, const int32_t check)
+{
+	if (dir == check || dir == (check + 1))
+		return true;
+	return false;
 }
 
 uint8_t *get_opposite_str(const int32_t dir)

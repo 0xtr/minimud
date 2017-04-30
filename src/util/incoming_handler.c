@@ -39,9 +39,11 @@ int32_t incoming_handler(const int32_t socket)
 
 static void strip_carriage_returns(const int32_t socket)
 {
-	for (size_t i = 0; i < strlen((char *)get_player_buffer(socket)); ++i) {
-		if (get_player_buffer(socket)[i] == '\r')
-			get_player_buffer(socket)[i] = '\0';
+	uint8_t *buffer = get_player_buffer(socket);
+
+	for (size_t i = 0; i < strlen((char *)buffer); ++i) {
+		if (buffer[i] == '\r')
+			buffer[i] = '\0';
 	}
 }
 

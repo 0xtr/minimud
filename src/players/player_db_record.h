@@ -2,7 +2,7 @@
 
 #include "../common.h"
 
-struct PlayerDBRecord {
+struct player_db_record {
 
 	uint8_t name[NAMES_MAX];
 	uint8_t hash[HASH_LENGTH];
@@ -16,4 +16,4 @@ struct PlayerDBRecord {
 
 };
 
-struct PlayerDBRecord *get_player_db_struct(void);
+struct player_db_record *get_player_db_struct(void);

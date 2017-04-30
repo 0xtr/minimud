@@ -1,10 +1,13 @@
 #include "handling_incoming_players.h"
 
-static int32_t check_player_pass(const struct PlayerDBRecord *player, const uint8_t *pw);
+#define NUM_RESERVED_WORDS 5
+static const uint8_t RESERVED_WORDS[NUM_RESERVED_WORDS][15] = { "admin", "root", "administrator", "system" };
+
+static int32_t check_player_pass(const struct player_db_record *player, const uint8_t *pw);
 
 int32_t check_for_highest_socket_num(void)
 {
-	struct PlayerLiveRecord *tmp = get_player_head();
+	struct player_live_record *tmp = get_player_head();
 	int32_t fdmax = 0;
 	if (tmp == NULL)
 		return fdmax;
@@ -17,7 +20,7 @@ int32_t check_for_highest_socket_num(void)
 	return fdmax;
 }
 
-static int32_t check_player_pass(const struct PlayerDBRecord *player, const uint8_t *pw)
+static int32_t check_player_pass(const struct player_db_record *player, const uint8_t *pw)
 {
 	// TODO: do this and pass to insert_player
 	const size_t PASSWORD_LEN = (strlen((char *)pw) > BUFFER_LENGTH) ? BUFFER_LENGTH : strlen((char *)pw);
@@ -43,7 +46,7 @@ static int32_t check_player_pass(const struct PlayerDBRecord *player, const uint
 
 int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 {
-	struct PlayerDBRecord *player = lookup_player(get_player_name(socket));
+	struct player_db_record *player = lookup_player(get_player_name(socket));
 	if (player == NULL) {
 		print_to_player(socket, UNABLE_TO_RETRIEVE_CHAR);
 		set_player_wait_state(socket, THEIR_NAME);
@@ -67,6 +70,8 @@ int32_t handle_existing_pass(const int32_t socket, const uint8_t *command)
 	} else {
 		free(map);
 	}
+
+	store_player_id(socket, player->id);
 
 	free(player);
 
@@ -117,13 +122,10 @@ int32_t set_player_confirm_new_pw(const int32_t socket, const uint8_t *command)
 	return EXIT_SUCCESS;
 }
 
-#define NUM_RESERVED_WORDS 5
-static const uint8_t RESERVED_WORDS[NUM_RESERVED_WORDS][15] = { "admin", "root", "ADMIN", "Admin", "Administrator" };
-
 _Bool check_if_name_is_reserved(const int32_t socket, const uint8_t *name)
 {
 	for (size_t i = 0; i < NUM_RESERVED_WORDS; ++i) {
-		if (strstr((char *)name, (char *)RESERVED_WORDS[i]) != NULL) {
+		if (strcasecmp((char *)name, (char *)RESERVED_WORDS[i]) == 0) {
 			print_to_player(socket, NAME_UNAVAILABLE);
 			print_to_player(socket, NAME_NOT_WITHIN_PARAMS);
 			return true;
@@ -150,20 +152,23 @@ _Bool check_if_name_is_valid(const int32_t socket, const uint8_t *name)
 	}
 
 	for (size_t i = 0; i < NAMES_MAX; ++i) {
-		if (get_player_buffer(socket)[i] == 0)
+		int32_t c = get_player_buffer(socket)[i];
+		if (c == 0)
 			break;
 
-		if (!isalpha(get_player_buffer(socket)[i]) && is_not_a_space)
+		if (!isalpha(c) && c != ' ')
 			return false;
 	}
 
 	return true;
 }
 
-_Bool check_if_player_is_already_online(const size_t socket)
+_Bool check_if_player_is_already_online(const size_t socket, const uint8_t *name)
 {
+	printf("num of players on %lu\n", get_num_of_players());
+
 	for (size_t i = 0; i < get_num_of_players(); ++i) {
-		if (strcmp((char *)get_player_name(socket), (char *)get_player_name(i)) == 0 && i != socket) {
+		if (memcmp(name, get_player(i)->name, strlen((char *)name)) == 0) {
 			print_to_player(socket, PLAYER_ALREADY_ONLINE);
 			set_player_wait_state(socket, THEIR_NAME);
 			return true;
