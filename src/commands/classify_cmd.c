@@ -84,6 +84,7 @@ struct command *is_info_cmd(const uint8_t *cmd, struct command *info)
 struct command *get_command_info(const uint8_t *cmd)
 {
 	struct command *info = (struct command *)malloc(sizeof(struct command));
+
 	info->type = COMMAND_NOT;
 	info->subtype = COMMAND_NOT;
 
@@ -104,23 +105,23 @@ uint8_t *get_movement_str(const int32_t dir)
 {
 	if (is_dir(dir, DIR_NORTH))
 		return (uint8_t *)"north";
-	if (dir == DIR_SOUTH)
+	if (is_dir(dir, DIR_SOUTH))
 		return (uint8_t *)"south";
-	if (dir == DIR_EAST)
+	if (is_dir(dir, DIR_EAST))
 		return (uint8_t *)"east";
-	if (dir == DIR_WEST)
+	if (is_dir(dir, DIR_WEST))
 		return (uint8_t *)"west";
-	if (dir == DIR_UP)
+	if (is_dir(dir, DIR_UP))
 		return (uint8_t *)"up";
-	if (dir == DIR_DOWN)
+	if (is_dir(dir, DIR_DOWN))
 		return (uint8_t *)"down";
-	if (dir == DIR_NORTHEAST)
+	if (is_dir(dir, DIR_NORTHEAST))
 		return (uint8_t *)"northeast";
-	if (dir == DIR_SOUTHEAST)
+	if (is_dir(dir, DIR_SOUTHEAST))
 		return (uint8_t *)"southeast";
-	if (dir == DIR_SOUTHWEST)
+	if (is_dir(dir, DIR_SOUTHWEST))
 		return (uint8_t *)"southwest";
-	if (dir == DIR_NORTHWEST)
+	if (is_dir(dir, DIR_NORTHWEST))
 		return (uint8_t *)"northwest";
 	return (uint8_t *)"EMPTY";
 }
@@ -134,25 +135,25 @@ _Bool is_dir(const int32_t dir, const int32_t check)
 
 uint8_t *get_opposite_str(const int32_t dir)
 {
-	if (dir == DIR_NORTH)
+	if (is_dir(dir, DIR_NORTH))
 		return (uint8_t *)"south";
-	if (dir == DIR_SOUTH)
+	if (is_dir(dir, DIR_SOUTH))
 		return (uint8_t *)"north";
-	if (dir == DIR_EAST)
+	if (is_dir(dir, DIR_EAST))
 		return (uint8_t *)"west";
-	if (dir == DIR_WEST)
+	if (is_dir(dir, DIR_WEST))
 		return (uint8_t *)"east";
-	if (dir == DIR_UP)
+	if (is_dir(dir, DIR_UP))
 		return (uint8_t *)"down";
-	if (dir == DIR_DOWN)
+	if (is_dir(dir, DIR_DOWN))
 		return (uint8_t *)"up";
-	if (dir == DIR_NORTHEAST)
+	if (is_dir(dir, DIR_NORTHEAST))
 		return (uint8_t *)"southwest";
-	if (dir == DIR_SOUTHEAST)
+	if (is_dir(dir, DIR_SOUTHEAST))
 		return (uint8_t *)"northwest";
-	if (dir == DIR_SOUTHWEST)
+	if (is_dir(dir, DIR_SOUTHWEST))
 		return (uint8_t *)"northeast";
-	if (dir == DIR_NORTHWEST)
+	if (is_dir(dir, DIR_NORTHWEST))
 		return (uint8_t *)"southeast";
 	return NULL;
 }
@@ -195,7 +196,9 @@ uint8_t *get_command(const size_t num)
 struct command *get_empty_command(void)
 {
 	struct command *info = (struct command *)malloc(sizeof(struct command));
+
 	info->type = COMMAND_NOT;
 	info->subtype = COMMAND_NOT;
+
 	return info;
 }

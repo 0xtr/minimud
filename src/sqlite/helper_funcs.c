@@ -29,7 +29,6 @@ int count_callback (void *data, int argc, char **argv, char **azColName)
 		if (memcmp(azColName[i], "id", strlen(azColName[i])) != 0)
 			continue;
 
-		++qmatches->matches;
 		add_query_match(qmatches, argv[i]);
 		break;
 	}
@@ -58,12 +57,8 @@ static void handle_player_columns(char *azColName, char *arg1, struct player_db_
 	const size_t arg_len = strlen(arg1);
 	const size_t col_len = strlen(azColName);
 
-	if (azColName[0] == 'x') {
-		player->x = atoi(arg1);
-	} else if (azColName[0] == 'y') {
-		player->y = atoi(arg1);
-	} else if (azColName[0] == 'z') {
-		player->z = atoi(arg1);
+	if (memcmp(azColName, "loc_id", col_len) == 0) {
+		player->loc_id = atoi(arg1);
 	} else if (memcmp(azColName, "hash", col_len) == 0) {
 		memcpy(player->hash, arg1, arg_len);
 	} else if (memcmp(azColName, "name", col_len) == 0) {

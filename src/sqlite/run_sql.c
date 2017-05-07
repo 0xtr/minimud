@@ -22,7 +22,7 @@ int32_t run_sql(char *query, void *data, const int32_t type)
 	assert(db != NULL);
 
 	if (sqlite3_exec(db, query, func, data, (char **)sqlerr) != SQLITE_OK) {
-		fprintf(stdout, "SQLITE3 room update error:\n%s\n", sqlite3_errmsg(get_roomdb()));
+		fprintf(stdout, "sqlite error:\n%s\n", sqlite3_errmsg(db));
 		sqlite3_free(query);
 		sqlite3_free(sqlerr);
 		return EXIT_FAILURE;

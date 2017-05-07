@@ -18,7 +18,7 @@ struct room_atom *lookup_room(const struct coordinates coords)
 
 struct room_atom *lookup_room_by_id(const int32_t id)
 {
-	uint8_t idstr[sizeof(id)] = {0};
+	uint8_t idstr[2 * sizeof(id)] = {0};
 	snprintf((char *)idstr, sizeof(id), "%d", id);
 
 	struct room_atom *map = get_room();
@@ -32,11 +32,10 @@ struct room_atom *lookup_room_by_id(const int32_t id)
 	return map;
 }
 
-int32_t lookup_room_exits(const struct coordinates origin, const struct coordinates dest)
+int32_t lookup_room_exits(const struct coordinates origin, struct room_atom *dest_room)
 {
 	int32_t rv = 0;
 	struct room_atom *origin_room = lookup_room(origin);
-	struct room_atom *dest_room = lookup_room(dest);
 
 	if (dest_room == NULL) {
 		rv = -2;
@@ -49,7 +48,6 @@ int32_t lookup_room_exits(const struct coordinates origin, const struct coordina
 	end: 
 
 	free(origin_room);
-	free(dest_room);
 
 	return rv;
 }
@@ -67,27 +65,27 @@ int32_t has_exit_for_dir(struct room_atom *origin, struct room_atom *dest)
 	return EXIT_FAILURE;
 }
 
-int32_t lookup_room_name_from_coords(const int32_t socket, const struct coordinates coords)
+int32_t lookup_room_name_from_coords(struct player_live_record *player, const struct coordinates coords)
 {
 	struct room_atom *map = lookup_room(coords);
 
 	if (map != NULL) {
 		// get_room_details(map);
-		set_player_buffer_replace(socket, map->rname);
+		set_player_buffer_replace(player, map->rname);
 		free(map);
 	} else {
-		set_player_buffer_replace(socket, "NULL SPACE");
+		set_player_buffer_replace(player, "NULL SPACE");
 	}
 
 	return EXIT_SUCCESS;
 }
 
-int32_t compare_room_owner(const int32_t socket, const struct coordinates coords)
+int32_t compare_room_owner(struct player_live_record *player, const struct coordinates coords)
 {
 	int32_t rv = EXIT_SUCCESS;
 	struct room_atom *map = lookup_room(coords);
 
-	if (strcmp((char*)get_player_name(socket), (char*)map->owner) != 0)
+	if (strcmp((char*)player->name, (char*)map->owner) != 0)
 		rv = EXIT_FAILURE;
 
 	free(map);

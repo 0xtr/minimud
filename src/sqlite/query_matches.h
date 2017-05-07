@@ -12,5 +12,5 @@ struct query_matches {
 };
 
 void add_query_match(struct query_matches *qmatches, const char *id);
-struct query_matches *players_in_room(const struct coordinates coords);
+struct query_matches *players_in_room(const int32_t r_id);
 struct query_matches *init_query(void);

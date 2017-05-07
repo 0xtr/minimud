@@ -12,5 +12,5 @@
 #include "../sqlite/helper_funcs.h"
 #include "../sqlite/query_matches.h"
 
-int32_t remove_room(const int32_t socket);
-int32_t remove_players_from_room(const struct coordinates coords, const int32_t r_id);
+int32_t remove_room(struct player_live_record *player);
+int32_t remove_players_from_room(const struct coordinates coords, struct room_atom *room);

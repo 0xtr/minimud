@@ -9,4 +9,4 @@
 
 #include "../printing/printing.h"
 
-int32_t do_cmd_action(const int32_t socket, struct command *info);
+int32_t do_cmd_action(struct player_live_record *player, struct command *info);

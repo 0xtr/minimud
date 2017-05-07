@@ -10,7 +10,7 @@ struct room_atom *insert_room(struct room_blueprint rconfig)
 	snprintf((char *)param_z, sizeof(rconfig.coords.z), "%d", rconfig.coords.z);
 
 	run_sql(sqlite3_mprintf(
-		"INSERT OR IGNORE INTO ROOMS (name, desc, x, y, z, north, east, south, west, up, down, "
+		"INSERT INTO ROOMS (name, desc, x, y, z, north, east, south, west, up, down, "
 		"northeast, southeast, southwest, northwest, owner, last_modified_by, flags)"
 		"VALUES (%Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q, %Q);", 
 		(char *)rconfig.name, (char *)rconfig.desc, 

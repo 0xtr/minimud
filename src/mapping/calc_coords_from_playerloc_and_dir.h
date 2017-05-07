@@ -8,6 +8,7 @@
 
 #include "../commands/classify_cmd.h"
 
-#include "movement_to_vector.h"
-
-struct coordinates calc_coords_from_playerloc_and_dir(const int32_t socket);
+struct coordinates calc_coords_from_playerloc_and_dir(struct player_live_record *player);
+int32_t x_movement_to_vector(const struct command *info);
+int32_t y_movement_to_vector(const struct command *info);
+int32_t z_movement_to_vector(const struct command *info);

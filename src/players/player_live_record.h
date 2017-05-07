@@ -5,6 +5,8 @@
 
 struct player_live_record {
 	int32_t db_id;
+
+	_Bool   connected;
 	_Bool   holding_for_input;
 	int32_t wait_state;
 	int32_t socket_num;
@@ -26,32 +28,29 @@ struct player_live_record {
 };
 
 struct player_live_record *get_player_head(void);
-struct player_live_record *get_player(const size_t index);
+struct player_live_record *get_player(const int32_t socket);
+struct player_live_record *get_player_by_index(const size_t index);
 struct player_live_record *get_player_by_socket(const int32_t socket);
+struct player_live_record *get_player_by_id(const int32_t id);
+
+int32_t get_player_id(const int32_t socket);
+int32_t get_socket_by_id(const int32_t id);
+
 int32_t add_new_player(const int32_t socket);
 int32_t remove_last_player_record(void);
 int32_t remove_player_by_socket(const int32_t socket);
 
-struct sockaddr *get_player_address(const int32_t socket);
-socklen_t *get_player_address_len(const int32_t socket);
-int32_t get_player_wait_state(const int32_t socket);
+int32_t store_player_id(struct player_live_record *player, const int32_t id);
 size_t get_num_of_players(void);
-int32_t get_player_socket(const int32_t socket);
-_Bool get_player_holding_for_input(const int32_t socket);
-uint8_t *get_player_buffer(const int32_t socket);
-uint8_t *get_player_name(const int32_t socket);
-uint8_t *get_player_store(const int32_t socket);
-int32_t clear_player_store(const int32_t socket);
-int32_t clear_player_buffer(const int32_t socket);
-int32_t init_player_store(const int32_t socket);
-int32_t set_player_name(const int32_t socket, const uint8_t *name);
-int32_t set_player_wait_state(const int32_t socket, const int32_t wait_state);
-int32_t set_player_holding_for_input(const int32_t socket, const _Bool hold);
-int32_t set_player_buffer_replace(const int32_t socket, const void *newbuf);
-int32_t set_player_buffer_append(const int32_t socket, const void *append);
-int32_t set_player_store_replace(const int32_t socket, const void *newval);
-int32_t set_player_store_append(const int32_t socket, const void *append);
-void reset_player_state(const int32_t socket);
-int32_t store_player_id(const int32_t socket, const int32_t id);
-int32_t get_player_id(const int32_t socket);
-int32_t get_socket_by_id(const int32_t id);
+int32_t clear_player_store(struct player_live_record *player);
+int32_t clear_player_buffer(struct player_live_record *player);
+int32_t init_player_store(struct player_live_record *player);
+int32_t set_player_name(struct player_live_record *player, const uint8_t *name);
+int32_t set_player_wait_state(struct player_live_record *player, const int32_t wait_state);
+int32_t set_player_holding_for_input(struct player_live_record *player, const _Bool hold);
+int32_t set_player_buffer_replace(struct player_live_record *player, const void *newbuf);
+int32_t set_player_buffer_append(struct player_live_record *player, const void *append);
+int32_t set_player_store_replace(struct player_live_record *player, const void *newval);
+int32_t set_player_store_append(struct player_live_record *player, const void *append);
+
+void reset_player_state(struct player_live_record *player);

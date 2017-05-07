@@ -20,4 +20,4 @@
 
 #include "../util/handling_incoming_players.h"
 
-int32_t interpret_command(const size_t socket);
+int32_t interpret_command(struct player_live_record *player);

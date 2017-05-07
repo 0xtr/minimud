@@ -1,44 +1,44 @@
 #include "alterations.h"
 
-#define player_is_not_owner strcmp((char *)map->owner, (char *)get_player_name(socket)) 
+#define player_is_not_owner strcmp((char *)map->owner, (char *)player->name) 
 
-int32_t adjust_room_name(const int32_t socket)
+int32_t adjust_room_name(struct player_live_record *player)
 {
-	struct coordinates coords = get_player_coords(socket);
+	struct coordinates coords = get_player_coords(player);
 
-	if (compare_room_owner(socket, coords) == -1)
+	if (compare_room_owner(player, coords) == -1)
 		return 2;
 
 	convert_coords_into_string_params(coords.x, coords.y, coords.z);
 
 	int32_t rv = run_sql(sqlite3_mprintf(
 		"UPDATE ROOMS SET name = %Q, last_modified_by = %Q WHERE x = %Q AND y = %Q AND z = %Q;", 
-		get_player_store(socket), get_player_name(socket), param_x, param_y, param_z), 0, DB_ROOM);
+		player->store, player->name, param_x, param_y, param_z), 0, DB_ROOM);
 
 	return rv;
 }
 
-int32_t adjust_room_desc(const int32_t socket)
+int32_t adjust_room_desc(struct player_live_record *player)
 {
-	struct coordinates coords = get_player_coords(socket);
+	struct coordinates coords = get_player_coords(player);
 
-	if (compare_room_owner(socket, coords) == -1)
+	if (compare_room_owner(player, coords) == -1)
 		return 2;
 
 	convert_coords_into_string_params(coords.x, coords.y, coords.z);
 
 	int32_t rv = run_sql(sqlite3_mprintf(
 		"UPDATE ROOMS SET desc = %Q, last_modified_by = %Q WHERE x = %Q AND y = %Q AND z = %Q;", 
-		get_player_store(socket), get_player_name(socket), param_x, param_y, param_z), 0, DB_ROOM);
+		player->store, player->name, param_x, param_y, param_z), 0, DB_ROOM);
 
 	return rv;
 }
 
-int32_t adjust_room_flag(const int32_t socket)
+int32_t adjust_room_flag(struct player_live_record *player)
 {
-	struct coordinates coords = get_player_coords(socket);
+	struct coordinates coords = get_player_coords(player);
 
-	if (compare_room_owner(socket, coords) == -1)
+	if (compare_room_owner(player, coords) == -1)
 		return 2;
 
 	convert_coords_into_string_params(coords.x, coords.y, coords.z);
@@ -46,7 +46,7 @@ int32_t adjust_room_flag(const int32_t socket)
 	// TODO: this
 	int32_t rv = run_sql(sqlite3_mprintf(
 		"UPDATE ROOMS SET flags = %Q WHERE x = %Q AND y = %Q AND z = %Q;", 
-		get_player_name(socket), param_x, param_y, param_z), 0, DB_ROOM);
+		player->name, param_x, param_y, param_z), 0, DB_ROOM);
 
 	return rv;
 }
@@ -83,7 +83,7 @@ int32_t unlink_rooms(const int32_t dir, struct room_atom *existing, struct room_
 	convert_coords_into_string_params(existing->coords.x, existing->coords.y, existing->coords.z);
 
 	int32_t rv = run_sql(sqlite3_mprintf(
-		"UPDATE ROOMS SET %Q = 0 WHERE x = %Q AND y = %Q AND z = %Q;", 
+		"UPDATE ROOMS SET %Q = '-1' WHERE x = %Q AND y = %Q AND z = %Q;", 
 		get_movement_str(dir), param_x, param_y, param_z), 0, DB_ROOM);
 
 	if (rv == EXIT_FAILURE)
@@ -94,7 +94,7 @@ int32_t unlink_rooms(const int32_t dir, struct room_atom *existing, struct room_
 	snprintf((char *)param_z, sizeof(newroom->coords.z), "%d", newroom->coords.z);
 
 	rv = run_sql(sqlite3_mprintf(
-		"UPDATE ROOMS SET %Q = 0 WHERE x = %Q AND y = %Q AND z = %Q;", 
+		"UPDATE ROOMS SET %Q = '-1' WHERE x = %Q AND y = %Q AND z = %Q;", 
 		get_opposite_str(dir), param_x, param_y, param_z), 0, DB_ROOM);
 
 	return rv;

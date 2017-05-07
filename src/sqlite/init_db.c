@@ -63,7 +63,7 @@ static void open_playerdb(void)
 		assert(run_sql(sqlite3_mprintf(
 			"CREATE TABLE PLAYERS (id INTEGER PRIMARY KEY AUTOINCREMENT," 
 			"name TEXT, hash TEXT, salt TEXT, last_ip TEXT,"
-			"x INT, y INT, z INT)"), 0, DB_PLAYER) == EXIT_SUCCESS);
+			"loc_id INT)"), 0, DB_PLAYER) == EXIT_SUCCESS);
 }
 
 static void open_roomdb(void)

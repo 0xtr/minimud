@@ -10,9 +10,7 @@ struct player_db_record {
 	uint8_t last_ip[8]; // sort out
 
 	int32_t id;
-	int32_t x;
-	int32_t y;
-	int32_t z;
+	int32_t loc_id;
 
 };
 

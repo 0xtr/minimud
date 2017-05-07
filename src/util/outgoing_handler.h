@@ -6,4 +6,4 @@
 #include "../players/player_live_record.h"
 #include "incoming_handler.h"
 
-int32_t outgoing_handler(const int32_t socket);
+int32_t outgoing_handler(struct player_live_record *player);

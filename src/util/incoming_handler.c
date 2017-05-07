@@ -1,6 +1,6 @@
 #include "incoming_handler.h"
 
-static void strip_carriage_returns(const int32_t socket);
+static void strip_carriage_returns(struct player_live_record *player);
 
 int32_t incoming_handler(const int32_t socket)
 {
@@ -16,13 +16,14 @@ int32_t incoming_handler(const int32_t socket)
 	if (incoming_data_len > BUFFER_LENGTH)
 		memset(&buffer[BUFFER_LENGTH], 0, incoming_data_len - BUFFER_LENGTH);
 
-	clear_player_buffer(socket);
-	set_player_buffer_replace(socket, buffer);
+	struct player_live_record *player = get_player(socket);
+	clear_player_buffer(player);
+	set_player_buffer_replace(player, buffer);
 
 	free(buffer);
 
 	if (retval == 0) {
-		return shutdown_socket(socket); 
+		return shutdown_socket(player); 
 	} else if (retval == -1) {
 		if (errno == EAGAIN)
 			return EXIT_SUCCESS;
@@ -31,34 +32,33 @@ int32_t incoming_handler(const int32_t socket)
 		return EXIT_FAILURE;
 	}
 
-	strip_carriage_returns(socket);
-	interpret_command(socket);
+	strip_carriage_returns(player);
+	interpret_command(player);
 
 	return EXIT_SUCCESS;
 }
 
-static void strip_carriage_returns(const int32_t socket)
+static void strip_carriage_returns(struct player_live_record *player)
 {
-	uint8_t *buffer = get_player_buffer(socket);
-
-	for (size_t i = 0; i < strlen((char *)buffer); ++i) {
-		if (buffer[i] == '\r')
-			buffer[i] = '\0';
+	for (size_t i = 0; i < strlen((char *)player->buffer); ++i) {
+		if (player->buffer[i] == '\r')
+			player->buffer[i] = '\0';
 	}
 }
 
-int32_t shutdown_socket(const int32_t socket)
+int32_t shutdown_socket(struct player_live_record *player)
 {
-	if (shutdown(socket, SHUT_RDWR) == -1) {
+	if (shutdown(player->socket_num, SHUT_RDWR) == -1) {
 		if (errno != ENOTCONN) {
 			perror("Failed to shutdown a connection");
 			return EXIT_FAILURE;
 		}
 	}
 
-	if (epoll_ctl(get_epollfd(), EPOLL_CTL_DEL, socket, NULL) == -1)
+	if (epoll_ctl(get_epollfd(), EPOLL_CTL_DEL, player->socket_num, NULL) == -1)
 		perror("Failed to remove socket from epoll list");
 
-	remove_player_by_socket(socket);
+	remove_player_by_socket(player->socket_num);
+
 	return EXIT_SUCCESS;
 }
