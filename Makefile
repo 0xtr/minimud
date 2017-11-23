@@ -1,4 +1,5 @@
-CC = gcc
+CC = @gcc
+MKDIR_P = @mkdir -p
 LD = -lm -lsqlite3
 //CFLAGS = -Wall -Wextra -g -O2 -std=gnu11
 CFLAGS = -Wall -Wextra -g -O2 -std=gnu11 -fno-omit-frame-pointer
@@ -11,7 +12,6 @@ EXCLUDES =
 SRCS = $(shell find $(SRC_DIR) -name *.c $(foreach exclude, $(EXCLUDES), -and -not -path "*$(exclude)*"))
 OBJS = $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
-MKDIR_P = mkdir -p -v
 
 .PHONY: all clean # stops file name conflicts
 

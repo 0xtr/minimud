@@ -80,12 +80,12 @@ int32_t print_to_player(struct player_live_record *player, const int32_t argumen
 		set_player_buffer_append(player, " chars.\n");
 		break;
 	case PRINT_CONFIRM_NEW_ROOM_DESC:
-		set_player_buffer_replace(player, "Confirm the new description by typing Y/y. You entered:");
+		set_player_buffer_replace(player, "Confirm the new description by typing Y/y. You entered:\n");
 		set_player_buffer_append(player, player->store);
 		set_player_buffer_replace(player, "\nIf this is wrong, type something other than Y/y.\n");
 		break;
 	case PRINT_CONFIRM_NEW_ROOM_NAME:
-		set_player_buffer_replace(player, "Confirm the new name by typing Y/y. You entered:");
+		set_player_buffer_replace(player, "Confirm the new name by typing Y/y. You entered:\n");
 		set_player_buffer_append(player, player->store);
 		set_player_buffer_replace(player, "\nIf this is wrong, type something other than Y/y.\n");
 		break;
@@ -93,7 +93,7 @@ int32_t print_to_player(struct player_live_record *player, const int32_t argumen
 		set_player_buffer_replace(player, "Room adjusted successfully. Exiting editor.\n");
 		break;
 	case PRINT_COULDNT_ADJUST_ROOM:
-		set_player_buffer_replace(player, "Some kind of error occurred. Room adjustment failed. Exiting editor.\n");
+		set_player_buffer_replace(player, "An error occurred. Room adjustment failed. Exiting editor.\n");
 		break;
 	case PRINT_EXITING_CMD_WAIT:
 		set_player_buffer_replace(player, "Exiting editor - returning you to the (real) world.\n");

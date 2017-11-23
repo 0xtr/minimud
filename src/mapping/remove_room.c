@@ -24,7 +24,7 @@ int32_t remove_room(struct player_live_record *player)
 	check_exits_and_adjust(coords, map);
 
 	int32_t rv = run_sql(sqlite3_mprintf(
-			"DELETE FROM ROOMS WHERE x LIKE %Q AND y LIKE %Q AND z LIKE %Q;",
+			"DELETE FROM ROOMS WHERE x = %Q AND y = %Q AND z = %Q;",
 			param_x, param_y, param_z), 0, DB_ROOM);
 	if (rv == EXIT_FAILURE) {
 		free(map);

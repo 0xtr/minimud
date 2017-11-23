@@ -135,11 +135,11 @@ static void alter_room_desc(struct player_live_record *player, const uint8_t *co
 
 	int32_t rv = adjust_room_desc(player);
 
-	if (rv == 1) {
+	if (rv == 0) {
 		print_to_player(player, PRINT_ADJUSTMENT_SUCCESSFUL);
-	} else if (rv == -2) {
+	} else if (rv == 1) {
 		print_to_player(player, PRINT_COULDNT_ADJUST_ROOM);
-	} else if (rv == -3) {
+	} else if (rv == 2) {
 		print_to_player(player, PRINT_INSUFFICIENT_PERMISSIONS);
 	}
 

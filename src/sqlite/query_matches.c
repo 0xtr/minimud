@@ -7,7 +7,7 @@ struct query_matches *players_in_room(const int32_t r_id)
 
 	struct query_matches *matches = init_query();
 	int32_t rv = run_sql(
-			sqlite3_mprintf("SELECT id FROM PLAYERS WHERE loc_id LIKE %Q",
+			sqlite3_mprintf("SELECT id FROM PLAYERS WHERE loc_id = %Q",
 			r_id_str), matches, DB_PLAYER_COUNT);
 
 	assert(rv == 0);

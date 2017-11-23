@@ -80,7 +80,8 @@ int32_t main(void)
 				return EXIT_FAILURE;
 			}
 
-			set_socket_nonblocking(new_fd);
+			if (set_socket_nonblocking(new_fd) == EXIT_FAILURE)
+				return EXIT_FAILURE;
 
 			ev.events = EPOLLIN | EPOLLET;
 			ev.data.fd = new_fd;

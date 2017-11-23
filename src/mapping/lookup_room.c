@@ -7,7 +7,7 @@ struct room_atom *lookup_room(const struct coordinates coords)
 	struct room_atom *map = get_room();
 
 	int32_t rv = run_sql(sqlite3_mprintf(
-			"SELECT * FROM ROOMS WHERE x LIKE %Q AND y LIKE %Q AND z LIKE %Q;", 
+			"SELECT * FROM ROOMS WHERE x = %Q AND y = %Q AND z = %Q;", 
 			param_x, param_y, param_z), map, DB_ROOM);
 
 	if (rv == EXIT_FAILURE)
@@ -24,7 +24,7 @@ struct room_atom *lookup_room_by_id(const int32_t id)
 	struct room_atom *map = get_room();
 
 	int32_t rv = run_sql(sqlite3_mprintf(
-			"SELECT * FROM ROOMS WHERE id LIKE %Q;", idstr), map, DB_ROOM);
+			"SELECT * FROM ROOMS WHERE id = %Q;", idstr), map, DB_ROOM);
 
 	if (rv == EXIT_FAILURE)
 		return NULL;
