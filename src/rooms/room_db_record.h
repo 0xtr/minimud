@@ -1,9 +1,8 @@
 #pragma once
 
 #include "../common.h"
-#include "../mapping/coordinates.h"
 
-struct room_atom {
+struct room_db_record {
 	int32_t id;
 
 	_Bool found;
@@ -18,4 +17,4 @@ struct room_atom {
 	int32_t exits[10];
 }; 
 
-struct room_atom *get_room(void);
+struct room_db_record *get_room(void);

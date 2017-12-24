@@ -8,7 +8,7 @@ struct coordinates get_player_coords(struct player_live_record *player)
 
 	run_sql(sqlite3_mprintf("SELECT * FROM PLAYERS WHERE name = %Q;", player->name), player_db, DB_PLAYER);
 
-	struct room_atom *room = lookup_room_by_id(player_db->loc_id);
+	struct room_db_record *room = lookup_room_by_id(player_db->loc_id);
 	coords = room->coords;
 
 	free(player_db);

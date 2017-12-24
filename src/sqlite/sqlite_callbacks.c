@@ -1,11 +1,11 @@
-#include "helper_funcs.h"
+#include "sqlite_callbacks.h"
 
 static void handle_player_columns(char *azColName, char *arg1, struct player_db_record *player);
-static void handle_map_columns(char *azColName, char *arg1, struct room_atom *map);
+static void handle_map_columns(char *azColName, char *arg1, struct room_db_record *map);
 
 int room_callback (void *data, int argc, char **argv, char **azColName)
 {
-	struct room_atom *map_ref = data;
+	struct room_db_record *map_ref = data;
 
 	increment_sqlite_rows_count();
 
@@ -72,9 +72,9 @@ static void handle_player_columns(char *azColName, char *arg1, struct player_db_
 	}
 }
 
-static void handle_map_columns(char *azColName, char *arg1, struct room_atom *map)
+static void handle_map_columns(char *azColName, char *arg1, struct room_db_record *map)
 {
-	const size_t arg_len = strlen(arg1);
+	const size_t arg_len = (arg1 != NULL) ? strlen(arg1) : 0;
 	const size_t col_len = strlen(azColName);
 
 	if (memcmp(azColName, "name", col_len) == 0) {

@@ -19,7 +19,6 @@ int32_t insert_player(struct player_live_record *player, const uint8_t *pw)
 		"INSERT INTO PLAYERS (name, hash, salt, last_ip, loc_id) "
 				"VALUES (%Q, %Q, %Q, %Q, %Q);", 
 		(char *)player->name, (char *)hash_result, (char *)salt, "-", "0"), 0, DB_PLAYER);
-	printf("rv %d\n", rv);
 
 	memset(salt, '\0', SALT_LENGTH);
 	memset(salt_and_pw, '\0', BUFFER_LENGTH + SALT_LENGTH);

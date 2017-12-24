@@ -2,7 +2,7 @@
 
 #include "../common.h"
 
-#include "../mapping/coordinates.h"
+#include "../rooms/coordinates.h"
 
 #include "../players/player_details.h"
 

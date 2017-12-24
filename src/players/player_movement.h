@@ -5,12 +5,11 @@
 #include "../commands/classify_cmd.h"
 
 #include "../sqlite/set_get_dbs.h"
-#include "../sqlite/helper_funcs.h"
+#include "../sqlite/sqlite_callbacks.h"
 
 #include "../printing/printing.h"
 
-#include "../mapping/lookup_room.h"
-#include "../mapping/alterations.h"
+#include "../rooms/room_actions.h"
 
 int32_t adjust_player_location(struct player_live_record *player, const int32_t rid);
 int32_t move_player(struct player_live_record *player, const int32_t DIRECTION);

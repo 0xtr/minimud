@@ -1,14 +1,16 @@
 #pragma once
 
+#include "rooms/coordinates.h"
+
 #define DEBUG
 
-#define convert_coords_into_string_params(x, y, z) \
-	uint8_t param_x[2 * sizeof(x)] = {0};\
-	uint8_t param_y[2 * sizeof(y)] = {0};\
-	uint8_t param_z[2 * sizeof(z)] = {0};\
-	snprintf((char *)param_x, sizeof(x), "%d", x);\
-	snprintf((char *)param_y, sizeof(y), "%d", y);\
-	snprintf((char *)param_z, sizeof(z), "%d", z);
+#define convert_coords_into_string_params(coords) \
+	uint8_t param_x[2 * sizeof(coords.x)] = {0};\
+	uint8_t param_y[2 * sizeof(coords.y)] = {0};\
+	uint8_t param_z[2 * sizeof(coords.z)] = {0};\
+	snprintf((char *)param_x, sizeof(coords.x), "%d", coords.x);\
+	snprintf((char *)param_y, sizeof(coords.y), "%d", coords.y);\
+	snprintf((char *)param_z, sizeof(coords.z), "%d", coords.z);
 
 #define MAX_SIMULTANEOUS_EPOLL_EVENTS 10
 #define BUFFER_LENGTH    	512

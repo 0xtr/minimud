@@ -33,9 +33,11 @@ const char * const system_commands[] = {
 };
 const char * const info_commands[] = {
 	"look", "l",
-	"commands",
 	"players",
-	"map"
+	"map",
+	"commands",
+	"?",
+	"help"
 };
 const char * const room_commands[] = {
 	"mkroom",

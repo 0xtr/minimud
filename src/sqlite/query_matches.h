@@ -2,9 +2,7 @@
 
 #include "../common.h"
 
-#include "../mapping/coordinates.h"
-
-#include "../sqlite/init_db.h"
+#include "../sqlite/sqlite_init_dbs.h"
 
 struct query_matches {
 	size_t matches;

@@ -25,33 +25,33 @@ int32_t print_to_player(struct player_live_record *player, const int32_t argumen
 		set_player_buffer_replace(player, "You've provided the name [");
 		set_player_buffer_append(player, player->name);
 		set_player_buffer_append(player, "].\n\n");
-		set_player_buffer_append(player, "Please provide a password less than ");
+		set_player_buffer_append(player, "Provide a password less than ");
 		set_player_buffer_append(player, BUFFER_LENGTH_STR);
 		set_player_buffer_append(player, " characters long.\n\n");
 		break;
 	case REQUEST_PW_CONFIRM:
-		set_player_buffer_replace(player, "Please confirm your password by typing it out once more.\n");
+		set_player_buffer_replace(player, "Confirm your password by typing it out once more.\n");
 		break;
 	case REQUEST_PW_FOR_EXISTING:
-		set_player_buffer_replace(player, "Please provide your password.\n");
+		set_player_buffer_replace(player, "Provide your password.\n");
 		break;
 	case ATTEMPT_CREATE_USR:
 		set_player_buffer_replace(player, "Attempting to create your character...\n");
 		break;
 	case MISMATCH_PW_SET:
-		set_player_buffer_replace(player, "Password mismatch. Start over.\nPlease provide a NAME.\n");
+		set_player_buffer_replace(player, "Password mismatch. Start over.\nWhat is your NAME.\n");
 		break;
 	case PLAYER_CREATION_FAILED:
 		set_player_buffer_replace(player, "Character creation failed. You should never see this.\n");
 		break;
 	case PLAYER_CREATION_SUCCESS:
-		set_player_buffer_replace(player, "Character created successfully. Entering the world...\n");
+		set_player_buffer_replace(player, "Character created. Entering the world...\n");
 		break;
 	case PLAYER_ALREADY_ONLINE: 
-		set_player_buffer_replace(player, "That player is already connected. Please provide another name.\n");
+		set_player_buffer_replace(player, "That player is already connected.\n");
 		break;
 	case INCORRECT_PASSWORD:
-		set_player_buffer_replace(player, "Incorrect password. Restarting.\nPlease provide a NAME.\n");
+		set_player_buffer_replace(player, "Incorrect password. Restarting.\n\nWhat is your NAME.\n");
 		break;
 	case UNABLE_TO_RETRIEVE_CHAR:
 		set_player_buffer_replace(player, "Couldn't retrieve your character.\n");
@@ -67,7 +67,7 @@ int32_t print_to_player(struct player_live_record *player, const int32_t argumen
 		set_player_buffer_append(player, NAMES_MIN_STR);
 		set_player_buffer_append(player, " characters long, and no more than ");
 		set_player_buffer_append(player, NAMES_MAX_STR);
-		set_player_buffer_append(player, " characters. Try again.\n\nPlease provide a NAME.\n");
+		set_player_buffer_append(player, " characters. Try again.\n\nWhat is your NAME.\n");
 		break;
 	case PRINT_PROVIDE_NEW_ROOM_NAME:
 		set_player_buffer_replace(player, "Enter a new room name, of up to ");
@@ -82,12 +82,12 @@ int32_t print_to_player(struct player_live_record *player, const int32_t argumen
 	case PRINT_CONFIRM_NEW_ROOM_DESC:
 		set_player_buffer_replace(player, "Confirm the new description by typing Y/y. You entered:\n");
 		set_player_buffer_append(player, player->store);
-		set_player_buffer_replace(player, "\nIf this is wrong, type something other than Y/y.\n");
+		set_player_buffer_append(player, "\nIf this is wrong, type something other than Y/y.\n\n");
 		break;
 	case PRINT_CONFIRM_NEW_ROOM_NAME:
 		set_player_buffer_replace(player, "Confirm the new name by typing Y/y. You entered:\n");
 		set_player_buffer_append(player, player->store);
-		set_player_buffer_replace(player, "\nIf this is wrong, type something other than Y/y.\n");
+		set_player_buffer_append(player, "\nIf this is wrong, type something other than Y/y.\n\n");
 		break;
 	case PRINT_ADJUSTMENT_SUCCESSFUL:
 		set_player_buffer_replace(player, "Room adjusted successfully. Exiting editor.\n");
@@ -212,9 +212,8 @@ static _Bool is_in_same_room(struct player_live_record *player, struct coordinat
 		coords.z == room_coords.z;
 }
 
-int32_t print_room_to_player(struct player_live_record *player, struct room_atom *room)
+int32_t print_room_to_player(struct player_live_record *player, struct room_db_record *room)
 {
-	printf("player %d name %s room %d\n", player->socket_num, player->name, room->id);
 	struct coordinates coords = get_player_coords(player);
 
 	set_player_buffer_replace(player, 
@@ -257,7 +256,8 @@ int32_t print_room_to_player(struct player_live_record *player, struct room_atom
 			"likely to be eaten by a null character."
 			: (void *)room->rdesc);
 
-	set_player_buffer_append(player, "\n");
+	if (room->rdesc != NULL && strlen((char *)room->rdesc) > 0)
+		set_player_buffer_append(player, "\n");
 	assert(outgoing_handler(player) == EXIT_SUCCESS);
 
 	const uint8_t *target = player->name;

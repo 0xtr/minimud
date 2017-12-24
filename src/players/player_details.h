@@ -7,7 +7,7 @@
 
 #include "../printing/printing.h"
 
-#include "../sqlite/helper_funcs.h"
+#include "../sqlite/sqlite_callbacks.h"
 #include "../sqlite/set_get_dbs.h"
 
 #include "../crypto/bcrypt.h"

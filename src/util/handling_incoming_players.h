@@ -2,8 +2,7 @@
 
 #include "../common.h"
 
-#include "../mapping/coordinates.h"
-#include "../mapping/lookup_room.h"
+#include "../rooms/room_actions.h"
 
 #include "../players/insert_player.h"
 #include "../players/player_live_record.h"

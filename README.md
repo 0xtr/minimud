@@ -5,10 +5,8 @@ You can:
 
 -create, edit, name, describe and delete rooms while connected
 
--add new commands through a text file that's parsed and stored at startup
+-communicate with other people online
 
--communicate with other players online
-
--return to the origin room, or save waypoints and return to them
+-switch from the core world into your own, where you can build at will
 
 -save your character and return to it at a later time

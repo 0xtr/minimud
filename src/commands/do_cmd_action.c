@@ -40,14 +40,14 @@ static void do_system_cmd(struct player_live_record *player, struct command *inf
 static void do_info_cmd(struct player_live_record *player, struct command *info)
 {
 	if (info->subtype == INFO_ROOM || info->subtype == INFO_ROOM2) {
-		struct room_atom *room = lookup_room(get_player_coords(player));
+		struct room_db_record *room = lookup_room(get_player_coords(player));
 
 		print_room_to_player(player, room);
 
 		free(room);
 	}
 
-	if (info->subtype == INFO_COMMANDS)
+	if (info->subtype >= INFO_COMMANDS && info->subtype <= INFO_COMMANDS3)
 		print_to_player(player, SHOWCMDS);
 	if (info->subtype == INFO_PLAYERS)
 		print_to_player(player, LISTPLAYERS);
@@ -129,7 +129,7 @@ static void do_movement_cmd(struct player_live_record *player, struct command *i
 		destination.y = origin.y - 1;
 	}
 
-	struct room_atom *dest_room = lookup_room(destination);
+	struct room_db_record *dest_room = lookup_room(destination);
 	if (dest_room == NULL) {
 		// do something
 	}

@@ -1,7 +1,7 @@
 #include "common.h"
 #include "commands/classify_cmd.h"
 #include "commands/do_cmd_action.h"
-#include "sqlite/init_db.h"
+#include "sqlite/sqlite_init_dbs.h"
 #include "util/incoming_handler.h"
 #include "util/epollfd_storage.h"
 #include "util/handling_incoming_players.h"
@@ -15,7 +15,7 @@ int32_t main(void)
 	srand(time(NULL));
 	const int32_t port = rand() % (6000 + 1 - 4500) + 4500;
 	
-	// open the sqlite3 db connections for rooms & players 
+	// open the sqlite3 dbs
 	assert(init_dbs() == EXIT_SUCCESS);
 
 	// create the master socket 

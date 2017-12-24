@@ -2,7 +2,7 @@
 
 int32_t run_sql(char *query, void *data, const int32_t type)
 {
-	printf("running %s\n", query);
+	printf("sql: %s\n", query);
 	sqlite3 *db = NULL;
 	void *func;
 	uint8_t *sqlerr = NULL;
@@ -11,6 +11,8 @@ int32_t run_sql(char *query, void *data, const int32_t type)
 		db = get_roomdb();
 	if (type == DB_PLAYER || type == DB_PLAYER_COUNT)
 		db = get_playerdb();
+	if (type == DB_OBJECT || type == DB_OBJECT_COUNT)
+		db = get_objdb();
 	
 	if (type == DB_ROOM)
 		func = room_callback;

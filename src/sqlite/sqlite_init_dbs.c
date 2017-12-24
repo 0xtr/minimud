@@ -1,7 +1,14 @@
-#include "init_db.h"
+#include "sqlite_init_dbs.h"
 
 static void open_playerdb(void);
 static void open_roomdb(void);
+static void open_objdb(void);
+static void insert_base_room(void);
+
+#define open_or_create_db(db, loc) \
+	if (access((char*)loc, F_OK) == -1)\
+		tables_needed = true;\
+	assert(sqlite3_open_v2(loc, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL) == SQLITE_OK);\
 
 int32_t init_dbs(void)
 {
@@ -18,9 +25,17 @@ int32_t init_dbs(void)
 
 	open_playerdb();
 	open_roomdb();
+	open_objdb();
 
+	insert_base_room();
+
+	return EXIT_SUCCESS;
+}
+
+static void insert_base_room(void)
+{
 	struct coordinates coords = {0};
-	struct room_atom *room = lookup_room(coords);
+	struct room_db_record *room = lookup_room(coords);
 
 	const int32_t id = room->id;
 
@@ -39,13 +54,11 @@ int32_t init_dbs(void)
 	rconfig.owner = (uint8_t *)"system";
 	rconfig.flags = (uint8_t *)"none";
 
-	struct room_atom *result = insert_room(rconfig);
+	struct room_db_record *result = insert_room(rconfig);
 	assert(result->id == 1);
 	free(result);
 
-	success:
-
-	return EXIT_SUCCESS;
+	success:;
 }
 
 static void open_playerdb(void)
@@ -53,10 +66,7 @@ static void open_playerdb(void)
 	_Bool tables_needed = false;
 	sqlite3 *db;
 
-	if (access((char*)SQLITE_PLAYERDB_LOC, F_OK) == -1)
-		tables_needed = true;
-
-	assert(sqlite3_open_v2(SQLITE_PLAYERDB_LOC, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL) == SQLITE_OK);
+	open_or_create_db(db, SQLITE_PLAYERDB_LOC);
 	set_playerdb(db);
 
 	if (tables_needed)
@@ -66,15 +76,27 @@ static void open_playerdb(void)
 			"loc_id INT)"), 0, DB_PLAYER) == EXIT_SUCCESS);
 }
 
+static void open_objdb(void)
+{
+	_Bool tables_needed = false;
+	sqlite3 *db;
+
+	open_or_create_db(db, SQLITE_OBJDB_LOC);
+	set_objdb(db);
+
+	if (tables_needed)
+		assert(run_sql(sqlite3_mprintf(
+			"CREATE TABLE OBJECTS (id INTEGER PRIMARY KEY AUTOINCREMENT," 
+			"obj_name TEXT, obj_keywords TEXT, obj_desc TEXT, obj_createdby TEXT,"
+			"obj_location INT, obj_playerid INT)"), 0, DB_OBJECT) == EXIT_SUCCESS);
+}
+
 static void open_roomdb(void)
 {
 	_Bool tables_needed = false;
 	sqlite3 *db;
 
-	if (access((char*)SQLITE_ROOMDB_LOC, F_OK) == -1)
-		tables_needed = true;
-
-	assert(sqlite3_open_v2(SQLITE_ROOMDB_LOC, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL) == SQLITE_OK);
+	open_or_create_db(db, SQLITE_ROOMDB_LOC);
 	set_roomdb(db);
 
 	if (tables_needed)

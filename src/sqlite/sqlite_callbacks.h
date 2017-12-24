@@ -5,7 +5,7 @@
 
 #include "../players/player_db_record.h"
 
-#include "../mapping/room_atom.h"
+#include "../rooms/room_db_record.h"
 
 #include "../sqlite/query_matches.h"
 
