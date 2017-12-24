@@ -214,12 +214,10 @@ static _Bool is_in_same_room(struct player_live_record *player, struct coordinat
 
 int32_t print_room_to_player(struct player_live_record *player, struct room_db_record *room)
 {
-	struct coordinates coords = get_player_coords(player);
-
 	set_player_buffer_replace(player, 
 			(room->found == false) ? (void *)"NULL SPACE" : (void *)room->rname);
 
-	append_coordinates_for_printing(player, coords);
+	append_coordinates_for_printing(player, room->coords);
 	assert(outgoing_handler(player) == EXIT_SUCCESS);
 
 	set_player_buffer_replace(player, "Exits:");
@@ -268,7 +266,7 @@ int32_t print_room_to_player(struct player_live_record *player, struct room_db_r
 		if (each->name == target)
 			continue;
 
-		if (is_in_same_room(each, coords) == true) {
+		if (is_in_same_room(each, room->coords) == true) {
 			set_player_buffer_replace(player, each->name);
 			set_player_buffer_append(player, " is here too.\n");
 			assert(outgoing_handler(player) == EXIT_SUCCESS);
