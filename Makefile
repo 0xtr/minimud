@@ -23,8 +23,8 @@ $(BUILD_DIR)/%.c.o: %.c # match via wildcard %
 	$(CC) $(LD) $(CFLAGS) -c $< -o $@
 
 clean:
-	/bin/rm -fv vgcore*
-	/bin/rm -frv $(BUILD_DIR)
+	/bin/rm -f vgcore*
+	/bin/rm -fr $(BUILD_DIR)
 	/bin/rm -fv $(BINARY_NAME)
 
 -include $(DEPS)
