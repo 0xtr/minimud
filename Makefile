@@ -1,7 +1,6 @@
 CC = @gcc
 MKDIR_P = @mkdir -p
 LD = -lm -lsqlite3
-//CFLAGS = -Wall -Wextra -g -O2 -std=gnu11
 CFLAGS = -Wall -Wextra -g -O2 -std=gnu11 -fno-omit-frame-pointer
 
 BUILD_DIR = ./build
